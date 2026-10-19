@@ -1,0 +1,26 @@
+---
+description: Approved libraries and when (not) to add optional ones
+alwaysApply: true
+---
+
+# Approved stack
+
+Use the libraries in `Docs/libraries.md`. Do not introduce alternatives.
+
+- **UI** — shadcn/ui **Base Nova** (`components.json`: `"style": "base-nova"`). Primitives live in `components/ui/`. Add with `npx shadcn@latest add <name>` (`-t next` if re-init). Do not switch presets or go back to Radix.
+- **Primitives** — `@base-ui/react` only. Do not import `radix-ui` / `@radix-ui/*`. Compose with Base UI `render`, not Radix `asChild`.
+- **Icons / classes** — `lucide-react`; `cn()` from `lib/utils.ts`. Tailwind only — no CSS-in-JS.
+- **Tooltips** — keep `TooltipProvider` in `app/layout.tsx` (already required by the tooltip component).
+- **Route progress** — `nextjs-toploader` in `app/layout.tsx` only. Do not add other nprogress wrappers. Programmatic nav: `useRouter` from `nextjs-toploader/app`.
+- **Skeletons** — **boneyard-js** for route loading: colocate `loading.tsx` next to `page.tsx` and render `RouteSkeleton` from `components/skeleton/route-skeleton.tsx` with a shadcn `fallback` until `npm run bones:build`. Registry in `bones/registry.ts`; config in `boneyard.config.json`. Keep shadcn `Skeleton` (`components/ui/skeleton`) only for small inline placeholders (sidebar, form suspense).
+- **Errors** — designed `error.tsx`, `global-error.tsx`, and `not-found.tsx` via `components/layout/error-screen.tsx` and `route-error.tsx`. Do not leave Next’s default error UI.
+- **Forms** — `react-hook-form` + Zod schema from `validations/` via `zodResolver`. Do not use uncontrolled-form-killing `useState` for every field.
+- **Dates** — `date-fns` named imports only. Never moment.js.
+- **Temp IDs** — `nanoid` on the client. Postgres `gen_random_uuid()` on the server.
+- **Branching** — `ts-pattern` in `data/` and `actions/` for result/error unions.
+- **Tests** — Vitest for unit/component; Playwright for E2E (auth/RLS). Not Jest.
+
+## Do not add by default
+
+- **Zustand / `stores/`** — only if client global state cannot live in Server Components or URL search params. Never Redux.
+- **TanStack Query** — only for post-load client caching (polling, optimistic updates, infinite scroll). Never for initial Server Component reads.

@@ -1,0 +1,26 @@
+---
+description: Data-access layer — all Supabase reads live in data/
+globs: data/**/*.ts
+alwaysApply: false
+---
+
+# data/ — reads only
+
+One file per entity: `data/projects.ts`, `data/users.ts`.
+
+- Every SELECT lives here — never `.from(...).select()` in a page or component
+- Prefer importing the server client; pass a client in only when the caller must choose browser vs server
+- Select only needed columns — never `select('*')`
+- Throw on Supabase `error`; return `data`. Use `ts-pattern` when branching on result/error unions instead of long `if`/`switch` chains
+
+```ts
+export async function getProjectsByUser(userId: string) {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('id, name, status')
+    .eq('user_id', userId)
+  if (error) throw error
+  return data
+}
+```

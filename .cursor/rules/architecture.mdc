@@ -1,0 +1,37 @@
+---
+description: Folder layout and one-way dependency flow for Next.js App Router + Supabase
+alwaysApply: true
+---
+
+# Architecture
+
+Colocate by feature, separate by layer. Route folders own UI. Business logic, data access, and types live outside `app/`. Nothing talks to Supabase from a component.
+
+## Folders (project root)
+
+- `app/` — routes only (pages, layouts, route handlers, one-off route UI)
+- `components/` — shared UI (`ui/` primitives, `[feature]/` reused widgets)
+- `lib/` — infra only (Supabase clients, utils, third-party SDKs)
+- `data/` — reads (SELECT)
+- `actions/` — Server Actions (INSERT/UPDATE/DELETE)
+- `types/` — shared TypeScript types
+- `validations/` — Zod schemas (client + server)
+- `hooks/` — custom React hooks
+- `stores/` — Zustand only. Do not create this folder or install Zustand until client global state cannot live in Server Components or URL search params. Never Redux.
+- `constants/` — enums, route paths, flags
+- `middleware.ts` — Next.js middleware
+- `supabase/migrations/` — append-only SQL (never edit applied/merged files)
+
+## Dependency flow (one direction)
+
+```
+app/  →  actions/, data/  →  lib/  →  Supabase
+  ↓
+components/, hooks/  →  types/, validations/, constants/
+```
+
+- Components and hooks never import Supabase
+- `data/` and `actions/` never import from `app/`
+- `lib/supabase/admin.ts` only from server-only files (`actions/`, `app/api/`)
+
+`data/` (reads during render) and `actions/` (writes from forms) stay separate. They are service + repository in one — do not add a extra repository layer unless we swap databases later.

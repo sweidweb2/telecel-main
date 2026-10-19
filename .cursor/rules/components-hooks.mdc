@@ -1,0 +1,23 @@
+---
+description: Shared UI and hooks — no direct Supabase, no one-off page components
+globs: components/**/*.{ts,tsx},hooks/**/*.{ts,tsx},stores/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# components/ and hooks/
+
+## components/
+
+- `components/ui/` — shadcn **Base Nova** primitives (`@base-ui/react`). Add with `npx shadcn@latest add <name>`; do not hand-roll Button/Input/Dialog if shadcn has it
+- Do not import Radix. Prefer Base UI `render` over Radix `asChild`. Menu/dialog triggers already render a button — style with `buttonVariants()`, do not nest `<Button>` (nested buttons break hydration)
+- Icons from `lucide-react`. Conditional classes via `cn()` from `lib/utils.ts`
+- `components/[feature]/` — reused across routes (e.g. `components/projects/project-card.tsx`)
+- One-off page UI stays next to the route in `app/`
+- Never import Supabase clients or `data/`/`actions/` query builders here — pages/actions call those
+- Forms: `react-hook-form` + `zodResolver` against a `validations/` schema
+- Skeletons: put them in the route’s `loading.tsx` via `RouteSkeleton` (boneyard-js). Use shadcn `Skeleton` only for small inline placeholders (sidebar menu, form suspense). Do not use either as a substitute for the `loading.tsx` convention.
+
+## hooks/
+
+- Custom hooks: `useUser()`, `useDebounce()`, etc.
+- Realtime wrappers live here (`hooks/use-realtime-projects.ts`) — subscribe only when live updates are required, not by default

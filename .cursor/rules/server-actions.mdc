@@ -1,0 +1,26 @@
+---
+description: Server Actions — all writes/mutations live in actions/
+globs: actions/**/*.ts
+alwaysApply: false
+---
+
+# actions/ — writes only
+
+One file per entity: `actions/projects.ts`. Every `'use server'` mutation lives here.
+
+- Validate with a `validations/` Zod schema before touching Supabase
+- Use `ts-pattern` for result/error branching instead of long `if`/`switch` chains
+- INSERT/UPDATE/DELETE only — reads belong in `data/`
+- `revalidatePath` / `revalidateTag` after successful mutations
+- Never import from `app/`
+
+```ts
+'use server'
+export async function createProject(input: CreateProjectInput) {
+  const parsed = createProjectSchema.parse(input)
+  const supabase = await createClient()
+  const { error } = await supabase.from('projects').insert(parsed)
+  if (error) throw error
+  revalidatePath('/projects')
+}
+```

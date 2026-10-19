@@ -1,0 +1,43 @@
+---
+description: Mobile-first responsive UI for marketing and app shells
+alwaysApply: true
+---
+
+# Responsive UI
+
+Every UI change must work on mobile (~375), tablet (~768), and desktop (~1280). RFQ requires full responsiveness. Prefer Tailwind mobile-first utilities — never desktop-only layouts.
+
+## Defaults
+
+1. **Mobile-first** — base styles = phone; enhance with `sm:` / `md:` / `lg:`. Do not design desktop then “fix” mobile later.
+2. **No horizontal page scroll** — avoid fixed widths that overflow. Prefer `w-full`, `max-w-*`, `min-w-0`, and fluid grids.
+3. **Breakpoints** — stack on small screens; split from `md:` or `lg:` (e.g. `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`).
+4. **Touch targets** — interactive controls at least ~44px (`min-h-11` / `min-w-11`) on mobile.
+5. **Typography** — scale headings (`text-3xl sm:text-4xl`); keep body readable (`text-base`+). Use `text-balance` on big titles when helpful.
+6. **Spacing** — tighter padding on mobile (`px-4 py-10`), more on larger (`sm:px-6 lg:py-16`).
+7. **CTAs / forms** — full-width buttons on mobile (`w-full sm:w-auto`); form fields `w-full`.
+8. **Images / video** — `next/image` with responsive `sizes`; never force overflow. Optimize for constrained mobile bandwidth.
+9. **Tables / dense data** — allow `overflow-x-auto` on the table container, or stack rows on small screens — never blow out the page width.
+
+## Navigation
+
+- **Marketing `SiteNavbar`** — desktop links from `lg:`; below that use the Sheet (hamburger) menu. Do not return to a single horizontal scroll of all links on mobile.
+- Language toggle stays reachable on mobile (bar or sheet).
+- **Marketing `SiteFooter`** — multi-column on `sm:`/`lg:`, stacked on mobile; touch-sized links; mount via locale layouts (not per page).
+- Dashboard sidebar already collapses; keep new dashboard chrome usable at narrow widths.
+
+## Checklist before finishing UI work
+
+- [ ] Looks correct at ~375, ~768, ~1280 (DevTools or real devices)
+- [ ] No unintended horizontal scroll on the document
+- [ ] Nav usable without sideways scrolling through every link
+- [ ] Primary CTAs visible without zooming
+
+```tsx
+// ❌ BAD — desktop-only row that overflows phones
+<nav className="flex gap-2 overflow-x-auto">…all links…</nav>
+
+// ✅ GOOD — desktop row + mobile sheet (see SiteNavbar)
+<nav className="hidden lg:flex">…</nav>
+{/* Sheet menu for < lg */}
+```

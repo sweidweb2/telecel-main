@@ -1,0 +1,17 @@
+---
+description: lib/ is infrastructure only — no domain/business logic
+globs: lib/**/*.ts
+alwaysApply: false
+---
+
+# lib/ — infrastructure, not domain
+
+If it does not know about app entities (projects, users, teams), it belongs here.
+
+- Supabase clients: `lib/supabase/client.ts`, `server.ts`, `admin.ts`
+- Generic utils: `lib/utils.ts` (`cn()` via clsx + tailwind-merge)
+- Fonts: `lib/fonts.ts` (`next/font`). Used by `app/layout.tsx` and `app/global-error.tsx`
+- Dates: `date-fns` named imports. Client temp IDs: `nanoid`
+- Third-party SDK setup (Stripe, Resend, etc.)
+
+`admin.ts` is server-only. Import it only from `actions/` or `app/api/` — never from Client Components, hooks, or `data/` called on the client.

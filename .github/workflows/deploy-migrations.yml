@@ -1,0 +1,49 @@
+# Pushes pending files in supabase/migrations to the linked project on merge to main.
+# Does not run seed.sql.
+#
+# Required repo secrets:
+#   SUPABASE_ACCESS_TOKEN  — Personal access token from https://supabase.com/dashboard/account/tokens
+#   SUPABASE_PROJECT_ID    — Project ref from the dashboard URL
+#   SUPABASE_DB_PASSWORD   — Database password for that project
+name: Deploy Migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-migrations-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: supabase db push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      # Applies pending files in supabase/migrations only. Never runs seed.sql.
+      - name: Push migrations
+        run: supabase db push

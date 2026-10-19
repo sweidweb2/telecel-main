@@ -1,0 +1,48 @@
+---
+description: SEO conventions for marketing pages, metadata, sitemap, and images
+globs: app/(marketing)/**/*.{ts,tsx},app/sitemap.ts,app/robots.ts,app/layout.tsx,components/seo/**/*.{ts,tsx},lib/seo/**/*.{ts,tsx},components/marketing/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# SEO
+
+Applies to public marketing surfaces only. Auth, dashboard, and API routes stay out of the index.
+
+## Metadata
+
+- Root defaults live in `app/layout.tsx` (`metadataBase`, title template, description, OG, Twitter).
+- Every marketing `page.tsx` exports metadata or `generateMetadata()` via `buildMarketingMetadata()` in `lib/seo/marketing-metadata.ts`.
+- Set `alternates` (canonical + `hreflang`) whenever a page is reachable under more than one path or locale.
+- Auth / dashboard layouts keep `robots: { index: false, follow: false }`.
+
+## Crawl surface
+
+- `app/sitemap.ts` lists only indexable public URLs (include locale variants).
+- `app/robots.ts` allows `/` and disallows `/dashboard`, `/api`, `/admin`, `/login`, `/signup`, and localized auth paths.
+- Default social preview: `app/opengraph-image.png`. Add dynamic `opengraph-image` routes only for real dynamic public pages.
+
+## Structured data & markup
+
+- JSON-LD via `components/seo/json-ld.tsx` — Organization on the landing page; Article / FAQPage where the content matches.
+- Exactly one `<h1>` per page; keep a sane `h2` → `h3` hierarchy.
+- Meaningful images need `alt` text. Decorative images use empty `alt=""`.
+
+## Images & URLs
+
+```tsx
+// ❌ BAD — raw img, no sizes, no alt discipline
+<img src="/hero.jpg" />
+
+// ✅ GOOD
+import Image from "next/image"
+<Image src="/hero.jpg" alt="ASIP cohort founders" width={1200} height={630} sizes="100vw" />
+```
+
+- Prefer readable slugs in public URLs — not raw UUIDs. When content comes from the DB, store and query a `slug` column.
+
+## Before shipping a marketing page
+
+- [ ] Metadata + canonical/alternates
+- [ ] In sitemap (if indexable)
+- [ ] One `h1`, alts on images, `next/image`
+- [ ] JSON-LD if Organization / Article / FAQ applies

@@ -1,0 +1,22 @@
+---
+description: Shared types, Zod schemas, and constants
+globs: types/**/*.ts,validations/**/*.ts,constants/**/*.ts
+alwaysApply: false
+---
+
+# types/, validations/, constants/
+
+## types/
+
+- `types/database.ts` — generated (`supabase gen types typescript`). Never hand-edit
+- Per-entity domain types on top of DB types: `types/project.ts`
+- Re-export from `types/index.ts` when useful
+
+## validations/
+
+- One Zod file per entity: `validations/project.ts`
+- Share the same schema in `react-hook-form` (`zodResolver` from `@hookform/resolvers/zod`) and Server Actions — write once, validate twice
+
+## constants/
+
+- DB enums, route paths, config values, feature flags

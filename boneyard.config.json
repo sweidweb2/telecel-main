@@ -1,0 +1,26 @@
+{
+  "breakpoints": [375, 768, 1280],
+  "out": "./bones",
+  "wait": 800,
+  "color": "oklch(0.97 0 0)",
+  "darkColor": "oklch(0.269 0 0)",
+  "animate": "pulse",
+  "select": "viewport",
+  "routes": [
+    "/dashboard",
+    "/dashboard/users",
+    "/dashboard/analytics",
+    "/dashboard/backup",
+    "/dashboard/contact-us",
+    "/dashboard/portfolio",
+    "/dashboard/registrations",
+    "/dashboard/settings",
+    "/en",
+    "/fr",
+    "/en/login",
+    "/fr/login",
+    "/login",
+    "/signup",
+    "/register"
+  ]
+}

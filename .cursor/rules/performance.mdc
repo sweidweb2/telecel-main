@@ -1,0 +1,26 @@
+---
+description: Performance defaults for data fetching, caching, and Supabase
+alwaysApply: true
+---
+
+# Performance
+
+Speed is a core product value. Structure does not replace these habits:
+
+1. **Server Components first** — call `data/` during render. No `useEffect` + fetch waterfalls for initial data. TanStack Query is not for first paint; add it later only for polling, optimistic updates, or infinite scroll.
+2. **Narrow selects** — never `select('*')`; list only the columns you need.
+3. **Cache reads, revalidate writes** — wrap `data/` with `unstable_cache` / tags where it helps; `revalidatePath` / `revalidateTag` in `actions/` after mutations.
+4. **Parallel fetches** — independent queries use `Promise.all`, never sequential awaits.
+
+```ts
+const [projects, user] = await Promise.all([
+  getProjectsByUser(userId),
+  getUser(userId),
+])
+```
+
+5. **Database** — index filter/order columns and FKs used in RLS. Keep RLS simple. Use views or `rpc()` for heavy joins, not multi-query joins in JS.
+6. **Realtime** — only for rows that must be live; not the default.
+7. **Edge** — `export const runtime = 'edge'` on latency-sensitive routes/middleware when the Supabase client is compatible.
+8. **Forms & dates** — `react-hook-form` (uncontrolled). `date-fns` named imports only — never moment.js.
+9. **Route loading** — colocate `loading.tsx` with `page.tsx` and use `RouteSkeleton` (boneyard-js) with a shadcn fallback until bones are captured (`npm run bones:build`). Top-of-screen progress is `NextTopLoader` in the root layout, not per page.
