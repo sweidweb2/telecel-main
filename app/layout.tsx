@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { BoneyardSetup } from "@/components/skeleton/boneyard-setup";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { brandMono, brandSans } from "@/lib/fonts";
+import { fontVariables } from "@/lib/fonts";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_TAGLINE, siteUrl } from "@/lib/seo/site";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("h-full antialiased", brandSans.variable, brandMono.variable, "font-sans")}
+      className={cn("h-full antialiased", fontVariables, "font-sans")}
     >
       <body className="flex min-h-full flex-col">
         <BoneyardSetup />

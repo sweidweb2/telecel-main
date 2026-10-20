@@ -1,72 +1,90 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
-import { Separator } from "@/components/ui/separator";
+import { SignalMotif } from "@/components/brand/signal-motif";
 import { SITE_CTAS, SITE_LEGAL_LINKS, SITE_NAV } from "@/constants/site-nav";
 
 /**
- * Footer skeleton wired to the RFQ sitemap. Social links and final legal
- * wording come from Telecel (Site settings in the CMS) — none are invented here.
+ * Charcoal footer: reversed logo, sales routes, full sitemap, one narrow
+ * motif strip at the far edge. Social links and legal wording come from
+ * Telecel (CMS Site settings); none are invented here.
  */
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t bg-muted/30">
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-7">
-          <div className="col-span-2 space-y-4">
-            <Logo />
-            <div className="flex flex-col gap-1 text-sm">
-              <Link href={SITE_CTAS.talkToSales.href} className="font-medium text-brand hover:underline">
-                {SITE_CTAS.talkToSales.label}
-              </Link>
-              <Link href={SITE_CTAS.requestDemo.href} className="text-muted-foreground hover:text-foreground">
-                {SITE_CTAS.requestDemo.label}
-              </Link>
-            </div>
-          </div>
-          {SITE_NAV.map((section) => (
-            <div key={section.href} className="space-y-3">
-              <h2 className="font-heading text-sm font-semibold">
-                <Link href={section.href} className="hover:text-brand">
-                  {section.label}
+    <footer className="mt-auto bg-charcoal text-charcoal-foreground">
+      <div className="container-site relative flex gap-10 py-16 lg:py-20">
+        <div className="min-w-0 flex-1">
+          <div className="grid gap-12 lg:grid-cols-12">
+            <div className="space-y-8 lg:col-span-4">
+              <Logo variant="reversed" size="lg" />
+              <div className="grid gap-1">
+                <p className="type-notation text-charcoal-muted">Work with us</p>
+                <Link
+                  href={SITE_CTAS.talkToSales.href}
+                  className="group flex min-h-11 items-center gap-2 font-heading text-2xl font-medium text-white"
+                >
+                  <span className="size-2 rounded-full bg-brand" aria-hidden />
+                  <span className="underline-offset-[6px] group-hover:underline">
+                    {SITE_CTAS.talkToSales.label}
+                  </span>
                 </Link>
-              </h2>
-              {section.children ? (
-                <ul className="space-y-1.5">
-                  {section.children.map((child) => (
-                    <li key={child.href}>
-                      <Link
-                        href={child.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {child.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+                <Link
+                  href={SITE_CTAS.requestDemo.href}
+                  className="flex min-h-11 items-center pl-4 font-heading text-2xl font-medium text-charcoal-foreground/80 underline-offset-[6px] hover:text-white hover:underline"
+                >
+                  {SITE_CTAS.requestDemo.label}
+                </Link>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <Separator className="my-8" />
+            <nav
+              aria-label="Footer"
+              className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:col-span-8"
+            >
+              {SITE_NAV.map((section) => (
+                <div key={section.href} className="space-y-4">
+                  <h2 className="font-sans text-sm font-semibold text-white">
+                    <Link href={section.href} className="hover:underline">
+                      {section.label}
+                    </Link>
+                  </h2>
+                  {section.children ? (
+                    <ul className="space-y-2.5">
+                      {section.children.map((child) => (
+                        <li key={child.href}>
+                          <Link
+                            href={child.href}
+                            className="text-sm leading-5 text-charcoal-muted transition-colors duration-150 hover:text-white"
+                          >
+                            {child.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+            </nav>
+          </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Telecel Global. All rights reserved.
-          </p>
-          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            {SITE_LEGAL_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="mt-16 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-charcoal-muted">
+              © {new Date().getFullYear()} Telecel Global. All rights reserved.
+            </p>
+            <nav aria-label="Legal" className="flex flex-wrap gap-x-6">
+              {SITE_LEGAL_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex min-h-11 items-center text-sm text-charcoal-muted hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
+        <SignalMotif tone="dark" rows={8} className="hidden h-auto w-16 self-start lg:block" />
       </div>
     </footer>
   );

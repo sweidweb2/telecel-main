@@ -8,7 +8,6 @@ import { SiteNavbar } from "@/components/layout/site-navbar";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
 import { SITE_CTAS } from "@/constants/site-nav";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -27,12 +26,12 @@ export default function NotFound() {
           title="Page not found"
           description="This page does not exist or has moved. Check the URL, or continue from the home page."
         >
-          <Link href={ROUTES.home} className={cn(buttonVariants(), "w-full")}>
+          <Link href={ROUTES.home} className={buttonVariants({ size: "cta" })}>
             Go to home page
           </Link>
           <Link
             href={SITE_CTAS.talkToSales.href}
-            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            className={buttonVariants({ size: "cta", variant: "ink-outline" })}
           >
             {SITE_CTAS.talkToSales.label}
           </Link>

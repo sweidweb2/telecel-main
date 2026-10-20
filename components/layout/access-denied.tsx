@@ -4,7 +4,6 @@ import { ShieldAlertIcon } from "lucide-react";
 import { ErrorScreen } from "@/components/layout/error-screen";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
 
 /**
  * 403 screen rendered by pages the caller's role cannot open (stable
@@ -22,7 +21,7 @@ export function AccessDenied({
       title="Access denied"
       description={description}
     >
-      <Link href={ROUTES.dashboard} className={cn(buttonVariants(), "w-full")}>
+      <Link href={ROUTES.dashboard} className={buttonVariants({ size: "cta" })}>
         Back to dashboard
       </Link>
     </ErrorScreen>

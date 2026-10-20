@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  return <div className="flex flex-1 flex-col bg-muted/30">{children}</div>;
+  return <div className="flex flex-1 flex-col">{children}</div>;
 }

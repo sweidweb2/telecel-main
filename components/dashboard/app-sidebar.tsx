@@ -12,7 +12,6 @@ import {
   InboxIcon,
   LayoutDashboardIcon,
   LayersIcon,
-  LightbulbIcon,
   MegaphoneIcon,
   NewspaperIcon,
   RouteIcon,
@@ -40,6 +39,7 @@ import {
 } from "@/components/ui/sidebar";
 import { canAccessSection, PORTAL_NAV } from "@/constants/dashboard-nav";
 import { ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/profile";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
@@ -79,11 +79,18 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="Telecel Global"
+              tooltip="Telecel Global CMS"
+              className="h-auto py-3 hover:bg-transparent"
               render={<Link href={ROUTES.dashboard} />}
             >
-              <Logo className="group-data-[collapsible=icon]:hidden" />
-              <Logo compact className="hidden group-data-[collapsible=icon]:inline-flex" />
+              <span className="grid gap-2 group-data-[collapsible=icon]:hidden">
+                <Logo variant="reversed" size="sm" />
+                <span className="type-notation text-charcoal-muted">Content management</span>
+              </span>
+              <span
+                aria-hidden
+                className="hidden size-2.5 rounded-full bg-brand group-data-[collapsible=icon]:block"
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -95,26 +102,30 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
 
           return (
             <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-xs font-medium text-charcoal-muted">
+                {group.label}
+              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {items.map((item) => {
                     const Icon = NAV_ICONS[item.href] ?? FileTextIcon;
+                    const active = isActive(pathname, item.href);
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
-                          render={<Link href={item.href} />}
-                          isActive={isActive(pathname, item.href)}
+                          render={
+                            <Link href={item.href} aria-current={active ? "page" : undefined} />
+                          }
+                          isActive={active}
                           tooltip={item.title}
+                          className={cn(
+                            "relative h-10 rounded-[3px] text-sidebar-foreground/75 hover:text-white",
+                            "data-active:bg-sidebar-accent data-active:font-semibold data-active:text-white",
+                            "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:bg-brand before:opacity-0 data-active:before:opacity-100"
+                          )}
                         >
                           <Icon />
                           <span>{item.title}</span>
-                          {item.ready ? null : (
-                            <LightbulbIcon
-                              aria-label="Planned"
-                              className="ml-auto size-3 opacity-40 group-data-[collapsible=icon]:hidden"
-                            />
-                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -126,9 +137,10 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
         })}
       </SidebarContent>
       <SidebarFooter>
-        <p className="truncate px-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-          {user.email} · <span className="capitalize">{user.role}</span>
-        </p>
+        <div className="grid gap-0.5 border-t border-sidebar-border px-2 pt-3 group-data-[collapsible=icon]:hidden">
+          <p className="truncate text-sm text-white">{user.email}</p>
+          <p className="type-notation text-charcoal-muted">{user.role}</p>
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -1,35 +1,58 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
+
+const HAS_BRAND_LOGO = process.env.NEXT_PUBLIC_HAS_BRAND_LOGO === "true";
+
+/** Rendered heights in px; the source artwork is 248×84 (wordmark + tagline). */
+const HEIGHTS = { sm: 32, md: 42, lg: 56 } as const;
 
 type LogoProps = {
   className?: string;
-  /** Mark only (collapsed sidebar, favicon-sized spots). */
-  compact?: boolean;
+  size?: keyof typeof HEIGHTS;
+  /** "reversed" = single-colour white for dark surfaces (footer, CMS sidebar). */
+  variant?: "color" | "reversed";
+  priority?: boolean;
 };
 
 /**
- * Placeholder Telecel Global lockup built from theme tokens.
- * Replace the mark/wordmark with the official SVG once Telecel supplies it
- * (keep this component's API so call sites do not change).
+ * Official Telecel wordmark ("telecel" + "Connecting Energies").
+ * Never retype the wordmark in a web font. When the confidential artwork is
+ * not present locally (see public/brand/README.md) a neutral text label is
+ * shown instead, clearly not an imitation of the logo.
  */
-export function Logo({ className, compact = false }: LogoProps) {
-  return (
-    <span
-      className={cn("inline-flex items-center gap-2 text-foreground", className)}
-      aria-label="Telecel Global"
-      role="img"
-    >
+export function Logo({ className, size = "md", variant = "color", priority }: LogoProps) {
+  const height = HEIGHTS[size];
+
+  if (!HAS_BRAND_LOGO) {
+    return (
       <span
-        aria-hidden
-        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-base font-bold leading-none text-brand-foreground"
+        className={cn(
+          "inline-flex items-center font-heading text-lg font-semibold tracking-tight",
+          variant === "reversed" ? "text-white" : "text-ink",
+          className
+        )}
+        style={{ height }}
       >
-        t
+        Telecel Global
       </span>
-      {compact ? null : (
-        <span aria-hidden className="flex items-baseline gap-1 font-heading leading-none">
-          <span className="text-lg font-bold tracking-tight text-brand">telecel</span>
-          <span className="text-sm font-medium text-muted-foreground">Global</span>
-        </span>
+    );
+  }
+
+  return (
+    <Image
+      src="/brand/telecel-wordmark.png"
+      alt="Telecel — Connecting Energies"
+      width={248}
+      height={84}
+      priority={priority}
+      unoptimized
+      className={cn(
+        "w-auto select-none",
+        variant === "reversed" && "brightness-0 invert",
+        className
       )}
-    </span>
+      style={{ height }}
+    />
   );
 }

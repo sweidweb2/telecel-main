@@ -68,10 +68,10 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 sm:px-8">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="h-4" />
-      <h1 className="min-w-0 truncate text-sm font-medium">{title}</h1>
+      <h1 className="min-w-0 truncate font-heading text-lg font-medium text-ink">{title}</h1>
       <DropdownMenu>
         {/*
           Base UI Menu Trigger already renders a <button>.

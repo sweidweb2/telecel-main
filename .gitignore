@@ -54,3 +54,5 @@ next-env.d.ts
 # confidential client material — repo is public (see docs/client/README.md)
 /docs/client/*
 !/docs/client/README.md
+/public/brand/*
+!/public/brand/README.md

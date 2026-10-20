@@ -7,7 +7,6 @@ import { CircleAlertIcon } from "lucide-react";
 import { ErrorScreen } from "@/components/layout/error-screen";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
 
 export type RouteErrorProps = {
   error: Error & { digest?: string };
@@ -32,20 +31,20 @@ export function RouteError({
       description="An unexpected error occurred. You can try again, or go back home."
       tone="destructive"
     >
-      <Button type="button" className="w-full" onClick={reset}>
+      <Button type="button" size="cta" onClick={reset}>
         Try again
       </Button>
       {homeAsAnchor ? (
         <a
           href={ROUTES.home}
-          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+          className={buttonVariants({ size: "cta", variant: "ink-outline" })}
         >
           Go home
         </a>
       ) : (
         <Link
           href={ROUTES.home}
-          className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+          className={buttonVariants({ size: "cta", variant: "ink-outline" })}
         >
           Go home
         </Link>

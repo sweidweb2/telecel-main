@@ -43,10 +43,11 @@ export function ForgotPasswordForm() {
   if (sentMessage) return <AuthNotice>{sentMessage}</AuthNotice>;
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
+          className="h-12 border-input px-3 text-base"
           id="email"
           type="email"
           autoComplete="email"
@@ -62,7 +63,7 @@ export function ForgotPasswordForm() {
           </p>
         ) : null}
       </div>
-      <Button type="submit" className="min-h-11 w-full sm:min-h-9" disabled={isPending}>
+      <Button type="submit" className="h-12 w-full text-[15px]" disabled={isPending}>
         {isPending ? (
           <>
             <Loader2Icon className="animate-spin" />

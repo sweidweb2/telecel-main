@@ -6,7 +6,7 @@ Branch `feat/foundation-setup`. Status of each board card after this branch.
 | --- | --- | --- |
 | Clean leftovers from ASIP copy | ✅ Done | ASIP pages, features, tables, copy, `/en` and `/fr` routing and seed credentials removed. Blog CMS kept and adapted as Insights → News. |
 | Collect all documents | 👤 Team | Store in `docs/client/` (git-ignored). Still needed: text pack and sitemap, brand guide, logo files, V11/V11.1 design. |
-| Prepare the theme + logo + font | 🟡 Placeholder | Tokens in `app/globals.css` (`--brand`), font in `lib/fonts.ts`, `components/brand/logo.tsx`. Swap in the official assets when received. |
+| Prepare the theme + logo + font | ✅ Done (provisional values) | "Connected Energies" system: `docs/02-architecture/design-system.md`. Real wordmark extracted locally (git-ignored). Swap in the official SVGs, red and font when received. |
 | Prepare central error handling pages | ✅ Done | `ErrorScreen` used by `error.tsx`, `global-error.tsx`, `not-found.tsx` (static), `AccessDenied` (403), segment boundaries. |
 | Decide libraries + package.json | ✅ Done | `docs/02-architecture/libraries.md`. Package renamed `telecel-global`. |
 | Get Supabase project credentials → env | 👤 Team | Create staging and prod projects, then follow `docs/04-runbooks/environment.md`. |

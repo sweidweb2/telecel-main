@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SignalMotif } from "@/components/brand/signal-motif";
 import { cn } from "@/lib/utils";
 
 type ErrorScreenProps = {
@@ -19,6 +13,7 @@ type ErrorScreenProps = {
   children: ReactNode;
 };
 
+/** Shared 403/404/500 layout: notation code, display title, actions, motif. */
 export function ErrorScreen({
   icon: Icon,
   code,
@@ -28,36 +23,22 @@ export function ErrorScreen({
   children,
 }: ErrorScreenProps) {
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <div
-            className={cn(
-              "mb-2 flex size-10 items-center justify-center rounded-lg",
-              tone === "destructive" ? "bg-destructive/10" : "bg-muted",
-            )}
-          >
-            <Icon
-              className={cn(
-                "size-5",
-                tone === "destructive"
-                  ? "text-destructive"
-                  : "text-muted-foreground",
-              )}
-            />
-          </div>
-          {code ? (
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              {code}
-            </p>
-          ) : null}
-          <CardTitle>
-            <h1>{title}</h1>
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">{children}</CardContent>
-      </Card>
+    <main className="container-site flex flex-1 items-center gap-12 py-16 lg:py-24">
+      <SignalMotif rows={8} className="hidden h-64 w-auto md:block" />
+      <div className="max-w-xl">
+        <p
+          className={cn(
+            "flex items-center gap-2 type-notation",
+            tone === "destructive" ? "text-destructive" : "text-muted-foreground"
+          )}
+        >
+          <Icon className="size-4" aria-hidden />
+          {code ?? "Notice"}
+        </p>
+        <h1 className="mt-4 type-section text-ink">{title}</h1>
+        <p className="mt-4 text-lg leading-7 text-muted-foreground">{description}</p>
+        <div className="mt-8 flex flex-wrap gap-3 [&>*]:w-auto">{children}</div>
+      </div>
     </main>
   );
 }

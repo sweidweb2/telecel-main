@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test --pass-with-no-tests",
     "bones:build": "boneyard-js build http://localhost:3000",
-    "bones:watch": "boneyard-js build --watch http://localhost:3000"
+    "bones:watch": "boneyard-js build --watch http://localhost:3000",
+    "brand:extract": "node scripts/extract-brand-assets.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

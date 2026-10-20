@@ -83,10 +83,11 @@ export function LoginForm({
 
   return (
     <div className="grid gap-4">
-      <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
           <Input
+            className="h-12 border-input px-3 text-base"
             id="email"
             type="email"
             autoComplete="email"
@@ -113,6 +114,7 @@ export function LoginForm({
             </Link>
           </div>
           <Input
+            className="h-12 border-input px-3 text-base"
             id="password"
             type="password"
             autoComplete="current-password"
@@ -127,7 +129,7 @@ export function LoginForm({
             </p>
           ) : null}
         </div>
-        <Button type="submit" className="min-h-11 w-full sm:min-h-9" disabled={busy}>
+        <Button type="submit" className="h-12 w-full text-[15px]" disabled={busy}>
           {isPending ? (
             <>
               <Loader2Icon className="animate-spin" />
@@ -149,7 +151,7 @@ export function LoginForm({
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 w-full sm:min-h-9"
+            className="h-12 w-full text-[15px]"
             disabled={busy}
             onClick={onGoogle}
           >

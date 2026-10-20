@@ -10,7 +10,8 @@ docs/
 ├── 02-architecture/    Decisions and designs
 │   ├── foundation-plan.md          Plan for the setup cards (+ Codex review)
 │   ├── editor-portal-features.md   Editor/admin portal scope and roles
-│   └── libraries.md                Approved dependencies
+│   ├── libraries.md                Approved dependencies
+│   └── design-system.md            "Connected Energies" UI system
 ├── 03-database/
 │   └── schema.dbml     Full Phase 1 data model (migrated + draft tables)
 ├── 04-runbooks/
