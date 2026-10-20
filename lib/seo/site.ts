@@ -1,5 +1,9 @@
 const LOCAL_SITE_URL = "http://localhost:3000";
 
+export const SITE_NAME = "Telecel Global";
+export const SITE_TAGLINE = "International connectivity and digital services for business";
+export const DEFAULT_OG_IMAGE = "/opengraph-image.png";
+
 export function siteUrl(): URL {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
 

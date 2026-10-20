@@ -1,34 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { nanoid } from "nanoid";
+
 import {
-  createClient,
-  type SupabaseClient,
-} from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const adminEmail = process.env.E2E_SEED_EMAIL ?? "asweid657@gmail.com";
-const adminPassword = process.env.E2E_SEED_PASSWORD ?? "ali@1234";
-
-function hasCredentials(): boolean {
-  return Boolean(
-    supabaseUrl &&
-      anonKey &&
-      serviceRoleKey &&
-      !supabaseUrl.includes("placeholder") &&
-      !anonKey.startsWith("placeholder"),
-  );
-}
-
-function adminClient(): SupabaseClient {
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Supabase admin E2E credentials are required.");
-  }
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
+  adminClient,
+  adminEmail,
+  adminPassword,
+  createTestUser,
+  hasSupabaseCredentials as hasCredentials,
+} from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -47,9 +26,9 @@ test.describe("blogs cms", () => {
     const admin = adminClient();
 
     try {
-      await page.goto("/en/login?next=%2Fdashboard%2Fblogs%2Fnew");
+      await page.goto("/login?next=%2Fdashboard%2Fblogs%2Fnew");
       await page.getByLabel("Email").fill(adminEmail);
-      await page.getByLabel("Password").fill(adminPassword);
+      await page.getByLabel("Password", { exact: true }).fill(adminPassword);
       await page.getByRole("button", { name: "Sign in" }).click();
       await expect(page).toHaveURL(/\/dashboard\/blogs\/new/, {
         timeout: 20_000,
@@ -79,7 +58,7 @@ test.describe("blogs cms", () => {
       });
 
       // Draft must not be publicly readable.
-      const draftResponse = await page.goto(`/en/insights/${slug}`);
+      const draftResponse = await page.goto(`/insights/${slug}`);
       expect(draftResponse?.status()).toBe(404);
 
       await page.goto("/dashboard/blogs");
@@ -92,7 +71,7 @@ test.describe("blogs cms", () => {
         }),
       ).toBeVisible({ timeout: 20_000 });
 
-      await page.goto(`/en/insights/${slug}`);
+      await page.goto(`/insights/${slug}`);
       await expect(page.getByRole("heading", { name: title })).toBeVisible({
         timeout: 20_000,
       });
@@ -101,37 +80,18 @@ test.describe("blogs cms", () => {
     }
   });
 
-  test("non-admin is redirected away from blogs", async ({ page }) => {
+  test("an account without a CMS role cannot open News", async ({ page }) => {
     test.setTimeout(60_000);
-    if (!supabaseUrl || !anonKey) {
-      throw new Error("Supabase credentials missing");
-    }
-
-    const suffix = nanoid(8).toLowerCase();
-    const email = `blog.viewer.${suffix}@example.com`;
-    const password = "Testpass1";
-    const admin = adminClient();
-    const { data: created, error: createError } =
-      await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: "Blog E2E Viewer" },
-        app_metadata: { app_role: "viewer" },
-      });
-    if (createError) throw createError;
+    const user = await createTestUser(null);
 
     try {
-      await page.goto("/en/login?next=%2Fdashboard%2Fblogs");
-      await page.getByLabel("Email").fill(email);
-      await page.getByLabel("Password").fill(password);
+      await page.goto("/login?next=%2Fdashboard%2Fblogs");
+      await page.getByLabel("Email").fill(user.email);
+      await page.getByLabel("Password", { exact: true }).fill(user.password);
       await page.getByRole("button", { name: "Sign in" }).click();
-      await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
-
-      await page.goto("/dashboard/blogs");
-      await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
+      await expect(page).toHaveURL(/\/login\?reason=no-access$/, { timeout: 20_000 });
     } finally {
-      await admin.auth.admin.deleteUser(created.user.id);
+      await user.cleanup();
     }
   });
 });

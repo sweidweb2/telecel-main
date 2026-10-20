@@ -23,7 +23,7 @@ Every UI change must work on mobile (~375), tablet (~768), and desktop (~1280). 
 
 - **Marketing `SiteNavbar`** — desktop links from `lg:`; below that use the Sheet (hamburger) menu. Do not return to a single horizontal scroll of all links on mobile.
 - Language toggle stays reachable on mobile (bar or sheet).
-- **Marketing `SiteFooter`** — multi-column on `sm:`/`lg:`, stacked on mobile; touch-sized links; mount via locale layouts (not per page).
+- **Marketing `SiteFooter`** — multi-column on `sm:`/`lg:`, stacked on mobile; touch-sized links; mount once in `app/(marketing)/layout.tsx` (not per page).
 - Dashboard sidebar already collapses; keep new dashboard chrome usable at narrow widths.
 
 ## Checklist before finishing UI work

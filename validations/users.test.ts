@@ -4,91 +4,82 @@ import {
   createUserSchema,
   parseUserListQuery,
   updateUserSchema,
-  USER_FORM_ROLE,
 } from "@/validations/users";
+
+const ID = "11111111-1111-4111-8111-111111111111";
 
 describe("users validation", () => {
   it("accepts a valid create payload and normalizes its email", () => {
     const result = createUserSchema.parse({
       fullName: "Ada Lovelace",
       email: "ADA@EXAMPLE.COM",
-      password: "Password1",
-      role: USER_FORM_ROLE,
+      password: "Telecel2026Strong",
+      role: "editor",
     });
 
     expect(result.email).toBe("ada@example.com");
-    expect(result.role).toBe("admin");
-    expect(result.password).toBe("Password1");
+    expect(result.role).toBe("editor");
   });
 
-  it("defaults empty password to password", () => {
-    const result = createUserSchema.parse({
-      fullName: "Ada Lovelace",
-      email: "ada@example.com",
-      password: "",
-      role: USER_FORM_ROLE,
-    });
-
-    expect(result.password).toBe("password");
+  it("requires a strong password (no default password)", () => {
+    for (const password of ["", "   ", "password", "Password1"]) {
+      expect(
+        createUserSchema.safeParse({
+          fullName: "Ada Lovelace",
+          email: "ada@example.com",
+          password,
+          role: "admin",
+        }).success,
+        password
+      ).toBe(false);
+    }
   });
 
-  it("defaults whitespace password to password", () => {
-    const result = createUserSchema.parse({
-      fullName: "Ada Lovelace",
-      email: "ada@example.com",
-      password: "   ",
-      role: USER_FORM_ROLE,
-    });
-
-    expect(result.password).toBe("password");
-  });
-
-  it("rejects non-admin roles, invalid emails, and weak passwords", () => {
+  it("rejects unknown roles and invalid emails", () => {
     expect(
       createUserSchema.safeParse({
         fullName: "Ada Lovelace",
         email: "ada@example.com",
-        password: "weak",
-        role: "editor",
-      }).success,
+        password: "Telecel2026Strong",
+        role: "viewer",
+      }).success
     ).toBe(false);
-
     expect(
       createUserSchema.safeParse({
         fullName: "Ada Lovelace",
         email: "not-an-email",
-        password: "Password1",
-        role: USER_FORM_ROLE,
-      }).success,
-    ).toBe(false);
-
-    expect(
-      createUserSchema.safeParse({
-        fullName: "A",
-        email: "ada@example.com",
-        password: "Password1",
-        role: USER_FORM_ROLE,
-      }).success,
+        password: "Telecel2026Strong",
+        role: "admin",
+      }).success
     ).toBe(false);
   });
 
-  it("requires a UUID and admin role when updating a user", () => {
+  it("requires a UUID, a role and the active flag when updating", () => {
     expect(
       updateUserSchema.safeParse({
-        id: "not-a-uuid",
+        id: ID,
         fullName: "Ada Lovelace",
         email: "ada@example.com",
-        role: USER_FORM_ROLE,
-      }).success,
+        role: "editor",
+        isActive: false,
+      }).success
+    ).toBe(true);
+    expect(
+      updateUserSchema.safeParse({
+        id: "nope",
+        fullName: "Ada Lovelace",
+        email: "ada@example.com",
+        role: "editor",
+        isActive: true,
+      }).success
     ).toBe(false);
-
     expect(
       updateUserSchema.safeParse({
-        id: "550e8400-e29b-41d4-a716-446655440000",
+        id: ID,
         fullName: "Ada Lovelace",
         email: "ada@example.com",
-        role: "viewer",
-      }).success,
+        role: "editor",
+      }).success
     ).toBe(false);
   });
 
@@ -98,17 +89,17 @@ describe("users validation", () => {
         page: "2",
         pageSize: "25",
         search: " ada@example.com ",
-        role: "admin",
-      }),
+        role: "editor",
+      })
     ).toEqual({
       page: 2,
       pageSize: 10,
       search: "ada@example.com",
-      role: "admin",
+      role: "editor",
     });
 
     expect(
-      parseUserListQuery({ page: "-1", pageSize: "999", role: "owner" }),
+      parseUserListQuery({ page: "-1", pageSize: "999", role: "viewer" })
     ).toEqual({ page: 1, pageSize: 10, search: "", role: "all" });
   });
 });

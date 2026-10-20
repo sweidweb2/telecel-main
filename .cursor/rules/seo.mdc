@@ -12,12 +12,12 @@ Applies to public marketing surfaces only. Auth, dashboard, and API routes stay 
 
 - Root defaults live in `app/layout.tsx` (`metadataBase`, title template, description, OG, Twitter).
 - Every marketing `page.tsx` exports metadata or `generateMetadata()` via `buildMarketingMetadata()` in `lib/seo/marketing-metadata.ts`.
-- Set `alternates` (canonical + `hreflang`) whenever a page is reachable under more than one path or locale.
+- Set `alternates.canonical` on every public page via `buildMarketingMetadata` (`lib/seo/marketing-metadata.ts`). English only in Phase 1 — add `hreflang` only if multilingual is commissioned.
 - Auth / dashboard layouts keep `robots: { index: false, follow: false }`.
 
 ## Crawl surface
 
-- `app/sitemap.ts` lists only indexable public URLs (include locale variants).
+- `app/sitemap.ts` lists only indexable public URLs (`live` entries in `constants/site-nav.ts` + published content).
 - `app/robots.ts` allows `/` and disallows `/dashboard`, `/api`, `/admin`, `/login`, `/signup`, and localized auth paths.
 - Default social preview: `app/opengraph-image.png`. Add dynamic `opengraph-image` routes only for real dynamic public pages.
 
@@ -35,7 +35,7 @@ Applies to public marketing surfaces only. Auth, dashboard, and API routes stay 
 
 // ✅ GOOD
 import Image from "next/image"
-<Image src="/hero.jpg" alt="ASIP cohort founders" width={1200} height={630} sizes="100vw" />
+<Image src="/hero.jpg" alt="Telecel Global network operations" width={1200} height={630} sizes="100vw" />
 ```
 
 - Prefer readable slugs in public URLs — not raw UUIDs. When content comes from the DB, store and query a `slug` column.

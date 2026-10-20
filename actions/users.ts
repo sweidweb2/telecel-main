@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { match, P } from "ts-pattern";
 
 import { ROUTES } from "@/constants/routes";
+import { authorizeAction } from "@/data/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import {
   createUserSchema,
   deleteUserSchema,
@@ -18,36 +18,6 @@ import {
 export type UserActionResult =
   | { status: "success"; message: string }
   | { status: "error"; message: string };
-
-type AdminSession =
-  | {
-      status: "success";
-      userId: string;
-      supabase: Awaited<ReturnType<typeof createClient>>;
-    }
-  | { status: "error"; message: string };
-
-async function authorizeAdmin(): Promise<AdminSession> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return { status: "error", message: "You must be signed in." };
-  }
-
-  const { data: isAdmin, error } = await supabase.rpc("is_admin");
-  if (error || !isAdmin) {
-    return {
-      status: "error",
-      message: "You do not have permission to manage users.",
-    };
-  }
-
-  return { status: "success", userId: user.id, supabase };
-}
 
 function validationMessage(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "Check the submitted user details.";
@@ -85,8 +55,8 @@ export async function createUser(
     return { status: "error", message: validationMessage(parsed.error) };
   }
 
-  const session = await authorizeAdmin();
-  if (session.status === "error") return session;
+  const auth = await authorizeAction("admin");
+  if (auth.status === "error") return auth;
 
   const admin = createAdminClient();
   const { error } = await admin.auth.admin.createUser({
@@ -113,22 +83,27 @@ export async function updateUser(
     return { status: "error", message: validationMessage(parsed.error) };
   }
 
-  const session = await authorizeAdmin();
-  if (session.status === "error") return session;
+  const auth = await authorizeAction("admin");
+  if (auth.status === "error") return auth;
+  const { session } = auth;
 
-  if (session.userId === parsed.data.id && parsed.data.role !== "admin") {
+  const isSelf = session.userId === parsed.data.id;
+  if (isSelf && (parsed.data.role !== "admin" || !parsed.data.isActive)) {
     return {
       status: "error",
       message: "You cannot remove your own administrator access.",
     };
   }
 
+  // Auth side: email, display name, and a ban while suspended so refresh
+  // tokens stop working immediately (not just at the next RLS check).
   const admin = createAdminClient();
   const { error: authError } = await admin.auth.admin.updateUserById(
     parsed.data.id,
     {
       email: parsed.data.email,
       user_metadata: { full_name: parsed.data.fullName },
+      ban_duration: parsed.data.isActive ? "none" : "876000h",
     },
   );
 
@@ -139,12 +114,14 @@ export async function updateUser(
     };
   }
 
+  // Role and status go through the caller's session so RLS (is_admin) and the
+  // protect_profile_access_fields trigger check them again in the database.
   const { error: profileError } = await session.supabase
     .from("profiles")
     .update({
-      email: parsed.data.email,
       full_name: parsed.data.fullName,
       role: parsed.data.role,
+      is_active: parsed.data.isActive,
     })
     .eq("id", parsed.data.id);
 
@@ -153,6 +130,16 @@ export async function updateUser(
       status: "error",
       message: mapSupabaseError(profileError.message),
     };
+  }
+
+  // profiles.email mirrors Auth and is only writable by the service role.
+  const { error: emailError } = await admin
+    .from("profiles")
+    .update({ email: parsed.data.email })
+    .eq("id", parsed.data.id);
+
+  if (emailError) {
+    return { status: "error", message: mapSupabaseError(emailError.message) };
   }
 
   refreshUsersRoute();
@@ -167,8 +154,9 @@ export async function deleteUser(
     return { status: "error", message: validationMessage(parsed.error) };
   }
 
-  const session = await authorizeAdmin();
-  if (session.status === "error") return session;
+  const auth = await authorizeAction("admin");
+  if (auth.status === "error") return auth;
+  const { session } = auth;
 
   if (session.userId === parsed.data.id) {
     return { status: "error", message: "You cannot delete your own account." };

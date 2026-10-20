@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSyncExternalStore, useTransition } from "react";
 import {
   HomeIcon,
+  KeyRoundIcon,
   LogOutIcon,
   MonitorIcon,
   MoonIcon,
@@ -25,9 +26,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getDashboardPageTitle } from "@/constants/dashboard-nav";
-import { DEFAULT_LOCALE } from "@/constants/locales";
-import { publicPath } from "@/constants/routes";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types/profile";
 
 const THEME_OPTIONS = [
   { value: "light", label: "Light", icon: SunIcon },
@@ -41,7 +42,19 @@ function useIsClient() {
   return useSyncExternalStore(emptySubscribe, () => true, () => false);
 }
 
-export function DashboardHeader() {
+function initials(email: string): string {
+  const name = email.split("@")[0] ?? "";
+  const parts = name.split(/[._-]+/).filter(Boolean);
+  const letters =
+    parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : name.slice(0, 2);
+  return letters.toUpperCase() || "?";
+}
+
+export function DashboardHeader({
+  user,
+}: {
+  user: { email: string; role: UserRole };
+}) {
   const pathname = usePathname();
   const title = getDashboardPageTitle(pathname);
   const [isPending, startTransition] = useTransition();
@@ -73,17 +86,30 @@ export function DashboardHeader() {
           aria-label="Open account menu"
         >
           <Avatar>
-            <AvatarFallback>AD</AvatarFallback>
+            <AvatarFallback>{initials(user.email)}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 min-w-48">
+        <DropdownMenuContent align="end" className="w-56 min-w-56">
+          <div className="px-2 py-1.5">
+            <p className="truncate text-sm font-medium">{user.email}</p>
+            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+          </div>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="min-h-11 cursor-pointer sm:min-h-8"
-            render={<Link href={publicPath(DEFAULT_LOCALE)} />}
+            render={<Link href={ROUTES.home} />}
             nativeButton={false}
           >
             <HomeIcon />
-            Go home
+            View website
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 cursor-pointer sm:min-h-8"
+            render={<Link href={ROUTES.updatePassword} />}
+            nativeButton={false}
+          >
+            <KeyRoundIcon />
+            Change password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (

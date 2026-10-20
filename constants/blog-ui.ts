@@ -1,24 +1,12 @@
-export const BLOG_TAB_IDS = [
-  "all",
-  "design",
-  "product",
-  "software-engineering",
-  "customer-success",
-] as const;
+import { INSIGHT_CATEGORIES } from "@/constants/blog-categories";
 
-export type BlogTabId = (typeof BLOG_TAB_IDS)[number];
+export type BlogTabId = "all" | (typeof INSIGHT_CATEGORIES)[number]["id"];
+
+export const BLOG_TAB_IDS: readonly BlogTabId[] = [
+  "all",
+  ...INSIGHT_CATEGORIES.map((category) => category.id),
+];
 
 export function categoryToTabId(name: string): BlogTabId {
-  switch (name) {
-    case "Design":
-      return "design";
-    case "Product":
-      return "product";
-    case "Software Engineering":
-      return "software-engineering";
-    case "Customer Success":
-      return "customer-success";
-    default:
-      return "all";
-  }
+  return INSIGHT_CATEGORIES.find((category) => category.label === name)?.id ?? "all";
 }

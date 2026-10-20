@@ -1,18 +1,15 @@
 import { z } from "zod";
 
-export const USER_ROLES = ["admin", "editor", "viewer"] as const;
+import { newPasswordSchema, PASSWORD_MAX } from "@/validations/auth";
+
+export const USER_ROLES = ["admin", "editor"] as const;
 /** Fixed page size — not configurable via URL or UI. */
 export const USER_PAGE_SIZE = 10;
-
-/** Create/edit forms always assign admin for now. */
-export const USER_FORM_ROLE = "admin" as const;
 
 export const USER_FULL_NAME_MIN = 2;
 export const USER_FULL_NAME_MAX = 80;
 export const USER_EMAIL_MAX = 254;
-export const USER_PASSWORD_MIN = 8;
-export const USER_PASSWORD_MAX = 128;
-export const USER_DEFAULT_PASSWORD = "password";
+export const USER_PASSWORD_MAX = PASSWORD_MAX;
 
 const fullNameSchema = z
   .string()
@@ -28,33 +25,25 @@ const emailSchema = z
   .email("Enter a valid email address")
   .transform((value) => value.toLowerCase());
 
-const passwordSchema = z
-  .string()
-  .min(USER_PASSWORD_MIN, "Password must be at least 8 characters")
-  .max(USER_PASSWORD_MAX, "Password must be 128 characters or fewer")
-  .regex(/[A-Za-z]/, "Password must include a letter")
-  .regex(/[0-9]/, "Password must include a number");
+const roleSchema = z.enum(USER_ROLES, "Choose a role");
 
-const createPasswordSchema = z
-  .string()
-  .trim()
-  .transform((value) => (value === "" ? USER_DEFAULT_PASSWORD : value))
-  .pipe(z.union([z.literal(USER_DEFAULT_PASSWORD), passwordSchema]));
-
-const lockedAdminRoleSchema = z.literal(USER_FORM_ROLE);
-
+/**
+ * Admin sets a strong temporary password and shares it out of band; the user
+ * changes it from the account menu (or uses "Forgot password" once SMTP is set).
+ */
 export const createUserSchema = z.object({
   fullName: fullNameSchema,
   email: emailSchema,
-  password: createPasswordSchema,
-  role: lockedAdminRoleSchema,
+  password: newPasswordSchema,
+  role: roleSchema,
 });
 
 export const updateUserSchema = z.object({
   id: z.uuid("Invalid user id"),
   fullName: fullNameSchema,
   email: emailSchema,
-  role: lockedAdminRoleSchema,
+  role: roleSchema,
+  isActive: z.boolean(),
 });
 
 export const deleteUserSchema = z.object({

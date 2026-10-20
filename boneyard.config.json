@@ -1,5 +1,9 @@
 {
-  "breakpoints": [375, 768, 1280],
+  "breakpoints": [
+    375,
+    768,
+    1280
+  ],
   "out": "./bones",
   "wait": 800,
   "color": "oklch(0.97 0 0)",
@@ -9,18 +13,10 @@
   "routes": [
     "/dashboard",
     "/dashboard/users",
-    "/dashboard/analytics",
-    "/dashboard/backup",
-    "/dashboard/contact-us",
-    "/dashboard/portfolio",
-    "/dashboard/registrations",
-    "/dashboard/settings",
-    "/en",
-    "/fr",
-    "/en/login",
-    "/fr/login",
+    "/dashboard/blogs",
+    "/",
+    "/insights",
     "/login",
-    "/signup",
-    "/register"
+    "/forgot-password"
   ]
 }

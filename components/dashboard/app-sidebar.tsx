@@ -3,19 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3Icon,
-  BriefcaseIcon,
+  BookOpenTextIcon,
+  BoxesIcon,
   DatabaseBackupIcon,
+  FileTextIcon,
+  HandshakeIcon,
+  ImageIcon,
+  InboxIcon,
   LayoutDashboardIcon,
-  MailIcon,
+  LayersIcon,
+  LightbulbIcon,
+  MegaphoneIcon,
   NewspaperIcon,
+  RouteIcon,
+  SearchIcon,
   SettingsIcon,
-  UserPlusIcon,
+  TargetIcon,
+  UserRoundIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Logo } from "@/components/brand/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -29,23 +38,38 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { DASHBOARD_NAV_ITEMS } from "@/constants/dashboard-nav";
-import { publicPath, ROUTES } from "@/constants/routes";
+import { canAccessSection, PORTAL_NAV } from "@/constants/dashboard-nav";
+import { ROUTES } from "@/constants/routes";
+import type { UserRole } from "@/types/profile";
 
-const NAV_ICONS: Record<(typeof DASHBOARD_NAV_ITEMS)[number]["href"], LucideIcon> =
-  {
-    [ROUTES.dashboard]: LayoutDashboardIcon,
-    [ROUTES.users]: UsersIcon,
-    [ROUTES.registrations]: UserPlusIcon,
-    [ROUTES.portfolio]: BriefcaseIcon,
-    [ROUTES.blogs]: NewspaperIcon,
-    [ROUTES.contactUs]: MailIcon,
-    [ROUTES.analytics]: BarChart3Icon,
-    [ROUTES.backup]: DatabaseBackupIcon,
-    [ROUTES.settings]: SettingsIcon,
-  };
+const NAV_ICONS: Record<string, LucideIcon> = {
+  [ROUTES.dashboard]: LayoutDashboardIcon,
+  [ROUTES.pages]: FileTextIcon,
+  [ROUTES.services]: LayersIcon,
+  [ROUTES.solutions]: BoxesIcon,
+  [ROUTES.useCases]: TargetIcon,
+  [ROUTES.blogs]: NewspaperIcon,
+  [ROUTES.caseStudies]: BookOpenTextIcon,
+  [ROUTES.leadership]: UserRoundIcon,
+  [ROUTES.partners]: HandshakeIcon,
+  [ROUTES.ctas]: MegaphoneIcon,
+  [ROUTES.media]: ImageIcon,
+  [ROUTES.inquiries]: InboxIcon,
+  [ROUTES.seo]: SearchIcon,
+  [ROUTES.users]: UsersIcon,
+  [ROUTES.formRouting]: RouteIcon,
+  [ROUTES.settings]: SettingsIcon,
+  [ROUTES.backups]: DatabaseBackupIcon,
+};
 
-export function AppSidebar() {
+function isActive(pathname: string, href: string): boolean {
+  return (
+    pathname === href ||
+    (href !== ROUTES.dashboard && pathname.startsWith(`${href}/`))
+  );
+}
+
+export function AppSidebar({ user }: { user: { email: string; role: UserRole } }) {
   const pathname = usePathname();
 
   return (
@@ -55,57 +79,56 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="Telecel"
-              render={<Link href={publicPath("en")} />}
+              tooltip="Telecel Global"
+              render={<Link href={ROUTES.dashboard} />}
             >
-              <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-                T
-              </span>
-              <span className="truncate font-heading font-medium group-data-[collapsible=icon]:hidden">
-                Telecel
-              </span>
+              <Logo className="group-data-[collapsible=icon]:hidden" />
+              <Logo compact className="hidden group-data-[collapsible=icon]:inline-flex" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Admin</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {DASHBOARD_NAV_ITEMS.map((item) => {
-                const Icon = NAV_ICONS[item.href];
+        {PORTAL_NAV.map((group) => {
+          const items = group.items.filter((item) => canAccessSection(user.role, item));
+          if (items.length === 0) return null;
 
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      render={<Link href={item.href} />}
-                      isActive={pathname === item.href}
-                      tooltip={item.title}
-                    >
-                      <Icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          return (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map((item) => {
+                    const Icon = NAV_ICONS[item.href] ?? FileTextIcon;
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          render={<Link href={item.href} />}
+                          isActive={isActive(pathname, item.href)}
+                          tooltip={item.title}
+                        >
+                          <Icon />
+                          <span>{item.title}</span>
+                          {item.ready ? null : (
+                            <LightbulbIcon
+                              aria-label="Planned"
+                              className="ml-auto size-3 opacity-40 group-data-[collapsible=icon]:hidden"
+                            />
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" tooltip="Admin">
-              <Avatar>
-                <AvatarFallback>AD</AvatarFallback>
-              </Avatar>
-              <span className="truncate text-sm font-medium group-data-[collapsible=icon]:hidden">
-                Admin
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <p className="truncate px-2 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+          {user.email} · <span className="capitalize">{user.role}</span>
+        </p>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

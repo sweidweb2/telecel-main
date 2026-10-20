@@ -1,21 +1,30 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
-import { authPath } from "@/constants/routes";
-import { getRequestLocale } from "@/lib/i18n/request-locale";
+import { loginReasonNotice } from "@/components/auth/auth-labels";
+import { AuthNotice, AuthShell } from "@/components/auth/auth-shell";
+import { LoginForm } from "@/components/auth/login-form";
+import { isGoogleAuthEnabled } from "@/lib/auth-config";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
-type LoginRedirectProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+export const metadata: Metadata = {
+  title: "Sign in",
 };
 
-export default async function LoginRedirectPage({
-  searchParams,
-}: LoginRedirectProps) {
-  const locale = await getRequestLocale();
+export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
-  const next = typeof params.next === "string" ? params.next : undefined;
-  const target = new URL(authPath(locale, "login"), "http://local.invalid");
-  if (next) {
-    target.searchParams.set("next", next);
-  }
-  redirect(`${target.pathname}${target.search}`);
+  const rawNext = typeof params.next === "string" ? params.next : undefined;
+  const next = rawNext ? safeRedirectPath(rawNext) : undefined;
+  const notice = loginReasonNotice(params.reason);
+
+  return (
+    <AuthShell
+      title="Sign in"
+      description="Telecel Global content management. Access is by invitation only."
+      notice={
+        notice ? <AuthNotice tone={notice.tone}>{notice.message}</AuthNotice> : null
+      }
+    >
+      <LoginForm next={next} googleEnabled={isGoogleAuthEnabled()} />
+    </AuthShell>
+  );
 }

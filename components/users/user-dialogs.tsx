@@ -1,7 +1,13 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  type Control,
+  type FieldValues,
+  type Path,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { useRouter } from "nextjs-toploader/app";
@@ -27,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -39,12 +46,18 @@ import {
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Profile } from "@/types/profile";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Profile, UserRole } from "@/types/profile";
 import {
   createUserSchema,
   updateUserSchema,
   USER_EMAIL_MAX,
-  USER_FORM_ROLE,
   USER_FULL_NAME_MAX,
   USER_PASSWORD_MAX,
   type CreateUserInput,
@@ -56,22 +69,50 @@ function FormFieldError({ message }: { message?: string }) {
   return <FieldError>{message}</FieldError>;
 }
 
-function LockedRoleField({ id }: { id: string }) {
+const ROLE_OPTIONS: { value: UserRole; label: string; hint: string }[] = [
+  { value: "editor", label: "Editor", hint: "Manages website content, news and inquiries." },
+  { value: "admin", label: "Admin", hint: "Everything editors can do, plus users and settings." },
+];
+
+function RoleField<T extends FieldValues & { role: UserRole }>({
+  id,
+  control,
+  disabled,
+}: {
+  id: string;
+  control: Control<T>;
+  disabled?: boolean;
+}) {
   return (
-    <Field>
-      <Label htmlFor={id}>Role</Label>
-      <Input
-        id={id}
-        value="Admin"
-        readOnly
-        disabled
-        aria-readonly="true"
-        className="bg-muted/50"
-      />
-      <p className="text-xs text-muted-foreground">
-        New and updated users are assigned the admin role.
-      </p>
-    </Field>
+    <Controller
+      name={"role" as Path<T>}
+      control={control}
+      render={({ field, fieldState }) => (
+        <Field data-invalid={Boolean(fieldState.error)}>
+          <Label htmlFor={id}>Role</Label>
+          <Select
+            value={field.value}
+            onValueChange={(value) => field.onChange(value)}
+            disabled={disabled}
+          >
+            <SelectTrigger id={id} className="w-full" aria-invalid={Boolean(fieldState.error)}>
+              <SelectValue placeholder="Choose a role" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {ROLE_OPTIONS.find((option) => option.value === field.value)?.hint}
+          </p>
+          <FormFieldError message={fieldState.error?.message} />
+        </Field>
+      )}
+    />
   );
 }
 
@@ -86,7 +127,7 @@ export function CreateUserDialog() {
       fullName: "",
       email: "",
       password: "",
-      role: USER_FORM_ROLE,
+      role: "editor",
     },
   });
 
@@ -97,7 +138,7 @@ export function CreateUserDialog() {
         fullName: "",
         email: "",
         password: "",
-        role: USER_FORM_ROLE,
+        role: "editor",
       });
     }
   }
@@ -105,7 +146,7 @@ export function CreateUserDialog() {
   function onSubmit(values: CreateUserInput) {
     startTransition(async () => {
       try {
-        const result = await createUser({ ...values, role: USER_FORM_ROLE });
+        const result = await createUser(values);
         if (result.status === "error") {
           toast.error(result.message);
           return;
@@ -134,7 +175,7 @@ export function CreateUserDialog() {
         <DialogHeader>
           <DialogTitle>Create user</DialogTitle>
           <DialogDescription>
-            Create a confirmed login and linked profile.
+            Create a confirmed login. Share the temporary password securely; the user changes it after signing in.
           </DialogDescription>
         </DialogHeader>
 
@@ -143,7 +184,6 @@ export function CreateUserDialog() {
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          <input type="hidden" {...form.register("role")} />
           <FieldGroup>
             <Field data-invalid={Boolean(form.formState.errors.fullName)}>
               <Label htmlFor="create-full-name">Full name</Label>
@@ -178,7 +218,7 @@ export function CreateUserDialog() {
                 autoComplete="new-password"
                 disabled={isPending}
                 maxLength={USER_PASSWORD_MAX}
-                placeholder='Defaults to "password" if empty'
+                placeholder="At least 10 characters, Aa1"
                 aria-invalid={Boolean(form.formState.errors.password)}
                 {...form.register("password")}
               />
@@ -186,7 +226,7 @@ export function CreateUserDialog() {
                 message={form.formState.errors.password?.message}
               />
             </Field>
-            <LockedRoleField id="create-role" />
+            <RoleField id="create-role" control={form.control} disabled={isPending} />
           </FieldGroup>
         </form>
 
@@ -213,7 +253,13 @@ export function CreateUserDialog() {
   );
 }
 
-export function UserRowActions({ user }: { user: Profile }) {
+export function UserRowActions({
+  user,
+  isCurrentUser = false,
+}: {
+  user: Profile;
+  isCurrentUser?: boolean;
+}) {
   const editFormId = useId();
   const router = useRouter();
   const [viewOpen, setViewOpen] = useState(false);
@@ -225,7 +271,8 @@ export function UserRowActions({ user }: { user: Profile }) {
     id: user.id,
     fullName: user.full_name ?? "",
     email: user.email,
-    role: USER_FORM_ROLE,
+    role: user.role ?? "editor",
+    isActive: user.is_active,
   };
   const form = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
@@ -240,7 +287,7 @@ export function UserRowActions({ user }: { user: Profile }) {
   function onUpdate(values: UpdateUserInput) {
     startUpdate(async () => {
       try {
-        const result = await updateUser({ ...values, role: USER_FORM_ROLE });
+        const result = await updateUser(values);
         if (result.status === "error") {
           toast.error(result.message);
           return;
@@ -300,7 +347,10 @@ export function UserRowActions({ user }: { user: Profile }) {
             <div className="grid gap-1">
               <dt className="text-muted-foreground">Role</dt>
               <dd>
-                <Badge variant="outline">{user.role}</Badge>
+                <Badge variant="outline">{user.role ?? "no access"}</Badge>
+                {user.is_active ? null : (
+                  <Badge variant="destructive" className="ml-1">suspended</Badge>
+                )}
               </dd>
             </div>
             <div className="grid gap-1">
@@ -352,7 +402,6 @@ export function UserRowActions({ user }: { user: Profile }) {
             noValidate
           >
             <input type="hidden" {...form.register("id")} />
-            <input type="hidden" {...form.register("role")} />
             <FieldGroup>
               <Field data-invalid={Boolean(form.formState.errors.fullName)}>
                 <Label htmlFor={`edit-name-${user.id}`}>Full name</Label>
@@ -381,7 +430,28 @@ export function UserRowActions({ user }: { user: Profile }) {
                   message={form.formState.errors.email?.message}
                 />
               </Field>
-              <LockedRoleField id={`edit-role-${user.id}`} />
+              <RoleField
+                id={`edit-role-${user.id}`}
+                control={form.control}
+                disabled={isUpdating || isCurrentUser}
+              />
+              <Controller
+                name="isActive"
+                control={form.control}
+                render={({ field }) => (
+                  <Field orientation="horizontal">
+                    <Checkbox
+                      id={`edit-active-${user.id}`}
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      disabled={isUpdating || isCurrentUser}
+                    />
+                    <Label htmlFor={`edit-active-${user.id}`}>
+                      Account active (unchecked = suspended, signed out everywhere)
+                    </Label>
+                  </Field>
+                )}
+              />
             </FieldGroup>
           </form>
 
@@ -408,6 +478,7 @@ export function UserRowActions({ user }: { user: Profile }) {
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogTrigger
+          disabled={isCurrentUser}
           render={
             <Button
               variant="ghost"

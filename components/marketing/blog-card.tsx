@@ -3,7 +3,6 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { Locale } from "@/constants/locales";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
 
@@ -18,11 +17,10 @@ function authorInitials(name: string) {
 
 type BlogCardProps = {
   article: ArticleListItem;
-  locale: Locale;
 };
 
-export function BlogCard({ article, locale }: BlogCardProps) {
-  const href = insightPath(locale, article.slug);
+export function BlogCard({ article }: BlogCardProps) {
+  const href = insightPath(article.slug);
 
   return (
     <Link href={href} className="group flex flex-col gap-5 outline-none">

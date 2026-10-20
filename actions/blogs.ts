@@ -3,10 +3,10 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { nanoid } from "nanoid";
 
-import { ROUTES } from "@/constants/routes";
+import { insightPath, ROUTES } from "@/constants/routes";
+import { authorizeAction } from "@/data/auth";
 import { estimateReadingTimeMinutes } from "@/lib/blog-utils";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
-import { createClient } from "@/lib/supabase/server";
 import { BLOGS_CACHE_TAG } from "@/data/blogs";
 import {
   createBlogSchema,
@@ -34,54 +34,38 @@ const MESSAGES = {
   genericError: "Something went wrong. Please try again.",
   slugTaken: "That slug is already in use.",
   featuredTaken: "Another post is already featured. Unfeature it first, or save again.",
-  invalidImage: "Please upload a JPEG, PNG, WebP, or GIF under the size limit.",
+  invalidImage: "Please upload a JPEG, PNG or WebP image under the size limit.",
 } as const;
 
 const COVER_BUCKET = "blogs";
-const AUTHOR_BUCKET = "auther";
+const AUTHOR_BUCKET = "authors";
 const COVER_MAX_BYTES = 5 * 1024 * 1024;
 const AUTHOR_MAX_BYTES = 2 * 1024 * 1024;
-const ALLOWED_MIME = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+// Must match allowed_mime_types on the storage buckets (insights migration).
+const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-type AdminSession =
-  | {
-      status: "success";
-      supabase: Awaited<ReturnType<typeof createClient>>;
-    }
-  | { status: "error"; message: string };
+type StaffClient = Extract<
+  Awaited<ReturnType<typeof authorizeAction>>,
+  { status: "success" }
+>["session"]["supabase"];
 
-async function authorizeAdmin(): Promise<AdminSession> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return { status: "error", message: MESSAGES.signedInRequired };
-  }
-
-  const { data: isAdmin, error } = await supabase.rpc("is_admin");
-  if (error || !isAdmin) {
-    return { status: "error", message: MESSAGES.unauthorized };
-  }
-
-  return { status: "success", supabase };
+/** Admins and editors manage Insights; RLS (is_staff) re-checks in the DB. */
+async function authorizeStaff(): Promise<
+  { status: "success"; supabase: StaffClient } | { status: "error"; message: string }
+> {
+  const auth = await authorizeAction("staff");
+  if (auth.status === "error") return auth;
+  return { status: "success", supabase: auth.session.supabase };
 }
 
-function refreshBlogPaths(slug?: string) {
+/** Revalidates listings, the sitemap and every detail path that changed (old and new slug). */
+function refreshBlogPaths(...slugs: (string | null | undefined)[]) {
   revalidateTag(BLOGS_CACHE_TAG, "max");
   revalidatePath(ROUTES.blogs);
-  revalidatePath("/en/insights");
-  revalidatePath("/fr/insights");
-  if (slug) {
-    revalidatePath(`/en/insights/${slug}`);
-    revalidatePath(`/fr/insights/${slug}`);
+  revalidatePath(ROUTES.insights);
+  revalidatePath("/sitemap.xml");
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(insightPath(slug as string));
   }
 }
 
@@ -100,7 +84,7 @@ function uniqueConstraintMessage(error: {
 }
 
 async function clearOtherFeatured(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: StaffClient,
   exceptId?: string,
 ) {
   let request = supabase
@@ -143,7 +127,7 @@ export async function createBlog(
     };
   }
 
-  const session = await authorizeAdmin();
+  const session = await authorizeStaff();
   if (session.status === "error") return session;
 
   const fields = toRowFields(parsed.data);
@@ -184,7 +168,7 @@ export async function updateBlog(
     };
   }
 
-  const session = await authorizeAdmin();
+  const session = await authorizeStaff();
   if (session.status === "error") return session;
 
   const { id, ...rest } = parsed.data;
@@ -197,7 +181,7 @@ export async function updateBlog(
 
   const { data: existing, error: existingError } = await session.supabase
     .from("blogs")
-    .select("id, published_at, status")
+    .select("id, slug, published_at, status")
     .eq("id", id)
     .maybeSingle();
 
@@ -238,7 +222,7 @@ export async function updateBlog(
     return { status: "error", message: MESSAGES.notFound };
   }
 
-  refreshBlogPaths(data.slug);
+  refreshBlogPaths(existing.slug, data.slug);
   return { status: "success", message: MESSAGES.updateSuccess, id: data.id };
 }
 
@@ -253,7 +237,7 @@ export async function deleteBlog(
     };
   }
 
-  const session = await authorizeAdmin();
+  const session = await authorizeStaff();
   if (session.status === "error") return session;
 
   const { data: existing } = await session.supabase
@@ -319,7 +303,7 @@ function storagePathFromPublicUrl(
 }
 
 async function removeStorageUrlIfOwned(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: StaffClient,
   url: string | null | undefined,
   bucket: string,
 ) {
@@ -341,7 +325,7 @@ async function uploadImage(options: {
     return { status: "error", message: MESSAGES.invalidImage };
   }
 
-  const session = await authorizeAdmin();
+  const session = await authorizeStaff();
   if (session.status === "error") return session;
 
   const { data: existing, error: existingError } = await session.supabase
@@ -442,7 +426,7 @@ export async function removeBlogImage(input: {
   id: string;
   kind: "thumbnail" | "author";
 }): Promise<BlogActionResult> {
-  const session = await authorizeAdmin();
+  const session = await authorizeStaff();
   if (session.status === "error") return session;
 
   const bucket = input.kind === "thumbnail" ? COVER_BUCKET : AUTHOR_BUCKET;

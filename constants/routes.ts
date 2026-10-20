@@ -1,36 +1,52 @@
-import type { Locale } from "@/constants/locales";
-import type { PublicPageSlug } from "@/constants/public-pages";
-
 export const ROUTES = {
   home: "/",
+  insights: "/insights",
+  contact: "/contact",
+
   login: "/login",
-  signup: "/signup",
-  /** @deprecated Use `signup` — kept for existing nav labels. */
-  register: "/signup",
+  forgotPassword: "/forgot-password",
+  updatePassword: "/update-password",
+  authCallback: "/auth/callback",
+  authConfirm: "/auth/confirm",
+  signOut: "/auth/sign-out",
+
   dashboard: "/dashboard",
-  users: "/dashboard/users",
-  registrations: "/dashboard/registrations",
-  portfolio: "/dashboard/portfolio",
+  pages: "/dashboard/pages",
+  services: "/dashboard/services",
+  solutions: "/dashboard/solutions",
+  useCases: "/dashboard/use-cases",
   blogs: "/dashboard/blogs",
-  contactUs: "/dashboard/contact-us",
-  analytics: "/dashboard/analytics",
-  backup: "/dashboard/backup",
+  caseStudies: "/dashboard/case-studies",
+  leadership: "/dashboard/leadership",
+  partners: "/dashboard/partners",
+  ctas: "/dashboard/ctas",
+  media: "/dashboard/media",
+  inquiries: "/dashboard/inquiries",
+  seo: "/dashboard/seo",
+  users: "/dashboard/users",
+  formRouting: "/dashboard/form-routing",
   settings: "/dashboard/settings",
+  backups: "/dashboard/backups",
 } as const;
 
-export type AuthPage = "login" | "signup";
+/** Why the login page was reached; drives the notice shown above the form. */
+export type LoginReason =
+  | "session-expired"
+  | "signed-out"
+  | "no-access"
+  | "auth-error"
+  | "password-updated";
 
-/** Locale-prefixed marketing path. Home slug `""` → `/en` or `/fr`. */
-export function publicPath(locale: Locale, slug: PublicPageSlug = ""): string {
-  return slug === "" ? `/${locale}` : `/${locale}/${slug}`;
+/** Insight detail path, e.g. `/insights/ux-review-presentations`. */
+export function insightPath(slug: string): string {
+  return `${ROUTES.insights}/${slug}`;
 }
 
-/** Locale-prefixed auth path, e.g. `/fr/login`. */
-export function authPath(locale: Locale, page: AuthPage = "login"): string {
-  return `/${locale}/${page}`;
-}
-
-/** Locale-prefixed insight detail path, e.g. `/en/insights/ux-review-presentations`. */
-export function insightPath(locale: Locale, slug: string): string {
-  return `/${locale}/insights/${slug}`;
+/** Login path carrying an optional post-login destination and notice. */
+export function loginPath(options: { next?: string; reason?: LoginReason } = {}): string {
+  const params = new URLSearchParams();
+  if (options.next) params.set("next", options.next);
+  if (options.reason) params.set("reason", options.reason);
+  const query = params.toString();
+  return query ? `${ROUTES.login}?${query}` : ROUTES.login;
 }

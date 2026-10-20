@@ -1,73 +1,65 @@
 import { describe, expect, it } from "vitest";
 
-import { loginSchema, registerSchema } from "@/validations/auth";
+import {
+  forgotPasswordSchema,
+  loginSchema,
+  newPasswordSchema,
+  updatePasswordSchema,
+} from "@/validations/auth";
 
 describe("loginSchema", () => {
-  it("accepts a valid email and password", () => {
+  it("accepts and normalizes a valid email", () => {
     const result = loginSchema.safeParse({
-      email: "asweid657@gmail.com",
-      password: "ali@1234",
+      email: "  Editor@Telecel.COM ",
+      password: "anything",
     });
 
     expect(result.success).toBe(true);
+    expect(result.data?.email).toBe("editor@telecel.com");
   });
 
-  it("rejects an invalid email", () => {
-    const result = loginSchema.safeParse({
-      email: "not-an-email",
-      password: "ali@1234",
-    });
-
-    expect(result.success).toBe(false);
+  it("rejects an invalid email or empty password", () => {
+    expect(
+      loginSchema.safeParse({ email: "not-an-email", password: "x" }).success
+    ).toBe(false);
+    expect(
+      loginSchema.safeParse({ email: "a@b.co", password: "" }).success
+    ).toBe(false);
   });
 });
 
-describe("registerSchema", () => {
-  it("accepts matching passwords that meet strength rules", () => {
-    const result = registerSchema.safeParse({
-      fullName: "ASIP Admin",
-      email: "dev@example.com",
-      password: "ali@1234",
-      confirmPassword: "ali@1234",
-    });
-
-    expect(result.success).toBe(true);
+describe("forgotPasswordSchema", () => {
+  it("requires a valid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "a@b.co" }).success).toBe(
+      true
+    );
+    expect(forgotPasswordSchema.safeParse({ email: "nope" }).success).toBe(
+      false
+    );
   });
+});
 
-  it("rejects mismatched passwords", () => {
-    const result = registerSchema.safeParse({
-      fullName: "ASIP Admin",
-      email: "dev@example.com",
-      password: "ali@1234",
-      confirmPassword: "ali@9999",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects a weak password", () => {
-    const result = registerSchema.safeParse({
-      fullName: "ASIP Admin",
-      email: "dev@example.com",
-      password: "short",
-      confirmPassword: "short",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("returns french validation messages", async () => {
-    const { registerSchemaFor } = await import("@/validations/auth");
-    const result = registerSchemaFor("fr").safeParse({
-      fullName: "A",
-      email: "bad",
-      password: "short",
-      confirmPassword: "other",
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toMatch(/caractères|valide|lettre/i);
+describe("newPasswordSchema", () => {
+  it.each(["short1A", "alllowercase123", "ALLUPPERCASE123", "NoDigitsHere!"])(
+    "rejects weak password %s",
+    (password) => {
+      expect(newPasswordSchema.safeParse(password).success).toBe(false);
     }
+  );
+
+  it("accepts a strong password", () => {
+    expect(newPasswordSchema.safeParse("Telecel2026Strong").success).toBe(true);
+  });
+});
+
+describe("updatePasswordSchema", () => {
+  it("rejects mismatched confirmation", () => {
+    const result = updatePasswordSchema.safeParse({
+      password: "Telecel2026Strong",
+      confirmPassword: "Telecel2026Other",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["confirmPassword"]);
   });
 });

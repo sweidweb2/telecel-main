@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { BlogEditorForm } from "@/components/blogs/blog-editor-form";
 import {
@@ -12,17 +11,14 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ROUTES } from "@/constants/routes";
-import { createClient } from "@/lib/supabase/server";
+import { requireSection } from "@/data/auth";
 
 export const metadata: Metadata = {
-  title: "New blog | ASIP Admin",
+  title: "New news article",
 };
 
 export default async function NewBlogPage() {
-  const supabase = await createClient();
-  const { data: isAdmin, error } = await supabase.rpc("is_admin");
-  if (error) throw error;
-  if (!isAdmin) redirect(ROUTES.dashboard);
+  await requireSection(ROUTES.blogs);
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
@@ -30,19 +26,19 @@ export default async function NewBlogPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink render={<Link href={ROUTES.blogs} />}>
-              Blogs
+              News
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>New blog</BreadcrumbPage>
+            <BreadcrumbPage>New article</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <BlogEditorForm
         mode="create"
-        heading="New blog"
-        description="Draft an Insights article. You can attach a cover and author avatar before creating."
+        heading="New article"
+        description="Draft a news article for Insights. You can attach a cover and author avatar before creating."
       />
     </main>
   );

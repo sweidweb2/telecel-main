@@ -1,7 +1,8 @@
 import { unstable_cache } from "next/cache";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 import { createPublicClient } from "@/lib/supabase/public";
-import { createClient } from "@/lib/supabase/server";
+import type { StaffSession } from "@/data/auth";
 import type {
   Blog,
   BlogListItem,
@@ -29,7 +30,7 @@ const PUBLIC_DETAIL_COLUMNS =
 
 const PUBLIC_SLUG_COLUMNS = "slug, updated_at" as const;
 
-type ServerClient = Awaited<ReturnType<typeof createClient>>;
+type ServerClient = StaffSession["supabase"];
 
 async function fetchBlogsPage(
   supabase: ServerClient,
@@ -66,42 +67,26 @@ async function fetchBlogsPage(
   };
 }
 
+/** Staff-only reads: callers pass the session from requireSection(). */
 export async function getBlogsPageData(
+  session: StaffSession,
   query: BlogListQuery,
-): Promise<
-  | { status: "forbidden" }
-  | { status: "ok"; list: BlogListResult }
-> {
-  const supabase = await createClient();
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-  if (adminError) throw adminError;
-  if (!isAdmin) return { status: "forbidden" };
-
-  const list = await fetchBlogsPage(supabase, query);
-  return { status: "ok", list };
+): Promise<BlogListResult> {
+  return fetchBlogsPage(session.supabase, query);
 }
 
-export async function getBlogByIdForAdmin(
+export async function getBlogByIdForStaff(
+  session: StaffSession,
   id: string,
-): Promise<
-  | { status: "forbidden" }
-  | { status: "not_found" }
-  | { status: "ok"; blog: Blog }
-> {
-  const supabase = await createClient();
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-  if (adminError) throw adminError;
-  if (!isAdmin) return { status: "forbidden" };
-
-  const { data, error } = await supabase
+): Promise<Blog | null> {
+  const { data, error } = await session.supabase
     .from("blogs")
     .select(DETAIL_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) return { status: "not_found" };
-  return { status: "ok", blog: data as Blog };
+  return (data as Blog | null) ?? null;
 }
 
 async function fetchPublishedBlogs(): Promise<BlogPublicListItem[]> {
@@ -222,23 +207,50 @@ async function fetchRelatedPublishedBlogs(
   return results.slice(0, limit);
 }
 
-export const getPublishedBlogs = unstable_cache(
+/**
+ * Builds (CI placeholders, or a DB that is briefly unreachable) must not fail
+ * on public content reads: fall back to "no articles" while building only.
+ * Pages then fill in on the first revalidation. At runtime errors still throw.
+ */
+async function tolerateDuringBuild<T>(load: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await load();
+  } catch (error) {
+    if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) throw error;
+    console.warn("[blogs] Supabase unreachable during build; rendering without articles.");
+    return fallback;
+  }
+}
+
+const cachedPublishedBlogs = unstable_cache(
   fetchPublishedBlogs,
   ["published-blogs"],
   { tags: [BLOGS_CACHE_TAG], revalidate: 300 },
 );
 
-export const getFeaturedBlog = unstable_cache(
+const cachedFeaturedBlog = unstable_cache(
   fetchFeaturedBlog,
   ["featured-blog"],
   { tags: [BLOGS_CACHE_TAG], revalidate: 300 },
 );
 
-export const getPublishedBlogSlugRows = unstable_cache(
+const cachedPublishedBlogSlugRows = unstable_cache(
   fetchPublishedBlogSlugRows,
   ["published-blog-slug-rows"],
   { tags: [BLOGS_CACHE_TAG], revalidate: 300 },
 );
+
+export function getPublishedBlogs(): Promise<BlogPublicListItem[]> {
+  return tolerateDuringBuild(cachedPublishedBlogs, []);
+}
+
+export function getFeaturedBlog(): Promise<BlogPublicListItem | null> {
+  return tolerateDuringBuild(cachedFeaturedBlog, null);
+}
+
+export function getPublishedBlogSlugRows(): Promise<BlogSlugRow[]> {
+  return tolerateDuringBuild(cachedPublishedBlogSlugRows, []);
+}
 
 export async function getPublishedBlogBySlug(
   slug: string,

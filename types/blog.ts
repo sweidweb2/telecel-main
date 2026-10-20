@@ -1,7 +1,6 @@
 import type { Tables } from "@/types/database";
 import type { Article, ArticleListItem } from "@/types/article";
 import { insightPath } from "@/constants/routes";
-import type { Locale } from "@/constants/locales";
 import { format } from "date-fns";
 
 export type BlogStatus = "draft" | "published";
@@ -59,10 +58,7 @@ function formatPublishedAt(value: string | null): string {
   return format(new Date(value), "d MMM yyyy");
 }
 
-function toArticleListFields(
-  blog: BlogPublicListItem,
-  locale: Locale,
-): ArticleListItem {
+function toArticleListFields(blog: BlogPublicListItem): ArticleListItem {
   const categories = blog.categories ?? [];
   const primary = categories[0] ?? "General";
 
@@ -71,7 +67,7 @@ function toArticleListFields(
     slug: blog.slug,
     title: blog.title,
     summary: blog.summary,
-    href: insightPath(locale, blog.slug),
+    href: insightPath(blog.slug),
     category: { name: primary, href: "#" },
     thumbnailUrl: blog.thumbnail_url ?? "",
     publishedAt: formatPublishedAt(blog.published_at),
@@ -91,11 +87,8 @@ function toArticleListFields(
 }
 
 /** Maps a public list row to marketing card shape (no body). */
-export function toArticleList(
-  blog: BlogPublicListItem,
-  locale: Locale = "en",
-): ArticleListItem {
-  return toArticleListFields(blog, locale);
+export function toArticleList(blog: BlogPublicListItem): ArticleListItem {
+  return toArticleListFields(blog);
 }
 
 /** Maps a DB blog detail row to the marketing `Article` shape. */
@@ -116,10 +109,9 @@ export function toArticle(
     | "updated_at"
     | "is_featured"
   >,
-  locale: Locale = "en",
 ): Article {
   return {
-    ...toArticleListFields(blog, locale),
+    ...toArticleListFields(blog),
     bodyHtml: blog.body_html,
     datePublishedIso: blog.published_at,
     dateModifiedIso: blog.updated_at,

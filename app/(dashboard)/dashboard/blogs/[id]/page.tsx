@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { BlogEditorForm } from "@/components/blogs/blog-editor-form";
 import {
@@ -12,31 +12,20 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ROUTES } from "@/constants/routes";
-import { getBlogByIdForAdmin } from "@/data/blogs";
+import { requireSection } from "@/data/auth";
+import { getBlogByIdForStaff } from "@/data/blogs";
 
-type EditBlogPageProps = {
-  params: Promise<{ id: string }>;
-};
+export const metadata: Metadata = { title: "Edit news article" };
 
-export async function generateMetadata({
+export default async function EditBlogPage({
   params,
-}: EditBlogPageProps): Promise<Metadata> {
+}: PageProps<"/dashboard/blogs/[id]">) {
+  const { session } = await requireSection(ROUTES.blogs);
   const { id } = await params;
-  const result = await getBlogByIdForAdmin(id);
-  if (result.status !== "ok") {
-    return { title: "Blog | ASIP Admin" };
-  }
-  return { title: `${result.blog.title} | ASIP Admin` };
-}
+  const blog = await getBlogByIdForStaff(session, id);
+  if (!blog) notFound();
 
-export default async function EditBlogPage({ params }: EditBlogPageProps) {
-  const { id } = await params;
-  const result = await getBlogByIdForAdmin(id);
-
-  if (result.status === "forbidden") redirect(ROUTES.dashboard);
-  if (result.status === "not_found") notFound();
-
-  const pageLabel = result.blog.title.trim() || "Edit blog";
+  const pageLabel = blog.title.trim() || "Edit article";
 
   return (
     <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
@@ -44,7 +33,7 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink render={<Link href={ROUTES.blogs} />}>
-              Blogs
+              News
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -57,8 +46,8 @@ export default async function EditBlogPage({ params }: EditBlogPageProps) {
       </Breadcrumb>
       <BlogEditorForm
         mode="edit"
-        blog={result.blog}
-        heading="Edit blog"
+        blog={blog}
+        heading="Edit article"
         description="Update content, publish status, featured hero, and images."
       />
     </main>

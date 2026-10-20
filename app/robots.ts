@@ -1,23 +1,25 @@
 import type { MetadataRoute } from "next";
 
+import { ROUTES } from "@/constants/routes";
 import { absoluteUrl } from "@/lib/seo/site";
 
+/** Production-only indexing: staging/UAT deployments must set NEXT_PUBLIC_ALLOW_INDEXING=false. */
 export default function robots(): MetadataRoute.Robots {
+  if (process.env.NEXT_PUBLIC_ALLOW_INDEXING === "false") {
+    return { rules: { userAgent: "*", disallow: "/" } };
+  }
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: [
-        "/dashboard/",
+        `${ROUTES.dashboard}/`,
+        "/auth/",
         "/api/",
-        "/admin/",
-        "/login",
-        "/signup",
-        "/register",
-        "/en/login",
-        "/en/signup",
-        "/fr/login",
-        "/fr/signup",
+        ROUTES.login,
+        ROUTES.forgotPassword,
+        ROUTES.updatePassword,
       ],
     },
     sitemap: absoluteUrl("/sitemap.xml"),

@@ -14,36 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      contact_messages: {
-        Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          message: string
-          phone: string
-          subject: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
-          message: string
-          phone: string
-          subject: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-          message?: string
-          phone?: string
-          subject?: string
-        }
-        Relationships: []
-      }
       blogs: {
         Row: {
           author_avatar_url: string | null
@@ -98,68 +68,32 @@ export type Database = {
         }
         Relationships: []
       }
-      interest_registrations: {
-        Row: {
-          company_name: string
-          consent: boolean
-          country: string
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          phone: string
-          pitch: string
-          sector: string
-        }
-        Insert: {
-          company_name: string
-          consent: boolean
-          country: string
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
-          phone: string
-          pitch: string
-          sector: string
-        }
-        Update: {
-          company_name?: string
-          consent?: boolean
-          country?: string
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-          phone?: string
-          pitch?: string
-          sector?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
           email: string
-          full_name: string | null
+          full_name: string
           id: string
-          role: Database["public"]["Enums"]["user_role"]
+          is_active: boolean
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
-          full_name?: string | null
+          full_name?: string
           id: string
-          role?: Database["public"]["Enums"]["user_role"]
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
-          full_name?: string | null
+          full_name?: string
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
         }
         Relationships: []
@@ -169,22 +103,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin: { Args: never; Returns: boolean }
+      current_app_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"] | null
+      }
+      current_session_is_fresh: { Args: never; Returns: boolean }
+      get_session_context: {
+        Args: never
+        Returns: {
+          user_id: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          is_active: boolean
+          session_fresh: boolean
+        }[]
+      }
       get_user_stats: {
         Args: never
         Returns: {
           total: number
           admins: number
           editors: number
-          viewers: number
+          no_access: number
           new_this_week: number
           new_this_month: number
         }[]
       }
+      is_admin: { Args: never; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
     }
     Enums: {
       blog_status: "draft" | "published"
-      user_role: "admin" | "editor" | "viewer"
+      user_role: "admin" | "editor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -313,7 +262,7 @@ export const Constants = {
   public: {
     Enums: {
       blog_status: ["draft", "published"],
-      user_role: ["admin", "editor", "viewer"],
+      user_role: ["admin", "editor"],
     },
   },
 } as const

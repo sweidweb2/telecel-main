@@ -1,0 +1,482 @@
+// Telecel Global — Phase 1 CMS data model (DRAFT for team review)
+//
+// Status legend in each table note:
+//   [MIGRATED] exists in supabase/migrations
+//   [DRAFT]    proposed; migrate after the editor-portal feature list is agreed
+//
+// Source of scope: Telecel Global RFQ §3 (architecture), §4.2 (CMS), §4.4
+// (lead forms), §5 (SEO, analytics, security, governance).
+// Conventions: uuid PKs (gen_random_uuid()), timestamptz, RLS on every table,
+// staff = admin|editor via public.is_staff(), admin via public.is_admin().
+// Paste into https://dbdiagram.io to view.
+
+Enum user_role {
+  admin
+  editor
+}
+
+Enum blog_status {
+  draft
+  published
+}
+
+Enum content_status {
+  draft
+  published
+  archived
+}
+
+Enum insight_type {
+  news
+  case_study
+}
+
+Enum section_owner {
+  page
+  service_pillar
+  service_module
+  solution
+  use_case
+}
+
+Enum section_type {
+  hero
+  service_pillars
+  customer_outcomes
+  buyer_routes
+  delivery_model
+  proof
+  cta
+  rich_text
+  media
+  faq
+  related_content
+}
+
+Enum inquiry_intent {
+  sales
+  demo
+  general
+}
+
+Enum inquiry_status {
+  new
+  contacted
+  qualified
+  closed
+  spam
+}
+
+Enum contact_method {
+  email
+  phone
+  video_call
+}
+
+Enum delivery_status {
+  pending
+  sent
+  failed
+}
+
+Enum media_kind {
+  image
+  video
+  document
+}
+
+// ---------------------------------------------------------------------------
+// Access
+// ---------------------------------------------------------------------------
+
+Table profiles {
+  id uuid [pk, note: 'FK → auth.users(id) ON DELETE CASCADE']
+  email text [not null, note: 'Mirrors Auth; only service_role may change it']
+  full_name text [not null, default: '']
+  role user_role [null, note: 'NULL = no CMS access']
+  is_active boolean [not null, default: true, note: 'false = suspended (also banned in Auth)']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    role
+    (created_at, id)
+    email [type: gin, note: 'pg_trgm']
+    full_name [type: gin, note: 'pg_trgm']
+  }
+
+  Note: '''
+    [MIGRATED] 20261020090000_baseline_profiles_and_access.sql
+    RLS: read/update own row; admins read/update all.
+    Trigger protect_profile_access_fields: only admins change role/is_active;
+    only service_role changes email.
+    Staff checks also require current_session_is_fresh() (24h absolute session).
+  '''
+}
+
+// ---------------------------------------------------------------------------
+// Website content (RFQ §3)
+// ---------------------------------------------------------------------------
+
+Table pages {
+  id uuid [pk]
+  path text [not null, unique, note: 'e.g. /, /platform, /why-telecel-global']
+  title text [not null]
+  status content_status [not null, default: 'draft']
+  seo_title text
+  seo_description text
+  og_image_id uuid [ref: > media_assets.id]
+  canonical_url text
+  noindex boolean [not null, default: false]
+  published_at timestamptz
+  updated_by uuid [ref: > profiles.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Home, Platform, Why Telecel Global, legal pages. Body = ordered page_sections.'
+}
+
+Table page_sections {
+  id uuid [pk]
+  owner_type section_owner [not null]
+  owner_id uuid [not null, note: 'id in the owner table (polymorphic; enforced by trigger)']
+  section_type section_type [not null]
+  sort_order int [not null]
+  is_visible boolean [not null, default: true]
+  content jsonb [not null, note: 'Shape validated per section_type with Zod in validations/']
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (owner_type, owner_id, sort_order)
+  }
+
+  Note: '''
+    [DRAFT] Reusable, reorderable modules (RFQ §4.2 "add, edit and reorder
+    content without developer dependency"). Same blocks power pages, pillars,
+    solutions and use cases.
+  '''
+}
+
+Table service_pillars {
+  id uuid [pk]
+  slug text [not null, unique]
+  title text [not null]
+  summary text [not null]
+  icon text
+  hero_media_id uuid [ref: > media_assets.id]
+  sort_order int [not null]
+  status content_status [not null, default: 'draft']
+  seo_title text
+  seo_description text
+  og_image_id uuid [ref: > media_assets.id]
+  noindex boolean [not null, default: false]
+  published_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] The 5 pillars: Cloud & Data Centre; Cybersecurity; IoT & Digital; Network & Enterprise Connectivity; Interactions, Voice & Messaging.'
+}
+
+Table service_modules {
+  id uuid [pk]
+  pillar_id uuid [not null, ref: > service_pillars.id]
+  slug text [not null]
+  title text [not null]
+  summary text [not null]
+  body_html text [not null, default: '', note: 'Sanitized (lib/sanitize-html.ts)']
+  sort_order int [not null]
+  is_standalone_page boolean [not null, default: false, note: 'true → /services/{pillar}/{slug} renders (RFQ: convert to page without redesign)']
+  status content_status [not null, default: 'draft']
+  seo_title text
+  seo_description text
+  noindex boolean [not null, default: false]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (pillar_id, slug) [unique]
+    (pillar_id, sort_order)
+  }
+
+  Note: '[DRAFT] Sub-services shown as sections inside the pillar page until promoted.'
+}
+
+Table solutions {
+  id uuid [pk]
+  slug text [not null, unique]
+  title text [not null]
+  summary text [not null]
+  sort_order int [not null]
+  status content_status [not null, default: 'draft']
+  seo_title text
+  seo_description text
+  og_image_id uuid [ref: > media_assets.id]
+  noindex boolean [not null, default: false]
+  published_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Mobile Operators; Enterprises; Governments & Institutions; Wholesale & Aggregators.'
+}
+
+Table use_cases {
+  id uuid [pk]
+  slug text [not null, unique]
+  title text [not null]
+  summary text [not null]
+  sort_order int [not null]
+  status content_status [not null, default: 'draft']
+  seo_title text
+  seo_description text
+  og_image_id uuid [ref: > media_assets.id]
+  noindex boolean [not null, default: false]
+  published_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] The 6 use cases from RFQ §3.'
+}
+
+Table solution_pillars {
+  solution_id uuid [ref: > solutions.id]
+  pillar_id uuid [ref: > service_pillars.id]
+  sort_order int [not null, default: 0]
+
+  indexes {
+    (solution_id, pillar_id) [pk]
+  }
+}
+
+Table use_case_pillars {
+  use_case_id uuid [ref: > use_cases.id]
+  pillar_id uuid [ref: > service_pillars.id]
+  sort_order int [not null, default: 0]
+
+  indexes {
+    (use_case_id, pillar_id) [pk]
+  }
+}
+
+Table use_case_solutions {
+  use_case_id uuid [ref: > use_cases.id]
+  solution_id uuid [ref: > solutions.id]
+
+  indexes {
+    (use_case_id, solution_id) [pk]
+  }
+}
+
+Table blogs {
+  id uuid [pk]
+  slug text [not null, unique]
+  title text [not null]
+  summary text [not null]
+  body_html text [not null, default: '']
+  categories "text[]" [not null, default: '{}']
+  thumbnail_url text
+  author_name text [not null]
+  author_avatar_url text
+  status blog_status [not null, default: 'draft']
+  is_featured boolean [not null, default: false, note: 'unique where true']
+  reading_time_minutes int [not null, default: 1]
+  published_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+    [MIGRATED] 20261020090100_insights_blogs.sql — powers /insights (News).
+    PLANNED change: rename to `insights`, add `type insight_type` (news |
+    case_study), `customer_name`, `is_approved` (case studies publish only
+    when Telecel approves), `seo_title/seo_description/noindex`, and
+    `cover_media_id` replacing thumbnail_url. RLS: staff manage, anyone reads
+    published.
+  '''
+}
+
+Table leaders {
+  id uuid [pk]
+  full_name text [not null]
+  job_title text [not null]
+  bio_html text [not null, default: '']
+  photo_media_id uuid [ref: > media_assets.id]
+  linkedin_url text
+  sort_order int [not null]
+  status content_status [not null, default: 'draft']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Why Telecel Global → Leadership.'
+}
+
+Table partners {
+  id uuid [pk]
+  name text [not null]
+  logo_media_id uuid [ref: > media_assets.id]
+  website_url text
+  is_cleared boolean [not null, default: false, note: 'RFQ: show only once cleared; publish requires true']
+  sort_order int [not null]
+  status content_status [not null, default: 'draft']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Partners & Ecosystem. CHECK (status <> published OR is_cleared).'
+}
+
+Table cta_blocks {
+  id uuid [pk]
+  key text [not null, unique, note: 'talk_to_sales, request_demo, …']
+  heading text [not null]
+  body text
+  button_label text [not null]
+  target_href text [not null]
+  intent inquiry_intent [not null]
+  analytics_event text [not null, note: 'Stable event name for GTM']
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Edited once, reused everywhere via the `cta` section type.'
+}
+
+Table media_assets {
+  id uuid [pk]
+  bucket text [not null]
+  path text [not null]
+  kind media_kind [not null]
+  mime_type text [not null]
+  bytes int [not null]
+  width int
+  height int
+  alt_text text [not null, note: 'Required (WCAG 2.1 AA, RFQ §5)']
+  caption text
+  poster_media_id uuid [ref: > media_assets.id, note: 'Video poster/fallback image']
+  uploaded_by uuid [ref: > profiles.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (bucket, path) [unique]
+  }
+
+  Note: '[DRAFT] Single media library. Public bucket for published assets; drafts in a private bucket.'
+}
+
+// ---------------------------------------------------------------------------
+// Lead generation (RFQ §4.4)
+// ---------------------------------------------------------------------------
+
+Table inquiries {
+  id uuid [pk]
+  intent inquiry_intent [not null]
+  full_name text [not null]
+  company text [not null]
+  job_role text [not null]
+  email text [not null]
+  country_code char(2) [not null, note: 'ISO 3166-1 alpha-2']
+  area_of_interest text [not null, note: 'service pillar slug or "other"']
+  business_need text [not null]
+  preferred_contact_method contact_method [not null]
+  consent boolean [not null, note: 'CHECK (consent = true)']
+  consent_text_version text [not null, note: 'Which consent wording the person saw']
+  source_path text [note: 'Page the form was submitted from']
+  utm jsonb
+  status inquiry_status [not null, default: 'new']
+  recipient_group_id uuid [ref: > recipient_groups.id]
+  delivery_status delivery_status [not null, default: 'pending']
+  delivery_attempts int [not null, default: 0]
+  last_delivery_error text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (created_at)
+    (status, created_at)
+    (area_of_interest)
+    (delivery_status) [note: 'partial: where delivery_status <> sent — retry queue']
+  }
+
+  Note: '''
+    [DRAFT] Insert only via a server action (Turnstile + rate limit + Zod);
+    anon has no direct table access. Staff read/update status. Retention
+    period to be agreed with Telecel (privacy wording).
+  '''
+}
+
+Table recipient_groups {
+  id uuid [pk]
+  name text [not null, unique]
+  description text
+  is_default boolean [not null, default: false, note: 'unique where true — fallback when no rule matches']
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table recipient_group_members {
+  id uuid [pk]
+  group_id uuid [not null, ref: > recipient_groups.id]
+  email text [not null]
+  name text
+
+  indexes {
+    (group_id, email) [unique]
+  }
+}
+
+Table routing_rules {
+  id uuid [pk]
+  area_of_interest text [not null]
+  intent inquiry_intent [null, note: 'NULL = any intent']
+  recipient_group_id uuid [not null, ref: > recipient_groups.id]
+  priority int [not null, default: 100]
+
+  Note: '[DRAFT] Admin-only. Routing changes need no code (RFQ §4.4).'
+}
+
+// ---------------------------------------------------------------------------
+// SEO, settings, governance
+// ---------------------------------------------------------------------------
+
+Table redirects {
+  id uuid [pk]
+  source_path text [not null, unique]
+  destination text [not null]
+  status_code int [not null, default: 301, note: 'CHECK in (301, 302, 307, 308)']
+  is_active boolean [not null, default: true]
+  created_by uuid [ref: > profiles.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Applied in proxy.ts from a cached map (revalidated on change).'
+}
+
+Table site_settings {
+  key text [pk, note: 'analytics, social_links, footer, privacy_notice, cookie_notice, contact_defaults']
+  value jsonb [not null]
+  updated_by uuid [ref: > profiles.id]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT] Admin-only writes; public read of whitelisted keys.'
+}
+
+Table audit_log {
+  id bigint [pk, increment]
+  actor_id uuid [ref: > profiles.id]
+  action text [not null, note: 'create | update | publish | unpublish | delete | role_change | login_as …']
+  entity_type text [not null]
+  entity_id text
+  summary jsonb [note: 'Changed field names, never secrets or reset links']
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (entity_type, entity_id, created_at)
+    (actor_id, created_at)
+  }
+
+  Note: '[DRAFT] Append-only (no UPDATE/DELETE grants). Admin read.'
+}
+
+Table content_revisions {
+  id uuid [pk]
+  entity_type text [not null]
+  entity_id uuid [not null]
+  snapshot jsonb [not null]
+  created_by uuid [ref: > profiles.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: '[DRAFT, optional] Preview/rollback and optimistic-concurrency checks (compare updated_at).'
+}

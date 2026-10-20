@@ -7,8 +7,7 @@ import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
-import type { Locale } from "@/constants/locales";
-import { publicPath } from "@/constants/routes";
+import { ROUTES } from "@/constants/routes";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import type { Article, ArticleListItem } from "@/types/article";
 import { cn } from "@/lib/utils";
@@ -31,14 +30,12 @@ type InsightDetailLabels = {
 };
 
 type InsightDetailPageProps = {
-  locale: Locale;
   article: Article;
   related: ArticleListItem[];
   labels: InsightDetailLabels;
 };
 
 export function InsightDetailPage({
-  locale,
   article,
   related,
   labels,
@@ -66,7 +63,7 @@ export function InsightDetailPage({
       <article className="pb-16 lg:pb-24">
         <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
           <Link
-            href={publicPath(locale, "insights")}
+            href={ROUTES.insights}
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
               "min-h-11 gap-2 px-0 hover:bg-transparent",
@@ -158,7 +155,7 @@ export function InsightDetailPage({
                 {labels.moreInsights}
               </h2>
               <Link
-                href={publicPath(locale, "insights")}
+                href={ROUTES.insights}
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "min-h-11 shrink-0 gap-1",
@@ -171,7 +168,7 @@ export function InsightDetailPage({
             <ul className="mt-8 grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
               {related.map((item) => (
                 <li key={item.id}>
-                  <BlogCard locale={locale} article={item} />
+                  <BlogCard article={item} />
                 </li>
               ))}
             </ul>
@@ -185,15 +182,13 @@ export function InsightDetailPage({
 export type { InsightDetailLabels };
 
 export function insightDetailLabelsFor(
-  locale: Locale,
   blogLabels: BlogLabels,
 ): InsightDetailLabels {
   return {
-    backToInsights:
-      locale === "fr" ? "Retour aux perspectives" : "Back to insights",
+    backToInsights: "Back to insights",
     writtenBy: blogLabels.writtenBy,
     publishedOn: blogLabels.publishedOn,
     fileUnder: blogLabels.fileUnder,
-    moreInsights: locale === "fr" ? "Autres articles" : "More insights",
+    moreInsights: "More insights",
   };
 }

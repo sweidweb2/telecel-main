@@ -38,3 +38,19 @@ Branch: `feat/foundation-setup`. Source of scope: Telecel Global RFQ (Aug 2026, 
 
 ## Not in this branch (needs people or external access)
 Collect documents; create the Supabase project and share credentials; Google Cloud OAuth client; SMTP account; official logo/font files; the Public Pages front-end (AS).
+
+## Codex review (2026-10-20) and what changed
+
+Codex (gpt-6-astra, high effort) reviewed this plan read-only. Adopted:
+
+- **Open redirect fixed:** the inherited `next` checks accepted `/\evil.example`. Now there is one validator, `lib/safe-redirect.ts`, with an allow-list (`/dashboard`, `/update-password`) and tests for encoded and backslash variants.
+- **Authorization at every operation:** `requireStaff` / `requireSection` (pages) and `authorizeAction` (actions) in `data/auth.ts`, plus RLS. The proxy is optimistic only. `server-only` is imported in `data/` and `lib/supabase/admin.ts`.
+- **24h timeout redesigned:** uses `auth.sessions.created_at` via `session_id` (immutable), not JWT `amr`/`iat`. Enforced inside `is_staff()`/`is_admin()`, so direct API calls are covered.
+- **No default role:** new accounts get no CMS access unless an admin assigns admin/editor. Admins can suspend users (`is_active` plus an Auth ban). The ASIP "default password = `password`" was removed.
+- **Reset links** use the `token_hash` flow (`/auth/confirm`), not PKCE, so they work across devices. Admin-generated recovery links are deferred.
+- **Kept the blog CMS** and adapted it as Insights → News (editors can manage it; old and new slugs are both revalidated) instead of deleting it (decision 1 above amended).
+- **Kept typed English label modules**, removed locale routing (decision 2 above confirmed).
+- **No experimental `forbidden()`:** a stable `AccessDenied` component is used instead (decision 9 amended).
+- `not-found.tsx` no longer reads the session. Public pages stay static.
+
+Deferred (tracked in `editor-portal-features.md` / `schema.dbml`): audit log, shared rate limiting, private draft-media bucket, revisions/concurrency, inquiry delivery retries/retention, restore testing.

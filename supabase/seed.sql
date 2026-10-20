@@ -1,17 +1,18 @@
 -- Local development seed data belongs here.
 -- Keep production data and credentials out of this file.
 --
--- Seeds a confirmed admin for dashboard testing:
--- email: asweid657@gmail.com
--- password: ali@1234
+-- Seeds a confirmed admin for LOCAL dashboard testing only (never run against
+-- a hosted project; the deploy workflow does not run seed.sql):
+-- email: admin@telecel.local
+-- password: LocalAdmin#2026
 
 create extension if not exists pgcrypto with schema extensions;
 
 do $$
 declare
   seed_user_id uuid := gen_random_uuid();
-  seed_email text := 'asweid657@gmail.com';
-  seed_password text := 'ali@1234';
+  seed_email text := 'admin@telecel.local';
+  seed_password text := 'LocalAdmin#2026';
 begin
   if exists (select 1 from auth.users where email = seed_email) then
     return;
@@ -42,8 +43,8 @@ begin
     seed_email,
     extensions.crypt(seed_password, extensions.gen_salt('bf')),
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"full_name":"ASIP Admin"}'::jsonb,
+    '{"provider":"email","providers":["email"],"app_role":"admin"}'::jsonb,
+    '{"full_name":"Local Admin"}'::jsonb,
     now(),
     now(),
     '',

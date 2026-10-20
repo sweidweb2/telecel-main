@@ -1,80 +1,43 @@
 import { z } from "zod";
 
-import { DEFAULT_LOCALE, type Locale } from "@/constants/locales";
+export const PASSWORD_MIN = 10;
+export const PASSWORD_MAX = 128;
 
-type AuthValidationMessages = {
-  invalidEmail: string;
-  passwordRequired: string;
-  passwordMin: string;
-  passwordLetter: string;
-  passwordNumber: string;
-  nameMin: string;
-  nameMax: string;
-  confirmRequired: string;
-  passwordsMismatch: string;
-};
+const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254, "Email must be 254 characters or fewer")
+  .pipe(z.email("Enter a valid email address"));
 
-const VALIDATION_MESSAGES: Record<Locale, AuthValidationMessages> = {
-  en: {
-    invalidEmail: "Enter a valid email address",
-    passwordRequired: "Password is required",
-    passwordMin: "Password must be at least 8 characters",
-    passwordLetter: "Password must include a letter",
-    passwordNumber: "Password must include a number",
-    nameMin: "Name must be at least 2 characters",
-    nameMax: "Name is too long",
-    confirmRequired: "Confirm your password",
-    passwordsMismatch: "Passwords do not match",
-  },
-  fr: {
-    invalidEmail: "Entrez une adresse e-mail valide",
-    passwordRequired: "Le mot de passe est requis",
-    passwordMin: "Le mot de passe doit contenir au moins 8 caractères",
-    passwordLetter: "Le mot de passe doit contenir une lettre",
-    passwordNumber: "Le mot de passe doit contenir un chiffre",
-    nameMin: "Le nom doit contenir au moins 2 caractères",
-    nameMax: "Le nom est trop long",
-    confirmRequired: "Confirmez votre mot de passe",
-    passwordsMismatch: "Les mots de passe ne correspondent pas",
-  },
-};
+/** Shared strength rule for any password a person chooses or an admin sets. */
+export const newPasswordSchema = z
+  .string()
+  .min(PASSWORD_MIN, `Password must be at least ${PASSWORD_MIN} characters`)
+  .max(PASSWORD_MAX, `Password must be ${PASSWORD_MAX} characters or fewer`)
+  .regex(/[a-z]/, "Password must include a lowercase letter")
+  .regex(/[A-Z]/, "Password must include an uppercase letter")
+  .regex(/[0-9]/, "Password must include a number");
 
-export function loginSchemaFor(locale: Locale = DEFAULT_LOCALE) {
-  const messages = VALIDATION_MESSAGES[locale];
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Password is required").max(PASSWORD_MAX),
+});
 
-  return z.object({
-    email: z.email(messages.invalidEmail).trim().toLowerCase(),
-    password: z.string().min(1, messages.passwordRequired),
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const updatePasswordSchema = z
+  .object({
+    password: newPasswordSchema,
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
-}
-
-export function registerSchemaFor(locale: Locale = DEFAULT_LOCALE) {
-  const messages = VALIDATION_MESSAGES[locale];
-
-  return z
-    .object({
-      fullName: z
-        .string()
-        .trim()
-        .min(2, messages.nameMin)
-        .max(80, messages.nameMax),
-      email: z.email(messages.invalidEmail).trim().toLowerCase(),
-      password: z
-        .string()
-        .min(8, messages.passwordMin)
-        .regex(/[A-Za-z]/, messages.passwordLetter)
-        .regex(/[0-9]/, messages.passwordNumber),
-      confirmPassword: z.string().min(1, messages.confirmRequired),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: messages.passwordsMismatch,
-      path: ["confirmPassword"],
-    });
-}
-
-/** Default English schemas for shared typing and unit tests. */
-export const loginSchema = loginSchemaFor(DEFAULT_LOCALE);
-export const registerSchema = registerSchemaFor(DEFAULT_LOCALE);
 
 export type LoginInput = z.infer<typeof loginSchema>;
-export type RegisterInput = z.infer<typeof registerSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;

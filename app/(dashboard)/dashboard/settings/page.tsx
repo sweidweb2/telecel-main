@@ -1,3 +1,13 @@
-export default function SettingsPage() {
-  return <div className="flex flex-1" />;
+import { PortalPlaceholder } from "@/components/dashboard/portal-placeholder";
+import { AccessDenied } from "@/components/layout/access-denied";
+import { getPortalSection } from "@/constants/dashboard-nav";
+import { ROUTES } from "@/constants/routes";
+import { requireSection } from "@/data/auth";
+
+export const metadata = { title: getPortalSection(ROUTES.settings)?.title };
+
+export default async function SettingsPage() {
+  const { section, allowed } = await requireSection(ROUTES.settings);
+  if (!allowed) return <AccessDenied />;
+  return <PortalPlaceholder section={section} />;
 }

@@ -119,7 +119,6 @@ export function UsersFilters({ query, onSearchChange }: UsersFiltersProps) {
             <SelectItem value="all">All roles</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="editor">Editor</SelectItem>
-            <SelectItem value="viewer">Viewer</SelectItem>
           </SelectContent>
         </Select>
 

@@ -2,61 +2,43 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileQuestionIcon } from "lucide-react";
 
-import { enFooterLabels } from "@/components/layout/site-footer-labels";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { enNavLabels } from "@/components/layout/site-nav-labels";
 import { ErrorScreen } from "@/components/layout/error-screen";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteNavbar } from "@/components/layout/site-navbar";
 import { buttonVariants } from "@/components/ui/button";
-import { publicPath, ROUTES } from "@/constants/routes";
-import { isAuthenticated } from "@/data/auth";
+import { ROUTES } from "@/constants/routes";
+import { SITE_CTAS } from "@/constants/site-nav";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Page not found",
+  robots: { index: false, follow: true },
 };
 
-export default async function NotFound() {
-  const loggedIn = await isAuthenticated();
-
+/** Static 404 — no session lookup, so it stays cheap and cacheable. */
+export default function NotFound() {
   return (
     <>
-      <SiteNavbar
-        locale="en"
-        labels={enNavLabels()}
-        isAuthenticated={loggedIn}
-      />
+      <SiteNavbar />
       <div className="flex flex-1 flex-col">
         <ErrorScreen
           icon={FileQuestionIcon}
           code="404"
           title="Page not found"
-          description="This page does not exist or was moved. Check the URL, or go back home."
+          description="This page does not exist or has moved. Check the URL, or continue from the home page."
         >
-          <Link
-            href={publicPath("en")}
-            className={cn(buttonVariants(), "w-full")}
-          >
-            Go home
+          <Link href={ROUTES.home} className={cn(buttonVariants(), "w-full")}>
+            Go to home page
           </Link>
-          {loggedIn ? (
-            <Link
-              href={ROUTES.dashboard}
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href={ROUTES.login}
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-            >
-              Login
-            </Link>
-          )}
+          <Link
+            href={SITE_CTAS.talkToSales.href}
+            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+          >
+            {SITE_CTAS.talkToSales.label}
+          </Link>
         </ErrorScreen>
       </div>
-      <SiteFooter labels={enFooterLabels()} />
+      <SiteFooter />
     </>
   );
 }

@@ -23,7 +23,6 @@ import type { UserListQuery } from "@/validations/users";
 const ROLE_VARIANT = {
   admin: "default",
   editor: "secondary",
-  viewer: "outline",
 } as const;
 
 export function UsersTable({
@@ -31,11 +30,13 @@ export function UsersTable({
   total,
   totalPages,
   query,
+  currentUserId,
 }: {
   users: Profile[];
   total: number;
   totalPages: number;
   query: UserListQuery;
+  currentUserId: string;
 }) {
   const [clientSearch, setClientSearch] = useState(query.search);
   const [prevQuerySearch, setPrevQuerySearch] = useState(query.search);
@@ -102,9 +103,14 @@ export function UsersTable({
                       {user.email}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={ROLE_VARIANT[user.role]}>
-                        {user.role}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        <Badge variant={user.role ? ROLE_VARIANT[user.role] : "outline"}>
+                          {user.role ?? "no access"}
+                        </Badge>
+                        {user.is_active ? null : (
+                          <Badge variant="destructive">suspended</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {format(new Date(user.created_at), "MMM d, yyyy")}
@@ -113,7 +119,7 @@ export function UsersTable({
                       {format(new Date(user.updated_at), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="pr-4">
-                      <UserRowActions user={user} />
+                      <UserRowActions user={user} isCurrentUser={user.id === currentUserId} />
                     </TableCell>
                   </TableRow>
                 ))

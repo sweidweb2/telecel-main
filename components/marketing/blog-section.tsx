@@ -10,7 +10,6 @@ import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { categoryToTabId, type BlogTabId } from "@/constants/blog-ui";
-import type { Locale } from "@/constants/locales";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
 
@@ -24,22 +23,19 @@ function authorInitials(name: string) {
 }
 
 type BlogSectionProps = {
-  locale: Locale;
   labels: BlogLabels;
   articles: ArticleListItem[];
   featured?: ArticleListItem;
 };
 
 function FeaturedPost({
-  locale,
   labels,
   article,
 }: {
-  locale: Locale;
   labels: BlogLabels;
   article: ArticleListItem;
 }) {
-  const href = insightPath(locale, article.slug);
+  const href = insightPath(article.slug);
 
   return (
     <>
@@ -124,14 +120,13 @@ function FeaturedPost({
       </Link>
 
       <div className="md:hidden">
-        <BlogCard locale={locale} article={article} />
+        <BlogCard article={article} />
       </div>
     </>
   );
 }
 
 export function BlogSection({
-  locale,
   labels,
   articles,
   featured,
@@ -165,7 +160,7 @@ export function BlogSection({
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-16 sm:px-6 md:gap-16 lg:pb-24">
         {featured ? (
-          <FeaturedPost locale={locale} labels={labels} article={featured} />
+          <FeaturedPost labels={labels} article={featured} />
         ) : null}
 
         <Tabs
@@ -195,7 +190,7 @@ export function BlogSection({
           <ul className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
             {filteredArticles.map((article) => (
               <li key={article.id}>
-                <BlogCard locale={locale} article={article} />
+                <BlogCard article={article} />
               </li>
             ))}
           </ul>

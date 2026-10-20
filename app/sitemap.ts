@@ -1,44 +1,36 @@
 import type { MetadataRoute } from "next";
 
-import { LOCALES } from "@/constants/locales";
-import { PUBLIC_PAGE_SLUGS } from "@/constants/public-pages";
+import { ROUTES, insightPath } from "@/constants/routes";
+import { SITE_NAV, type SiteNavLink } from "@/constants/site-nav";
 import { getInsightSlugRows } from "@/data/insights";
-import { localeUrl } from "@/lib/seo/alternates";
+import { absoluteUrl } from "@/lib/seo/site";
+
+/** Only routes that exist (`live`) are listed; anchors (#…) never are. */
+function liveLinks(): SiteNavLink[] {
+  const links = SITE_NAV.flatMap((section) => [section, ...(section.children ?? [])]);
+  const seen = new Set<string>();
+  return links.filter((link) => {
+    if (!link.live || link.href.includes("#") || seen.has(link.href)) return false;
+    seen.add(link.href);
+    return true;
+  });
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const entries: MetadataRoute.Sitemap = [];
   const insightRows = await getInsightSlugRows();
 
-  for (const locale of LOCALES) {
-    for (const slug of PUBLIC_PAGE_SLUGS) {
-      const path = slug === "" ? "/" : `/${slug}`;
-      entries.push({
-        url: localeUrl(locale, path),
-        changeFrequency: slug === "insights" ? "weekly" : "monthly",
-        priority: slug === "" ? 1 : 0.8,
-        alternates: {
-          languages: Object.fromEntries(
-            LOCALES.map((loc) => [loc, localeUrl(loc, path)]),
-          ),
-        },
-      });
-    }
-
-    for (const row of insightRows) {
-      const path = `/insights/${row.slug}`;
-      entries.push({
-        url: localeUrl(locale, path),
-        lastModified: row.updated_at ? new Date(row.updated_at) : undefined,
-        changeFrequency: "monthly",
-        priority: 0.7,
-        alternates: {
-          languages: Object.fromEntries(
-            LOCALES.map((loc) => [loc, localeUrl(loc, path)]),
-          ),
-        },
-      });
-    }
-  }
-
-  return entries;
+  return [
+    { url: absoluteUrl(ROUTES.home), changeFrequency: "weekly", priority: 1 },
+    ...liveLinks().map((link) => ({
+      url: absoluteUrl(link.href),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    })),
+    ...insightRows.map((row) => ({
+      url: absoluteUrl(insightPath(row.slug)),
+      lastModified: row.updated_at ? new Date(row.updated_at) : undefined,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
+  ];
 }

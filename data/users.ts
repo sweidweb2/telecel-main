@@ -1,26 +1,13 @@
-import { cache } from "react";
+import "server-only";
 
-import { createClient } from "@/lib/supabase/server";
+import type { StaffSession } from "@/data/auth";
 import type { Profile, UserListResult, UserStats } from "@/types/profile";
 import type { UserListQuery } from "@/validations/users";
 
-const USER_COLUMNS = "id, email, full_name, role, created_at, updated_at" as const;
+const USER_COLUMNS =
+  "id, email, full_name, role, is_active, created_at, updated_at" as const;
 
-export async function getUsers(query: UserListQuery): Promise<UserListResult> {
-  const supabase = await createClient();
-  return fetchUsers(supabase, query);
-}
-
-/**
- * Per-request memoization only.
- * Stats are one RPC (`get_user_stats`) — not four head-count round trips.
- */
-export const getUserStats = cache(async (): Promise<UserStats> => {
-  const supabase = await createClient();
-  return fetchUserStats(supabase);
-});
-
-type ServerClient = Awaited<ReturnType<typeof createClient>>;
+type ServerClient = StaffSession["supabase"];
 
 async function fetchUsers(
   supabase: ServerClient,
@@ -67,7 +54,7 @@ async function fetchUserStats(supabase: ServerClient): Promise<UserStats> {
       total: 0,
       admins: 0,
       editors: 0,
-      viewers: 0,
+      noAccess: 0,
       newThisWeek: 0,
       newThisMonth: 0,
     };
@@ -77,31 +64,23 @@ async function fetchUserStats(supabase: ServerClient): Promise<UserStats> {
     total: Number(row.total ?? 0),
     admins: Number(row.admins ?? 0),
     editors: Number(row.editors ?? 0),
-    viewers: Number(row.viewers ?? 0),
+    noAccess: Number(row.no_access ?? 0),
     newThisWeek: Number(row.new_this_week ?? 0),
     newThisMonth: Number(row.new_this_month ?? 0),
   };
 }
 
 /**
- * Single shared client: admin check → list + stats in parallel.
- * Cuts duplicate createClient/getUser round trips on the Users page.
+ * List + stats in parallel for the Users page. The caller must already have
+ * passed an admin guard; RLS (is_admin) enforces the same rule in the DB.
  */
-export async function getUsersPageData(query: UserListQuery): Promise<
-  | { status: "forbidden" }
-  | { status: "ok"; list: UserListResult; stats: UserStats }
-> {
-  const supabase = await createClient();
-
-  // `is_admin()` uses auth.uid() from the JWT — no extra getUser() needed.
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_admin");
-  if (adminError) throw adminError;
-  if (!isAdmin) return { status: "forbidden" };
-
+export async function getUsersPageData(
+  session: StaffSession,
+  query: UserListQuery
+): Promise<{ list: UserListResult; stats: UserStats }> {
   const [list, stats] = await Promise.all([
-    fetchUsers(supabase, query),
-    fetchUserStats(supabase),
+    fetchUsers(session.supabase, query),
+    fetchUserStats(session.supabase),
   ]);
-
-  return { status: "ok", list, stats };
+  return { list, stats };
 }

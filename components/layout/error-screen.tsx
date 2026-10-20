@@ -51,7 +51,9 @@ export function ErrorScreen({
               {code}
             </p>
           ) : null}
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>
+            <h1>{title}</h1>
+          </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">{children}</CardContent>
