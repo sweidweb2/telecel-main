@@ -1,2 +1,0 @@
-﻿@import "tailwindcss";
-.test { @apply fixed inset-0 m-auto h-fit w-[min(calc(100vw-2rem),32rem)]; }
