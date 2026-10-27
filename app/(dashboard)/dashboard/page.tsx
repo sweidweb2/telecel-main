@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const { session } = await requireSection(ROUTES.dashboard);
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col gap-10 p-5 sm:p-8">
+    <main className="dashboard-page gap-10">
       <PortalPageHeader
         title="Overview"
         description={`Signed in as ${session.email}. Your role: ${session.role}.`}

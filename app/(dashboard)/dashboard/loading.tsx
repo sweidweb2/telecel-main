@@ -1,5 +1,11 @@
-import { DashboardPageSkeleton } from "@/components/dashboard/page-skeleton";
+﻿import { DashboardPageSkeleton } from "@/components/dashboard/page-skeleton";
+import { RouteSkeleton } from "@/components/skeleton/route-skeleton";
 
-export default function DashboardLoading() {
-  return <DashboardPageSkeleton />;
+export default function Loading() {
+  return (
+    <RouteSkeleton
+      name="dashboard-overview"
+      fallback={<DashboardPageSkeleton />}
+    />
+  );
 }

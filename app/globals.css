@@ -238,6 +238,19 @@
   }
 }
 
+/* Shared CMS / dashboard page chrome — keep skeletons in sync. */
+@utility dashboard-page {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0%;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+  @media (width >= 40rem) {
+    padding: 1.5rem;
+  }
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

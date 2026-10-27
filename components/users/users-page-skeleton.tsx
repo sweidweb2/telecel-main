@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Shadcn fallback for `/dashboard/users` until boneyard bones are captured. */
 export function UsersPageSkeleton() {
   return (
-    <main className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6">
+    <main className="dashboard-page">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-2">
           <Skeleton className="h-8 w-24" />

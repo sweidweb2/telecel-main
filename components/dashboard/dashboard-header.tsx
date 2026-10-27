@@ -67,7 +67,7 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 sm:px-8">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 sm:px-6">
       <SidebarTrigger className="-ml-1" />
       <h1 className="min-w-0 truncate font-heading text-lg font-medium text-ink">{title}</h1>
       <DropdownMenu>

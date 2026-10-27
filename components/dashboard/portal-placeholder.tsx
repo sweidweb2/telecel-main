@@ -4,7 +4,7 @@ import type { PortalSection } from "@/constants/dashboard-nav";
 /** Empty portal section: heading plus the capabilities planned for it. */
 export function PortalPlaceholder({ section }: { section: PortalSection }) {
   return (
-    <main className="flex min-w-0 flex-1 flex-col gap-8 p-5 sm:p-8">
+    <main className="dashboard-page gap-8">
       <PortalPageHeader title={section.title} description={section.description} />
       <section aria-labelledby="planned-heading" className="max-w-3xl">
         <div className="flex items-center gap-3">
