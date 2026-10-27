@@ -143,12 +143,12 @@ export function BlogSection({
   return (
     <main>
       <section className="py-10 sm:py-14 lg:py-16">
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <div className="container-site">
           <div className="flex w-full max-w-3xl flex-col">
             <span className="text-sm font-semibold text-primary">
               {labels.eyebrow}
             </span>
-            <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+            <h1 className="type-display mt-3 text-balance">
               {labels.title}
             </h1>
             <p className="mt-4 text-base text-muted-foreground sm:mt-6 sm:text-lg">
@@ -158,7 +158,7 @@ export function BlogSection({
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-16 sm:px-6 md:gap-16 lg:pb-24">
+      <div className="container-site flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
         {featured ? (
           <FeaturedPost labels={labels} article={featured} />
         ) : null}

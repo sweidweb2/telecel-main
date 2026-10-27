@@ -61,7 +61,7 @@ export function InsightDetailPage({
       <JsonLd data={structuredData} />
 
       <article className="pb-16 lg:pb-24">
-        <div className="mx-auto w-full max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
+        <div className="container-site pt-8 sm:pt-10 lg:pt-12">
           <Link
             href={ROUTES.insights}
             className={cn(
@@ -77,16 +77,14 @@ export function InsightDetailPage({
             <p className="text-sm font-semibold text-primary">
               {article.category.name}
             </p>
-            <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-              {article.title}
-            </h1>
+            <h1 className="type-display mt-3 text-balance">{article.title}</h1>
             <p className="mt-4 text-base text-muted-foreground sm:mt-6 sm:text-lg">
               {article.summary}
             </p>
           </header>
         </div>
 
-        <div className="mx-auto mt-8 w-full max-w-6xl px-4 sm:mt-10 sm:px-6">
+        <div className="container-site mt-8 sm:mt-10">
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted md:aspect-[2/1]">
             {article.thumbnailUrl ? (
               <Image
@@ -95,13 +93,13 @@ export function InsightDetailPage({
                 fill
                 priority
                 className="object-cover"
-                sizes="(max-width: 1152px) 100vw, 1152px"
+                sizes="(max-width: 1280px) 100vw, 1280px"
               />
             ) : null}
           </div>
         </div>
 
-        <div className="mx-auto mt-8 w-full max-w-6xl px-4 sm:mt-10 sm:px-6">
+        <div className="container-site mt-8 sm:mt-10">
           <div className="flex flex-col gap-8 border-b pb-8 sm:flex-row sm:items-end sm:justify-between lg:pb-10">
             <div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
               <div className="flex flex-col gap-2">
@@ -141,19 +139,17 @@ export function InsightDetailPage({
           </div>
         </div>
 
-        <div className="mx-auto mt-8 w-full max-w-3xl px-4 sm:mt-10 sm:px-6">
+        <div className="container-site mt-8 sm:mt-10">
           <div
-            className="prose prose-neutral dark:prose-invert max-w-none text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8"
+            className="prose prose-neutral dark:prose-invert mx-auto max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         </div>
 
         {related.length > 0 ? (
-          <section className="mx-auto mt-16 w-full max-w-6xl px-4 sm:mt-20 sm:px-6">
+          <section className="container-site mt-16 sm:mt-20">
             <div className="flex items-end justify-between gap-4">
-              <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-                {labels.moreInsights}
-              </h2>
+              <h2 className="type-section text-balance">{labels.moreInsights}</h2>
               <Link
                 href={ROUTES.insights}
                 className={cn(
