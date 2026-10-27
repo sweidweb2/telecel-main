@@ -5,7 +5,7 @@ import type { ActivityLogListResult, ActivityLogRow } from "@/types/observabilit
 import type { ActivityLogQuery } from "@/validations/audit-log";
 
 const ACTIVITY_COLUMNS =
-  "id, actor_id, action, entity_type, entity_id, summary, created_at, actor:profiles!audit_log_actor_id_fkey(full_name, email)" as const;
+  "id, action, entity_type, entity_id, created_at, actor:profiles!audit_log_actor_id_fkey(full_name, email)" as const;
 
 /**
  * Paginated activity log for the admin Activity page.

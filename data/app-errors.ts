@@ -5,7 +5,7 @@ import type { ErrorLogListResult, ErrorLogRow } from "@/types/observability";
 import type { ErrorLogQuery } from "@/validations/app-errors";
 
 const ERROR_COLUMNS =
-  "id, created_at, severity, source, code, message, actor_id, request_id, context, actor:profiles!app_errors_actor_id_fkey(full_name, email)" as const;
+  "id, created_at, severity, source, message, actor:profiles!app_errors_actor_id_fkey(full_name, email)" as const;
 
 /**
  * Paginated error log for the admin Error log page.

@@ -5,7 +5,7 @@ import { match, P } from "ts-pattern";
 
 import {
   recordActivity,
-  recordAppError,
+  unexpectedActionError,
 } from "@/actions/observability";
 import { ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
@@ -67,16 +67,13 @@ async function userUnexpectedError(
   error: { code?: string; message?: string },
 ): Promise<UserActionResult> {
   const mapped = mapSupabaseError(error.message ?? "");
-  if (!isExpectedUserError(error.message ?? "")) {
-    await recordAppError({
-      severity: "error",
-      source,
-      code: error.code ?? null,
-      message: error.message ?? mapped,
-      actorId,
-    });
-  }
-  return { status: "error", message: mapped };
+  return unexpectedActionError({
+    source,
+    actorId,
+    error,
+    isExpected: isExpectedUserError(error.message ?? ""),
+    userMessage: mapped,
+  });
 }
 
 export async function createUser(

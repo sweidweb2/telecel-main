@@ -149,3 +149,34 @@ export async function recordAppError(input: RecordAppErrorInput): Promise<void> 
     );
   }
 }
+
+export type UnexpectedActionErrorResult = {
+  status: "error";
+  message: string;
+};
+
+/**
+ * Log an unexpected action failure (unless `isExpected`) and return a UI error.
+ * Prefer this over per-entity `*UnexpectedError` wrappers.
+ */
+export async function unexpectedActionError(input: {
+  source: string;
+  actorId?: string | null;
+  error?: { code?: string; message?: string } | null;
+  /** Expected user mistakes — skip `app_errors` (noise control). */
+  isExpected?: boolean;
+  userMessage: string;
+  context?: Record<string, unknown> | null;
+}): Promise<UnexpectedActionErrorResult> {
+  if (!input.isExpected) {
+    await recordAppError({
+      severity: "error",
+      source: input.source,
+      code: input.error?.code ?? null,
+      message: input.error?.message ?? input.userMessage,
+      actorId: input.actorId ?? null,
+      context: input.context,
+    });
+  }
+  return { status: "error", message: input.userMessage };
+}

@@ -14,6 +14,7 @@ import {
   recordAppError,
   scrubContext,
   truncateMessage,
+  unexpectedActionError,
 } from "@/actions/observability";
 
 describe("truncateMessage", () => {
@@ -103,5 +104,41 @@ describe("recordActivity / recordAppError", () => {
     ).resolves.toBeUndefined();
 
     spy.mockRestore();
+  });
+});
+
+describe("unexpectedActionError", () => {
+  beforeEach(() => {
+    insertMock.mockReset();
+    fromMock.mockClear();
+    insertMock.mockResolvedValue({ error: null });
+  });
+
+  it("logs and returns a UI error for unexpected failures", async () => {
+    const result = await unexpectedActionError({
+      source: "actions.blogs.createBlog",
+      actorId: "11111111-1111-1111-1111-111111111111",
+      error: { code: "42P01", message: "relation missing" },
+      userMessage: "Something went wrong. Please try again.",
+    });
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Something went wrong. Please try again.",
+    });
+    expect(fromMock).toHaveBeenCalledWith("app_errors");
+  });
+
+  it("skips logging when the failure is expected", async () => {
+    const result = await unexpectedActionError({
+      source: "actions.users.createUser",
+      actorId: "11111111-1111-1111-1111-111111111111",
+      error: { message: "already registered" },
+      isExpected: true,
+      userMessage: "A user with this email already exists.",
+    });
+
+    expect(result.status).toBe("error");
+    expect(fromMock).not.toHaveBeenCalled();
   });
 });

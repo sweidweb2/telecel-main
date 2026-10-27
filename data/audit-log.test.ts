@@ -47,11 +47,9 @@ describe("getActivityLogPage", () => {
       data: [
         {
           id: 1,
-          actor_id: null,
           action: "create",
           entity_type: "blog",
           entity_id: "abc",
-          summary: null,
           created_at: "2026-10-27T00:00:00.000Z",
           actor: null,
         },
