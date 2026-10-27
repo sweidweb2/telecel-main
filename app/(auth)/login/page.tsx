@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { loginReasonNotice } from "@/components/auth/auth-labels";
 import { AuthNotice, AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
-import { getMaintenanceFlags } from "@/data/site-settings";
+import { getMaintenanceMode } from "@/data/site-settings";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
-import { isLoginBlocked } from "@/lib/maintenance";
+import { isMaintenanceActive } from "@/lib/maintenance";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 
 export const metadata: Metadata = {
@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const [flags, params] = await Promise.all([
-    getMaintenanceFlags(),
+  const [mode, params] = await Promise.all([
+    getMaintenanceMode(),
     searchParams,
   ]);
-  const maintenanceOn = isLoginBlocked(flags);
+  const maintenanceOn = isMaintenanceActive(mode);
 
   const rawNext = typeof params.next === "string" ? params.next : undefined;
   const next = rawNext ? safeRedirectPath(rawNext) : undefined;

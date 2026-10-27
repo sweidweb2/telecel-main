@@ -17,7 +17,7 @@ const ALLOWED_TYPES = new Set<EmailOtpType>([
  * Email-link verification (token_hash flow). Unlike the PKCE `code` flow, it
  * works when the link is opened on another device. The email templates in
  * Supabase must point here — see docs/04-runbooks/auth-setup.md.
- * During L1/L2 maintenance only active admins keep the new session.
+ * During maintenance only active admins keep the new session.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;

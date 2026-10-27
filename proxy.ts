@@ -3,18 +3,23 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { loginPath, ROUTES } from "@/constants/routes";
 import {
-  getMaintenanceFlagsForProxy,
+  getMaintenanceModeForProxy,
   isAdminClaim,
-  isLoginBlocked,
-  isPublicBlocked,
+  isMaintenanceActive,
 } from "@/lib/maintenance";
 
 /**
  * Optimistic checks only (Next 16 "proxy", formerly middleware):
- * refreshes the Supabase session cookies, enforces maintenance Level 1 / 2,
- * and redirects signed-out visitors away from the CMS. Role, account status
- * and the 24h absolute session lifetime are enforced server-side
- * (data/auth.ts) and in RLS.
+ * refreshes the Supabase session cookies, enforces maintenance mode, and
+ * redirects signed-out visitors away from the CMS. Role, account status and
+ * the 24h absolute session lifetime are enforced server-side (data/auth.ts)
+ * and in RLS.
+ *
+ * Maintenance policy (full mode): rewrite public traffic to /maintenance;
+ * keep auth surfaces + sign-out reachable; signed-in staff keep /dashboard/*
+ * so they can turn maintenance off. Admin exceptions for *new* sessions are
+ * enforced in actions/auth and auth route handlers (DB role), not via
+ * JWT-admin public browse.
  */
 
 const AUTH_ONLY_PAGES = new Set<string>([ROUTES.login]);
@@ -22,7 +27,7 @@ const AUTH_ONLY_PAGES = new Set<string>([ROUTES.login]);
 /** Legacy self-serve reset URL — contact form is the supported path now. */
 const LEGACY_FORGOT_PASSWORD = "/forgot-password";
 
-/** Paths that must stay reachable during Level 2 public maintenance. */
+/** Paths that must stay reachable during full maintenance. */
 const MAINTENANCE_PASSTHROUGH = new Set<string>([
   ROUTES.maintenance,
   ROUTES.signOut,
@@ -91,7 +96,6 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   const signedIn = Boolean(claims?.sub);
-  const isAdmin = isAdminClaim(claims);
   const { pathname, search } = request.nextUrl;
 
   if (pathname === LEGACY_FORGOT_PASSWORD) {
@@ -100,26 +104,20 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(target, response);
   }
 
-  const maintenance = await getMaintenanceFlagsForProxy();
-  const loginBlocked = isLoginBlocked(maintenance);
-  const publicBlocked = isPublicBlocked(maintenance);
+  const maintenanceOn = isMaintenanceActive(await getMaintenanceModeForProxy());
 
-  if (publicBlocked) {
-    // Admins may browse public pages and use auth surfaces; signed-in staff
-    // keep the dashboard so they can turn maintenance off.
-    const allowDashboard = signedIn && isProtectedPath(pathname);
-    const allowAdminBrowse = signedIn && isAdmin;
-    const allowAuth = isAuthSurfacePath(pathname);
-    const passthrough = MAINTENANCE_PASSTHROUGH.has(pathname);
-    if (!allowDashboard && !allowAdminBrowse && !allowAuth && !passthrough) {
+  if (maintenanceOn) {
+    const allow =
+      MAINTENANCE_PASSTHROUGH.has(pathname) ||
+      isAuthSurfacePath(pathname) ||
+      (signedIn && isProtectedPath(pathname));
+    if (!allow) {
       return rewriteWithCookies(
         new URL(ROUTES.maintenance, request.url),
         response,
       );
     }
   }
-  // Level 1 / 2: auth surfaces stay reachable so admins can sign in.
-  // Non-admin sessions are rejected in actions/auth and auth route handlers.
 
   if (isProtectedPath(pathname) && !signedIn) {
     // Always send anonymous CMS visitors to login — including during
@@ -131,12 +129,15 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(target, response);
   }
 
-  if (
-    AUTH_ONLY_PAGES.has(pathname) &&
-    signedIn &&
-    (!loginBlocked || isAdmin)
-  ) {
-    return redirectWithCookies(new URL(ROUTES.dashboard, request.url), response);
+  if (AUTH_ONLY_PAGES.has(pathname) && signedIn) {
+    // During maintenance only JWT-admins leave /login for the dashboard;
+    // DB role is still enforced there. Non-admins stay on login.
+    if (!maintenanceOn || isAdminClaim(claims)) {
+      return redirectWithCookies(
+        new URL(ROUTES.dashboard, request.url),
+        response,
+      );
+    }
   }
 
   return response;

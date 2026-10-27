@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
  * OAuth (Google) PKCE return. Unknown Google accounts are rejected by Supabase
  * when signups are disabled and arrive here with `error` params instead of a
  * `code`. Accounts without a CMS role are signed out by requireStaff().
- * During L1/L2 maintenance only active admins keep the new session.
+ * During maintenance only active admins keep the new session.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;

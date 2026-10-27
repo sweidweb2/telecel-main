@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 import { canAccessSection, getPortalSection } from "@/constants/dashboard-nav";
 import { loginPath, ROUTES, type LoginReason } from "@/constants/routes";
-import { getMaintenanceFlags } from "@/data/site-settings";
-import { isLoginBlocked } from "@/lib/maintenance";
+import { getMaintenanceMode } from "@/data/site-settings";
+import { isMaintenanceActive } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types/profile";
 
@@ -81,13 +81,13 @@ export function isAdminSession(session: Pick<SessionContext, "role">): boolean {
 }
 
 /**
- * After a successful auth handshake: keep the session only if login is open,
- * or the signed-in user is an active admin (admins may sign in during L1/L2).
- * Signs the user out and returns false when maintenance blocks them.
+ * After a successful auth handshake: keep the session only if maintenance is
+ * off, or the signed-in user is an active admin. Signs the user out and
+ * returns false when maintenance blocks them.
  */
 export async function allowSessionDuringMaintenance(): Promise<boolean> {
-  const flags = await getMaintenanceFlags();
-  if (!isLoginBlocked(flags)) return true;
+  const mode = await getMaintenanceMode();
+  if (!isMaintenanceActive(mode)) return true;
 
   const context = await getSessionContext();
   if (context?.role === "admin" && context.isActive) return true;
