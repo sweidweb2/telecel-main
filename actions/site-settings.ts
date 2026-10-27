@@ -9,21 +9,22 @@ import { clearMaintenanceProxyCache } from "@/lib/maintenance";
 import {
   MAINTENANCE_CACHE_TAG,
   MAINTENANCE_SETTING_KEY,
-  type MaintenanceFlags,
+  type MaintenanceMode,
 } from "@/types/site-settings";
 import {
-  maintenanceFlagsSchema,
-  type MaintenanceFlagsInput,
+  maintenanceModeSchema,
+  maintenanceModeToSetting,
+  type MaintenanceModeInput,
 } from "@/validations/site-settings";
 
 export type SiteSettingsActionResult =
-  | { status: "success"; message: string; flags: MaintenanceFlags }
+  | { status: "success"; message: string; mode: MaintenanceMode }
   | { status: "error"; message: string };
 
-export async function updateMaintenanceFlags(
-  input: MaintenanceFlagsInput,
+export async function updateMaintenanceMode(
+  input: MaintenanceModeInput,
 ): Promise<SiteSettingsActionResult> {
-  const parsed = maintenanceFlagsSchema.safeParse(input);
+  const parsed = maintenanceModeSchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
@@ -35,12 +36,12 @@ export async function updateMaintenanceFlags(
   if (auth.status === "error") return auth;
 
   const { session } = auth;
-  const flags = parsed.data;
+  const mode = parsed.data;
 
   const { error } = await session.supabase.from("site_settings").upsert(
     {
       key: MAINTENANCE_SETTING_KEY,
-      value: flags,
+      value: maintenanceModeToSetting(mode),
       updated_by: session.userId,
       updated_at: new Date().toISOString(),
     },
@@ -49,7 +50,7 @@ export async function updateMaintenanceFlags(
 
   if (error) {
     return unexpectedActionError({
-      source: "actions.site-settings.updateMaintenanceFlags",
+      source: "actions.site-settings.updateMaintenanceMode",
       actorId: session.userId,
       error,
       userMessage: "Maintenance settings could not be saved. Please try again.",
@@ -61,7 +62,7 @@ export async function updateMaintenanceFlags(
     action: "update",
     entityType: "site_settings",
     entityId: MAINTENANCE_SETTING_KEY,
-    summary: { level1: flags.level1, level2: flags.level2 },
+    summary: { mode },
   });
 
   revalidateTag(MAINTENANCE_CACHE_TAG, "max");
@@ -72,6 +73,6 @@ export async function updateMaintenanceFlags(
   return {
     status: "success",
     message: "Maintenance settings saved.",
-    flags,
+    mode,
   };
 }

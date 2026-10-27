@@ -1,46 +1,43 @@
 import {
-  DEFAULT_MAINTENANCE_FLAGS,
+  DEFAULT_MAINTENANCE_MODE,
+  MAINTENANCE_CACHE_TTL_SECONDS,
   MAINTENANCE_SETTING_KEY,
-  type MaintenanceFlags,
+  type MaintenanceMode,
 } from "@/types/site-settings";
-import { parseMaintenanceFlags } from "@/validations/site-settings";
-
-const CACHE_TTL_MS = 15_000;
+import { parseMaintenanceMode } from "@/validations/site-settings";
 
 type CacheEntry = {
   at: number;
-  flags: MaintenanceFlags;
+  mode: MaintenanceMode;
 };
 
 let cache: CacheEntry | null = null;
 
-/** Ops safety valve — when set, both maintenance levels are ignored. */
+/**
+ * Break-glass contract (single ops valve):
+ * - `MAINTENANCE_FORCE_OFF` ignores the DB and treats maintenance as off.
+ * - Missing env, failed REST, or bad JSON also fail **open** (off) so a
+ *   Supabase outage cannot lock admins out of the CMS.
+ * Do not add more valves — FORCE_OFF + fail-open are the whole story.
+ */
 export function isMaintenanceForceOff(): boolean {
   const raw = process.env.MAINTENANCE_FORCE_OFF?.trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
-/** Effective flags after force-off and Level 2 ⇒ Level 1. */
-export function resolveMaintenanceFlags(
-  flags: MaintenanceFlags,
-): MaintenanceFlags {
-  if (isMaintenanceForceOff()) return DEFAULT_MAINTENANCE_FLAGS;
-  if (flags.level2) return { level1: true, level2: true };
-  return { level1: flags.level1, level2: false };
+/** Apply FORCE_OFF on top of a stored/raw mode. */
+export function resolveMaintenanceMode(mode: MaintenanceMode): MaintenanceMode {
+  if (isMaintenanceForceOff()) return DEFAULT_MAINTENANCE_MODE;
+  return mode;
 }
 
-export function isLoginBlocked(flags: MaintenanceFlags): boolean {
-  const resolved = resolveMaintenanceFlags(flags);
-  return resolved.level1 || resolved.level2;
-}
-
-export function isPublicBlocked(flags: MaintenanceFlags): boolean {
-  return resolveMaintenanceFlags(flags).level2;
+export function isMaintenanceActive(mode: MaintenanceMode): boolean {
+  return resolveMaintenanceMode(mode) === "full";
 }
 
 /**
- * Optimistic admin check from JWT `app_metadata.app_role` (proxy only).
- * Page/action guards still use the DB role via `get_session_context`.
+ * Optimistic admin check from JWT `app_metadata.app_role` (proxy login
+ * redirect only). Page/action guards use the DB role via `get_session_context`.
  */
 export function isAdminClaim(
   claims: { app_metadata?: Record<string, unknown> } | null | undefined,
@@ -49,29 +46,14 @@ export function isAdminClaim(
 }
 
 /**
- * Proxy-safe fetch with a short in-memory TTL. Uses the anon REST API so it
- * works in the request proxy without importing `server-only` modules.
+ * Uncached REST read of the stored mode (no FORCE_OFF). Shared by the proxy
+ * memory cache and `data/site-settings` `unstable_cache` so both paths hit
+ * the same wire format and fail-open behavior.
  */
-export async function getMaintenanceFlagsForProxy(): Promise<MaintenanceFlags> {
-  if (isMaintenanceForceOff()) return DEFAULT_MAINTENANCE_FLAGS;
-
-  const now = Date.now();
-  if (cache && now - cache.at < CACHE_TTL_MS) return cache.flags;
-
-  const flags = await fetchMaintenanceFlagsFromRest();
-  cache = { at: now, flags };
-  return flags;
-}
-
-/** Clears the proxy TTL cache (useful in tests). */
-export function clearMaintenanceProxyCache(): void {
-  cache = null;
-}
-
-async function fetchMaintenanceFlagsFromRest(): Promise<MaintenanceFlags> {
+export async function fetchMaintenanceModeFromRest(): Promise<MaintenanceMode> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) return DEFAULT_MAINTENANCE_FLAGS;
+  if (!url || !anonKey) return DEFAULT_MAINTENANCE_MODE;
 
   try {
     const endpoint = new URL(`${url.replace(/\/$/, "")}/rest/v1/site_settings`);
@@ -85,16 +67,35 @@ async function fetchMaintenanceFlagsFromRest(): Promise<MaintenanceFlags> {
         Authorization: `Bearer ${anonKey}`,
         Accept: "application/json",
       },
-      // Avoid Next Data Cache sticking to a stale maintenance state in proxy.
       cache: "no-store",
     });
 
-    if (!response.ok) return DEFAULT_MAINTENANCE_FLAGS;
+    if (!response.ok) return DEFAULT_MAINTENANCE_MODE;
 
     const rows = (await response.json()) as Array<{ value: unknown }>;
-    const value = rows[0]?.value;
-    return resolveMaintenanceFlags(parseMaintenanceFlags(value));
+    return parseMaintenanceMode(rows[0]?.value);
   } catch {
-    return DEFAULT_MAINTENANCE_FLAGS;
+    return DEFAULT_MAINTENANCE_MODE;
   }
+}
+
+/**
+ * Proxy-safe read with a short in-memory TTL matching
+ * `MAINTENANCE_CACHE_TTL_SECONDS`. FORCE_OFF is applied on every read so the
+ * env valve is immediate without waiting for cache expiry.
+ */
+export async function getMaintenanceModeForProxy(): Promise<MaintenanceMode> {
+  const now = Date.now();
+  if (cache && now - cache.at < MAINTENANCE_CACHE_TTL_SECONDS * 1000) {
+    return resolveMaintenanceMode(cache.mode);
+  }
+
+  const mode = await fetchMaintenanceModeFromRest();
+  cache = { at: now, mode };
+  return resolveMaintenanceMode(mode);
+}
+
+/** Clears the proxy TTL cache after settings writes (and in tests). */
+export function clearMaintenanceProxyCache(): void {
+  cache = null;
 }

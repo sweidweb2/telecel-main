@@ -3,40 +3,29 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearMaintenanceProxyCache,
   isAdminClaim,
-  isLoginBlocked,
+  isMaintenanceActive,
   isMaintenanceForceOff,
-  isPublicBlocked,
-  resolveMaintenanceFlags,
+  resolveMaintenanceMode,
 } from "@/lib/maintenance";
 
-describe("resolveMaintenanceFlags", () => {
+describe("resolveMaintenanceMode", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     clearMaintenanceProxyCache();
   });
 
-  it("forces level1 when level2 is on", () => {
-    expect(resolveMaintenanceFlags({ level1: false, level2: true })).toEqual({
-      level1: true,
-      level2: true,
-    });
+  it("passes through off and full", () => {
+    expect(resolveMaintenanceMode("off")).toBe("off");
+    expect(resolveMaintenanceMode("full")).toBe("full");
+    expect(isMaintenanceActive("off")).toBe(false);
+    expect(isMaintenanceActive("full")).toBe(true);
   });
 
   it("respects MAINTENANCE_FORCE_OFF", () => {
     vi.stubEnv("MAINTENANCE_FORCE_OFF", "1");
     expect(isMaintenanceForceOff()).toBe(true);
-    expect(resolveMaintenanceFlags({ level1: true, level2: true })).toEqual({
-      level1: false,
-      level2: false,
-    });
-    expect(isLoginBlocked({ level1: true, level2: true })).toBe(false);
-    expect(isPublicBlocked({ level1: true, level2: true })).toBe(false);
-  });
-
-  it("reports login vs public blocks", () => {
-    expect(isLoginBlocked({ level1: true, level2: false })).toBe(true);
-    expect(isPublicBlocked({ level1: true, level2: false })).toBe(false);
-    expect(isPublicBlocked({ level1: true, level2: true })).toBe(true);
+    expect(resolveMaintenanceMode("full")).toBe("off");
+    expect(isMaintenanceActive("full")).toBe(false);
   });
 
   it("reads admin from JWT app_metadata", () => {

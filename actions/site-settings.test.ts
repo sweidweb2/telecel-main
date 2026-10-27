@@ -34,9 +34,9 @@ vi.mock("@/lib/maintenance", async () => {
 
 import { authorizeAction } from "@/data/auth";
 import { recordActivity } from "@/actions/observability";
-import { updateMaintenanceFlags } from "@/actions/site-settings";
+import { updateMaintenanceMode } from "@/actions/site-settings";
 
-describe("updateMaintenanceFlags", () => {
+describe("updateMaintenanceMode", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     upsertMock.mockResolvedValue({ error: null });
@@ -49,7 +49,7 @@ describe("updateMaintenanceFlags", () => {
       message: "Only administrators can do this.",
     });
 
-    const result = await updateMaintenanceFlags({ level1: true, level2: false });
+    const result = await updateMaintenanceMode("full");
     expect(result).toEqual({
       status: "error",
       message: "Only administrators can do this.",
@@ -70,15 +70,15 @@ describe("updateMaintenanceFlags", () => {
       },
     });
 
-    const result = await updateMaintenanceFlags({ level1: false, level2: true });
+    const result = await updateMaintenanceMode("full");
 
     expect(result.status).toBe("success");
     if (result.status !== "success") return;
-    expect(result.flags).toEqual({ level1: true, level2: true });
+    expect(result.mode).toBe("full");
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         key: "maintenance",
-        value: { level1: true, level2: true },
+        value: { mode: "full" },
       }),
       { onConflict: "key" },
     );
@@ -87,6 +87,7 @@ describe("updateMaintenanceFlags", () => {
         action: "update",
         entityType: "site_settings",
         entityId: "maintenance",
+        summary: { mode: "full" },
       }),
     );
   });
