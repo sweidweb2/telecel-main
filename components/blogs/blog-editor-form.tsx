@@ -9,13 +9,11 @@ import { Trash2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  createBlog,
-  deleteBlog,
   removeBlogImage,
-  updateBlog,
   uploadAuthorAvatar,
   uploadBlogThumbnail,
-} from "@/actions/blogs";
+} from "@/actions/blog-media";
+import { createBlog, deleteBlog, updateBlog } from "@/actions/blogs";
 import { BlogRichTextEditor } from "@/components/blogs/blog-rich-text-editor";
 import {
   AlertDialog,
@@ -38,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -402,9 +401,7 @@ export function BlogEditorForm({
                   },
                 })}
               />
-              {errors.title ? (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
-              ) : null}
+              <FieldError>{errors.title?.message}</FieldError>
             </div>
             <div className="grid gap-2">
               <FieldLabel
@@ -425,9 +422,7 @@ export function BlogEditorForm({
                   },
                 })}
               />
-              {errors.slug ? (
-                <p className="text-sm text-destructive">{errors.slug.message}</p>
-              ) : null}
+              <FieldError>{errors.slug?.message}</FieldError>
             </div>
             <div className="grid gap-2 sm:col-span-2 xl:col-span-1">
               <FieldLabel
@@ -444,11 +439,7 @@ export function BlogEditorForm({
                 aria-invalid={Boolean(errors.authorName)}
                 {...register("authorName")}
               />
-              {errors.authorName ? (
-                <p className="text-sm text-destructive">
-                  {errors.authorName.message}
-                </p>
-              ) : null}
+              <FieldError>{errors.authorName?.message}</FieldError>
             </div>
           </div>
 
@@ -468,9 +459,7 @@ export function BlogEditorForm({
               aria-invalid={Boolean(errors.summary)}
               {...register("summary")}
             />
-            {errors.summary ? (
-              <p className="text-sm text-destructive">{errors.summary.message}</p>
-            ) : null}
+            <FieldError>{errors.summary?.message}</FieldError>
           </div>
 
           <div className="grid gap-2">
@@ -489,11 +478,7 @@ export function BlogEditorForm({
                 />
               )}
             />
-            {errors.bodyHtml ? (
-              <p className="text-sm text-destructive">
-                {errors.bodyHtml.message}
-              </p>
-            ) : null}
+            <FieldError>{errors.bodyHtml?.message}</FieldError>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -559,11 +544,7 @@ export function BlogEditorForm({
                     Featured hero (only one at a time)
                   </Label>
                 </div>
-                {errors.isFeatured ? (
-                  <p className="text-sm text-destructive">
-                    {errors.isFeatured.message}
-                  </p>
-                ) : null}
+                <FieldError>{errors.isFeatured?.message}</FieldError>
               </CardContent>
             </Card>
 
@@ -749,9 +730,9 @@ export function BlogEditorForm({
                 </ul>
               ) : null}
               {errors.categories ? (
-                <p className="text-sm text-destructive">
+                <FieldError>
                   {errors.categories.message ?? errors.categories.root?.message}
-                </p>
+                </FieldError>
               ) : null}
             </CardContent>
           </Card>
