@@ -13,6 +13,8 @@ role-gated placeholder page. The tables are drafted in `docs/03-database/schema.
 | Inquiries: read, update status, export | ✅ | ✅ |
 | SEO & redirects | ✅ | ✅ |
 | Users: invite, change role, suspend, delete | — | ✅ |
+| Activity log (CMS mutations, append-only) | — | ✅ |
+| Error log (unexpected server failures) | — | ✅ |
 | Form routing (recipient groups and rules) | — | ✅ |
 | Site settings (analytics IDs, footer, social, privacy/cookie wording) | — | ✅ |
 | Backups (status and recovery runbook) | — | ✅ |
@@ -45,7 +47,8 @@ Accounts without a role, or suspended accounts, cannot sign in to the CMS.
 **Cross-cutting:**
 
 - Preview before publish. Every publish/unpublish revalidates the detail page, listings and `sitemap.xml`.
-- Audit log of create/update/publish/delete and role changes (admin-readable, append-only).
+- Activity log (`audit_log`) of create/update/publish/delete and role changes (admin-readable, append-only) at `/dashboard/activity-log`.
+- Error log (`app_errors`) for unexpected Server Action / provider failures at `/dashboard/error-log` (not validation/authz noise; not a third-party APM).
 - Optimistic concurrency (warn when someone else saved first).
 - No placeholder or invented content may be published (RFQ §4.3). The portal should show "missing content" warnings.
 

@@ -24,6 +24,8 @@ export const ROUTES = {
   inquiries: "/dashboard/inquiries",
   seo: "/dashboard/seo",
   users: "/dashboard/users",
+  activityLog: "/dashboard/activity-log",
+  errorLog: "/dashboard/error-log",
   formRouting: "/dashboard/form-routing",
   settings: "/dashboard/settings",
   backups: "/dashboard/backups",
