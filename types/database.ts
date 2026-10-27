@@ -96,6 +96,50 @@ export type Database = {
           },
         ]
       }
+      backup_export_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          format: string
+          id: string
+          last_exported_at: string | null
+          name: string
+          scope: string
+          table_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          format: string
+          id?: string
+          last_exported_at?: string | null
+          name: string
+          scope: string
+          table_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          format?: string
+          id?: string
+          last_exported_at?: string | null
+          name?: string
+          scope?: string
+          table_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_export_settings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blogs: {
         Row: {
           author_avatar_url: string | null
@@ -150,6 +194,75 @@ export type Database = {
         }
         Relationships: []
       }
+      inquiries: {
+        Row: {
+          area_of_interest: string
+          business_need: string
+          company: string
+          consent: boolean
+          consent_text_version: string
+          country_code: string
+          created_at: string
+          delivery_attempts: number
+          delivery_status: Database["public"]["Enums"]["delivery_status"]
+          email: string
+          full_name: string
+          id: string
+          intent: Database["public"]["Enums"]["inquiry_intent"]
+          job_role: string
+          last_delivery_error: string | null
+          preferred_contact_method: Database["public"]["Enums"]["contact_method"]
+          source_path: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
+          updated_at: string
+          utm: Json | null
+        }
+        Insert: {
+          area_of_interest: string
+          business_need: string
+          company: string
+          consent: boolean
+          consent_text_version: string
+          country_code: string
+          created_at?: string
+          delivery_attempts?: number
+          delivery_status?: Database["public"]["Enums"]["delivery_status"]
+          email: string
+          full_name: string
+          id?: string
+          intent: Database["public"]["Enums"]["inquiry_intent"]
+          job_role: string
+          last_delivery_error?: string | null
+          preferred_contact_method: Database["public"]["Enums"]["contact_method"]
+          source_path?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          utm?: Json | null
+        }
+        Update: {
+          area_of_interest?: string
+          business_need?: string
+          company?: string
+          consent?: boolean
+          consent_text_version?: string
+          country_code?: string
+          created_at?: string
+          delivery_attempts?: number
+          delivery_status?: Database["public"]["Enums"]["delivery_status"]
+          email?: string
+          full_name?: string
+          id?: string
+          intent?: Database["public"]["Enums"]["inquiry_intent"]
+          job_role?: string
+          last_delivery_error?: string | null
+          preferred_contact_method?: Database["public"]["Enums"]["contact_method"]
+          source_path?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+          utm?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -179,6 +292,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -215,6 +357,10 @@ export type Database = {
     }
     Enums: {
       blog_status: "draft" | "published"
+      contact_method: "email" | "phone" | "video_call"
+      delivery_status: "pending" | "sent" | "failed"
+      inquiry_intent: "sales" | "demo" | "general"
+      inquiry_status: "new" | "contacted" | "qualified" | "closed" | "spam"
       user_role: "admin" | "editor"
     }
     CompositeTypes: {
@@ -344,6 +490,10 @@ export const Constants = {
   public: {
     Enums: {
       blog_status: ["draft", "published"],
+      contact_method: ["email", "phone", "video_call"],
+      delivery_status: ["pending", "sent", "failed"],
+      inquiry_intent: ["sales", "demo", "general"],
+      inquiry_status: ["new", "contacted", "qualified", "closed", "spam"],
       user_role: ["admin", "editor"],
     },
   },

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpenTextIcon,
   BoxesIcon,
+  CircleAlertIcon,
   DatabaseBackupIcon,
   FileTextIcon,
   HandshakeIcon,
@@ -15,8 +16,10 @@ import {
   MegaphoneIcon,
   NewspaperIcon,
   RouteIcon,
+  ScrollTextIcon,
   SearchIcon,
   SettingsIcon,
+  StarIcon,
   TargetIcon,
   UserRoundIcon,
   UsersIcon,
@@ -57,6 +60,8 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   [ROUTES.inquiries]: InboxIcon,
   [ROUTES.seo]: SearchIcon,
   [ROUTES.users]: UsersIcon,
+  [ROUTES.activityLog]: ScrollTextIcon,
+  [ROUTES.errorLog]: CircleAlertIcon,
   [ROUTES.formRouting]: RouteIcon,
   [ROUTES.settings]: SettingsIcon,
   [ROUTES.backups]: DatabaseBackupIcon,
@@ -119,7 +124,7 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
                             <Link href={item.href} aria-current={active ? "page" : undefined} />
                           }
                           isActive={active}
-                          tooltip={item.title}
+                          tooltip={item.ready ? `${item.title} (available)` : item.title}
                           className={cn(
                             "relative h-10 rounded-[3px] text-sidebar-foreground/75 hover:text-sidebar-accent-foreground",
                             "data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground",
@@ -127,7 +132,15 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
                           )}
                         >
                           <Icon />
-                          <span>{item.title}</span>
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <span className="truncate">{item.title}</span>
+                            {item.ready ? (
+                              <StarIcon
+                                className="size-3 shrink-0 fill-brand text-brand"
+                                aria-label="Available"
+                              />
+                            ) : null}
+                          </span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );

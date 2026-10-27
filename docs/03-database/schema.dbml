@@ -378,7 +378,6 @@ Table inquiries {
   source_path text [note: 'Page the form was submitted from']
   utm jsonb
   status inquiry_status [not null, default: 'new']
-  recipient_group_id uuid [ref: > recipient_groups.id]
   delivery_status delivery_status [not null, default: 'pending']
   delivery_attempts int [not null, default: 0]
   last_delivery_error text
@@ -393,9 +392,10 @@ Table inquiries {
   }
 
   Note: '''
-    [DRAFT] Insert only via a server action (Turnstile + rate limit + Zod);
-    anon has no direct table access. Staff read/update status. Retention
-    period to be agreed with Telecel (privacy wording).
+    Migrated in 20261027210000_inquiries. Insert only via server action
+    (Turnstile + rate limit + Zod); anon has no table access. Staff
+    (is_staff) SELECT + UPDATE. recipient_group_id deferred until form
+    routing ships. Retention period TBD with Telecel.
   '''
 }
 
@@ -445,12 +445,12 @@ Table redirects {
 }
 
 Table site_settings {
-  key text [pk, note: 'analytics, social_links, footer, privacy_notice, cookie_notice, contact_defaults']
-  value jsonb [not null]
+  key text [pk, note: 'maintenance (live); later: analytics, social_links, footer, privacy_notice, cookie_notice, contact_defaults']
+  value jsonb [not null, note: 'maintenance → { level1: bool, level2: bool }']
   updated_by uuid [ref: > profiles.id]
   updated_at timestamptz [not null, default: `now()`]
 
-  Note: '[DRAFT] Admin-only writes; public read of whitelisted keys.'
+  Note: 'Admin-only writes via is_admin(); anon/authenticated SELECT for whitelisted keys (maintenance). Seeded maintenance defaults off.'
 }
 
 Table audit_log {
@@ -488,6 +488,25 @@ Table app_errors {
   }
 
   Note: '[MIGRATED 20261027120000] Append-only. Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/error-log. Not a Sentry replacement.'
+}
+
+Table backup_export_settings {
+  id uuid [pk]
+  name text [not null, note: '1–120 chars']
+  scope text [not null, note: 'all | single']
+  table_name text [note: 'Required when scope=single; allowlist: profiles, blogs, inquiries, audit_log, app_errors']
+  format text [not null, note: 'csv | json']
+  created_by uuid [ref: > profiles.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  last_exported_at timestamptz
+
+  indexes {
+    created_at [note: 'desc']
+    (created_by, created_at)
+  }
+
+  Note: '[MIGRATED 20261027230000] Admin-only CRUD via is_admin(). Stores reusable export configs; dumps download in the browser (no Storage). Admin UI: /dashboard/backups. Table data reads for export use service role in actions/backups.ts.'
 }
 
 Table content_revisions {

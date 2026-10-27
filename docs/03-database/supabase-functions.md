@@ -4,13 +4,19 @@ Companion to `schema.dbml` and `supabase/migrations/`. Update this file whenever
 
 The observability migration (`20261027120000_audit_and_app_errors`) adds **tables and RLS only** — it reuses existing `is_admin()` and introduces **no new RPCs**.
 
+The inquiries migration (`20261027210000_inquiries`) adds enums + `inquiries` + RLS (`is_staff` select/update). Inserts use the service-role client in `actions/inquiries.ts`. It reuses `set_updated_at()` and introduces **no new RPCs**.
+
+The site settings migration (`20261027220000_site_settings`) adds `site_settings` + RLS (public SELECT for whitelisted keys; admin INSERT/UPDATE via `is_admin()`). Seeds `maintenance` `{ level1: false, level2: false }`. **No new RPCs.**
+
+The backup export settings migration (`20261027230000_backup_export_settings`) adds `backup_export_settings` + admin RLS (`is_admin()` SELECT/INSERT/UPDATE/DELETE) and reuses `set_updated_at()`. Export dumps themselves are not stored; the Next action reads allowlisted tables with the service-role client after `authorizeAction("admin")`. **No new RPCs.**
+
 ## Role / session helpers
 
 | Name | Role | Details |
 | --- | --- | --- |
 | `current_session_is_fresh()` | `security definer` SQL | True when the Auth session is within the 24h window (`auth.sessions.created_at`). |
 | `current_app_role()` | `security definer` SQL | Active profile role for `auth.uid()` only if the session is fresh; else null. |
-| `is_admin()` | `security definer` SQL | `current_app_role() = 'admin'`. Used by admin-only RLS (profiles admin policies, `audit_log`, `app_errors`). |
+| `is_admin()` | `security definer` SQL | `current_app_role() = 'admin'`. Used by admin-only RLS (profiles admin policies, `audit_log`, `app_errors`, `backup_export_settings`). |
 | `is_staff()` | `security definer` SQL | Any non-null `current_app_role()` (admin or editor). Used by CMS/blog staff policies. |
 | `get_session_context()` | `security definer` SQL | One round trip for `data/auth.ts`: `user_id`, `role`, `is_active`, `session_fresh`. |
 

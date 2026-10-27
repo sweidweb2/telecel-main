@@ -148,10 +148,10 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         minRole: "editor",
         description: "Talk to Sales and Request a Demo submissions.",
         planned: [
-          "List, filter and export inquiries",
+          "CSV export",
           "See which recipient group each inquiry was routed to",
-          "Status tracking (new, contacted, closed)",
         ],
+        ready: true,
       },
       {
         title: "SEO & redirects",
@@ -206,18 +206,22 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         title: "Site settings",
         href: ROUTES.settings,
         minRole: "admin",
-        description: "Analytics/tag manager IDs, contact defaults, social links and legal text.",
+        description:
+          "Maintenance modes, plus future analytics, contact defaults, and legal text.",
         planned: [
           "Tag manager / analytics IDs",
           "Footer, social links, privacy and cookie wording",
         ],
+        ready: true,
       },
       {
         title: "Backups",
         href: ROUTES.backups,
         minRole: "admin",
-        description: "Backup status and recovery instructions.",
-        planned: ["Last backup time", "Link to recovery runbook"],
+        description:
+          "Save export settings and download table dumps as CSV or JSON.",
+        planned: [],
+        ready: true,
       },
     ],
   },
