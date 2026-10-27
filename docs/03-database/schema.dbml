@@ -283,8 +283,18 @@ Table blogs {
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 
+  indexes {
+    (status, published_at)
+    created_at [note: 'desc']
+    categories [type: gin]
+    title [type: gin, note: 'pg_trgm — admin list search']
+    slug [type: gin, note: 'pg_trgm — admin list search']
+    author_name [type: gin, note: 'pg_trgm — admin list search']
+  }
+
   Note: '''
     [MIGRATED] 20261020090100_insights_blogs.sql — powers /insights (News).
+    Trgm search indexes: 20261027250000_admin_list_search_indexes.sql.
     PLANNED change: rename to `insights`, add `type insight_type` (news |
     case_study), `customer_name`, `is_approved` (case studies publish only
     when Telecel approves), `seo_title/seo_description/noindex`, and
