@@ -25,7 +25,8 @@ RFQ §4.2 asks for staging, UAT and production processes. Use separate Supabase 
 | Dev server | `npm run dev` |
 | Lint / types / unit tests | `npm run lint` · `npm run typecheck` · `npm test` |
 | Production build | `npm run build` |
-| E2E (starts dev server) | `npx playwright install chromium` once, then `npm run test:e2e` |
+| E2E (starts dev server locally) | `npx playwright install chromium` once, then `npm run test:e2e` |
+| Full local CI mirror | `npm run test:ci` (lint → typecheck → vitest → build → Playwright) |
 | Local Supabase (needs Docker) | `npx supabase start` → `npx supabase db reset` (applies migrations + seed) |
 | Link a hosted project | `npx supabase link --project-ref <ref>` |
 | Push migrations | `npx supabase db push` (CI does this on merge to `main`; see `.github/workflows/deploy-migrations.yml`) |
@@ -39,4 +40,6 @@ RFQ §4.2 asks for staging, UAT and production processes. Use separate Supabase 
 
 ## CI secrets (GitHub → Settings → Secrets)
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` (CI E2E), and `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` (migration deploy). Without them, CI still runs lint/types/unit/build, and the auth E2E tests skip themselves.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` (CI E2E), and `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` (migration deploy). Without them, CI still runs lint/types/unit/build/public E2E; auth, blogs, users, and observability E2E suites skip themselves.
+
+Apply `supabase/migrations/` (including `audit_log` / `app_errors`) to the project used for E2E before expecting those suites to pass.

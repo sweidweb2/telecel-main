@@ -1,4 +1,12 @@
 # Required branch-protection check name: "CI"
+#
+# Quality gates (every PR / push to main):
+#   1. ESLint
+#   2. TypeScript (next typegen + tsc --noEmit)
+#   3. Vitest unit tests (lib, validations, data, actions — excludes e2e/)
+#   4. Next.js production build
+#   5. Playwright E2E (public site always; auth/blogs/users/observability when
+#      Supabase + E2E seed secrets are configured — otherwise those suites skip)
 name: CI
 
 on:
@@ -18,11 +26,12 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     env:
-      # Prefer repo secrets so auth E2E can run; fall back to placeholders so
-      # lint / typecheck / build / public E2E still work without secrets.
+      # Prefer repo secrets so auth / blogs / users / observability E2E can run;
+      # fall back to placeholders so lint / typecheck / unit / build / public E2E
+      # still work without secrets.
       # NEXT_PUBLIC_* are inlined at build time — must be set for the whole job.
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
@@ -30,6 +39,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       E2E_SEED_EMAIL: ${{ secrets.E2E_SEED_EMAIL }}
       E2E_SEED_PASSWORD: ${{ secrets.E2E_SEED_PASSWORD }}
+      CI: true
 
     steps:
       - name: Checkout
@@ -59,7 +69,7 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Playwright
+      - name: Playwright E2E
         run: npm run test:e2e
 
       - name: Upload Playwright report

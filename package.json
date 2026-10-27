@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --pass-with-no-tests",
+    "test:ci": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e",
     "bones:build": "boneyard-js build http://localhost:3000",
     "bones:watch": "boneyard-js build --watch http://localhost:3000",
     "brand:extract": "node scripts/extract-brand-assets.mjs"

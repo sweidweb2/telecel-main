@@ -19,7 +19,9 @@ export default defineConfig({
   webServer: {
     command: process.env.CI ? "npm run start" : "npm run dev",
     url: "http://localhost:3000",
-    reuseExistingServer: true,
+    // Locally reuse `next dev`; in CI always start the production server
+    // from the preceding `npm run build` step.
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
