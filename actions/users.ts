@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { match, P } from "ts-pattern";
 
+import {
+  recordActivity,
+  recordAppError,
+} from "@/actions/observability";
 import { ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -43,8 +47,36 @@ function mapSupabaseError(message: string): string {
     .otherwise(() => message || "The user operation failed.");
 }
 
+function isExpectedUserError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("already registered") ||
+    lower.includes("already been registered") ||
+    lower.includes("duplicate") ||
+    lower.includes("password")
+  );
+}
+
 function refreshUsersRoute() {
   revalidatePath(ROUTES.users);
+}
+
+async function userUnexpectedError(
+  source: string,
+  actorId: string,
+  error: { code?: string; message?: string },
+): Promise<UserActionResult> {
+  const mapped = mapSupabaseError(error.message ?? "");
+  if (!isExpectedUserError(error.message ?? "")) {
+    await recordAppError({
+      severity: "error",
+      source,
+      code: error.code ?? null,
+      message: error.message ?? mapped,
+      actorId,
+    });
+  }
+  return { status: "error", message: mapped };
 }
 
 export async function createUser(
@@ -59,7 +91,7 @@ export async function createUser(
   if (auth.status === "error") return auth;
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
+  const { data, error } = await admin.auth.admin.createUser({
     email: parsed.data.email,
     password: parsed.data.password,
     email_confirm: true,
@@ -68,8 +100,20 @@ export async function createUser(
   });
 
   if (error) {
-    return { status: "error", message: mapSupabaseError(error.message) };
+    return userUnexpectedError(
+      "actions.users.createUser",
+      auth.session.userId,
+      error,
+    );
   }
+
+  await recordActivity({
+    actorId: auth.session.userId,
+    action: "invite",
+    entityType: "user",
+    entityId: data.user.id,
+    summary: { role: parsed.data.role, email: parsed.data.email },
+  });
 
   refreshUsersRoute();
   return { status: "success", message: "User created successfully." };
@@ -95,6 +139,12 @@ export async function updateUser(
     };
   }
 
+  const { data: before } = await session.supabase
+    .from("profiles")
+    .select("role, is_active, email")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+
   // Auth side: email, display name, and a ban while suspended so refresh
   // tokens stop working immediately (not just at the next RLS check).
   const admin = createAdminClient();
@@ -108,10 +158,11 @@ export async function updateUser(
   );
 
   if (authError) {
-    return {
-      status: "error",
-      message: mapSupabaseError(authError.message),
-    };
+    return userUnexpectedError(
+      "actions.users.updateUser",
+      session.userId,
+      authError,
+    );
   }
 
   // Role and status go through the caller's session so RLS (is_admin) and the
@@ -126,10 +177,11 @@ export async function updateUser(
     .eq("id", parsed.data.id);
 
   if (profileError) {
-    return {
-      status: "error",
-      message: mapSupabaseError(profileError.message),
-    };
+    return userUnexpectedError(
+      "actions.users.updateUser",
+      session.userId,
+      profileError,
+    );
   }
 
   // profiles.email mirrors Auth and is only writable by the service role.
@@ -139,8 +191,33 @@ export async function updateUser(
     .eq("id", parsed.data.id);
 
   if (emailError) {
-    return { status: "error", message: mapSupabaseError(emailError.message) };
+    return userUnexpectedError(
+      "actions.users.updateUser",
+      session.userId,
+      emailError,
+    );
   }
+
+  const action =
+    before && before.role !== parsed.data.role
+      ? "role_change"
+      : before && before.is_active !== parsed.data.isActive
+        ? parsed.data.isActive
+          ? "reactivate"
+          : "suspend"
+        : "update";
+
+  await recordActivity({
+    actorId: session.userId,
+    action,
+    entityType: "user",
+    entityId: parsed.data.id,
+    summary: {
+      role: parsed.data.role,
+      isActive: parsed.data.isActive,
+      email: parsed.data.email,
+    },
+  });
 
   refreshUsersRoute();
   return { status: "success", message: "User updated successfully." };
@@ -166,8 +243,19 @@ export async function deleteUser(
   const { error } = await admin.auth.admin.deleteUser(parsed.data.id);
 
   if (error) {
-    return { status: "error", message: mapSupabaseError(error.message) };
+    return userUnexpectedError(
+      "actions.users.deleteUser",
+      session.userId,
+      error,
+    );
   }
+
+  await recordActivity({
+    actorId: session.userId,
+    action: "delete",
+    entityType: "user",
+    entityId: parsed.data.id,
+  });
 
   refreshUsersRoute();
   return { status: "success", message: "User deleted successfully." };
