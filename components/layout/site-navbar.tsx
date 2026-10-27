@@ -61,12 +61,20 @@ export function SiteNavbar() {
           })}
         </nav>
 
-        <Link
-          href={SITE_CTAS.talkToSales.href}
-          className={cn(buttonVariants({ size: "cta" }), "ml-auto hidden min-[75rem]:inline-flex")}
-        >
-          {SITE_CTAS.talkToSales.label}
-        </Link>
+        <div className="ml-auto hidden items-center gap-3 min-[75rem]:flex">
+          <Link
+            href={ROUTES.login}
+            className={buttonVariants({ size: "cta", variant: "ink-outline" })}
+          >
+            Login
+          </Link>
+          <Link
+            href={SITE_CTAS.talkToSales.href}
+            className={buttonVariants({ size: "cta" })}
+          >
+            {SITE_CTAS.talkToSales.label}
+          </Link>
+        </div>
 
         <div className="ml-auto min-[75rem]:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -112,6 +120,13 @@ export function SiteNavbar() {
                   className={buttonVariants({ size: "cta", variant: "ink-outline" })}
                 >
                   {SITE_CTAS.requestDemo.label}
+                </Link>
+                <Link
+                  href={ROUTES.login}
+                  onClick={() => setOpen(false)}
+                  className={buttonVariants({ size: "cta", variant: "ink-outline" })}
+                >
+                  Login
                 </Link>
               </div>
             </SheetContent>
