@@ -84,8 +84,10 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
               render={<Link href={ROUTES.dashboard} />}
             >
               <span className="grid gap-2 group-data-[collapsible=icon]:hidden">
-                <Logo variant="reversed" size="sm" />
-                <span className="type-notation text-charcoal-muted">Content management</span>
+                <Logo size="sm" />
+                <span className="type-notation text-sidebar-foreground/55">
+                  Content management
+                </span>
               </span>
               <span
                 aria-hidden
@@ -102,7 +104,7 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
 
           return (
             <SidebarGroup key={group.label}>
-              <SidebarGroupLabel className="text-xs font-medium text-charcoal-muted">
+              <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/55">
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -119,8 +121,8 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
                           isActive={active}
                           tooltip={item.title}
                           className={cn(
-                            "relative h-10 rounded-[3px] text-sidebar-foreground/75 hover:text-white",
-                            "data-active:bg-sidebar-accent data-active:font-semibold data-active:text-white",
+                            "relative h-10 rounded-[3px] text-sidebar-foreground/75 hover:text-sidebar-accent-foreground",
+                            "data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground",
                             "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:bg-brand before:opacity-0 data-active:before:opacity-100"
                           )}
                         >
@@ -138,8 +140,8 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
       </SidebarContent>
       <SidebarFooter>
         <div className="grid gap-0.5 border-t border-sidebar-border px-2 pt-3 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-sm text-white">{user.email}</p>
-          <p className="type-notation text-charcoal-muted">{user.role}</p>
+          <p className="truncate text-sm text-sidebar-foreground">{user.email}</p>
+          <p className="type-notation text-sidebar-foreground/55">{user.role}</p>
         </div>
       </SidebarFooter>
       <SidebarRail />

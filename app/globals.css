@@ -14,7 +14,7 @@
  *
  * Red is the recognition anchor, ~3–5% of a viewport: identity, primary
  * action, selected stage, one motif route. ~85% white/light surfaces.
- * Large dark areas only in the footer, login aside and CMS sidebar.
+ * Large dark areas: footer and login aside. CMS sidebar follows light/dark.
  */
 @theme inline {
   --color-brand: var(--brand);
@@ -115,14 +115,15 @@
   --chart-4: #a3a3a0;
   --chart-5: #dededa;
 
-  --sidebar: var(--charcoal);
-  --sidebar-foreground: var(--charcoal-foreground);
+  /* CMS sidebar follows the theme (light here, charcoal in .dark). */
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--ink);
   --sidebar-primary: var(--brand);
   --sidebar-primary-foreground: var(--brand-foreground);
-  --sidebar-accent: #2a2a2a;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2e2e2e;
-  --sidebar-ring: #f2f2f0;
+  --sidebar-accent: #ececea;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--ink);
 }
 
 .dark {
@@ -154,8 +155,12 @@
 
   --sidebar: #0f0f0f;
   --sidebar-foreground: #f2f2f0;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
   --sidebar-accent: #222222;
+  --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #262626;
+  --sidebar-ring: #f2f2f0;
 }
 
 @layer base {

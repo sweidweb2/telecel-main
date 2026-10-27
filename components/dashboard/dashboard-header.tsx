@@ -23,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { getDashboardPageTitle } from "@/constants/dashboard-nav";
 import { ROUTES } from "@/constants/routes";
@@ -70,7 +69,6 @@ export function DashboardHeader({
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 sm:px-8">
       <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="h-4" />
       <h1 className="min-w-0 truncate font-heading text-lg font-medium text-ink">{title}</h1>
       <DropdownMenu>
         {/*
