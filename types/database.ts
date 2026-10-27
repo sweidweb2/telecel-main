@@ -14,6 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_errors: {
+        Row: {
+          actor_id: string | null
+          code: string | null
+          context: Json | null
+          created_at: string
+          id: number
+          message: string
+          request_id: string | null
+          severity: string
+          source: string
+        }
+        Insert: {
+          actor_id?: string | null
+          code?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: number
+          message: string
+          request_id?: string | null
+          severity: string
+          source: string
+        }
+        Update: {
+          actor_id?: string | null
+          code?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: number
+          message?: string
+          request_id?: string | null
+          severity?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_errors_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: number
+          summary: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: number
+          summary?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: number
+          summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blogs: {
         Row: {
           author_avatar_url: string | null

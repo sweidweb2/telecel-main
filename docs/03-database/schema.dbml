@@ -456,18 +456,38 @@ Table site_settings {
 Table audit_log {
   id bigint [pk, increment]
   actor_id uuid [ref: > profiles.id]
-  action text [not null, note: 'create | update | publish | unpublish | delete | role_change | login_as …']
+  action text [not null, note: 'create | update | publish | unpublish | delete | role_change | invite | suspend …']
   entity_type text [not null]
   entity_id text
   summary jsonb [note: 'Changed field names, never secrets or reset links']
   created_at timestamptz [not null, default: `now()`]
 
   indexes {
+    created_at [note: 'desc']
     (entity_type, entity_id, created_at)
     (actor_id, created_at)
   }
 
-  Note: '[DRAFT] Append-only (no UPDATE/DELETE grants). Admin read.'
+  Note: '[MIGRATED 20261027120000] Append-only (no UPDATE/DELETE). Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/activity-log.'
+}
+
+Table app_errors {
+  id bigint [pk, increment]
+  created_at timestamptz [not null, default: `now()`]
+  severity text [not null, note: 'warning | error']
+  source text [not null, note: 'e.g. actions.blogs.updateBlog']
+  code text
+  message text [not null]
+  actor_id uuid [ref: > profiles.id]
+  request_id text
+  context jsonb [note: 'Safe keys only; never secrets']
+
+  indexes {
+    created_at [note: 'desc']
+    (source, created_at)
+  }
+
+  Note: '[MIGRATED 20261027120000] Append-only. Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/error-log. Not a Sentry replacement.'
 }
 
 Table content_revisions {
