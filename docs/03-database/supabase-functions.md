@@ -6,9 +6,13 @@ The observability migration (`20261027120000_audit_and_app_errors`) adds **table
 
 The inquiries migration (`20261027210000_inquiries`) adds enums + `inquiries` + RLS (`is_staff` select/update). Inserts use the service-role client in `actions/inquiries.ts`. It reuses `set_updated_at()` and introduces **no new RPCs**.
 
-The site settings migration (`20261027220000_site_settings`) adds `site_settings` + RLS (public SELECT for whitelisted keys; admin INSERT/UPDATE via `is_admin()`). Seeds `maintenance` `{ level1: false, level2: false }`. **No new RPCs.**
+The site settings migration (`20261027220000_site_settings`) adds `site_settings` + RLS (public SELECT for whitelisted keys; admin INSERT/UPDATE via `is_admin()`). Seeds `maintenance` (originally `{ level1, level2 }`). **No new RPCs.**
+
+The maintenance mode migration (`20261027240000_maintenance_mode`) rewrites the `maintenance` jsonb value to `{ mode: "off" | "full" }` (legacy `level2` ⇒ `full`). Keeps the KV table for upcoming settings keys. **No new RPCs.**
 
 The backup export settings migration (`20261027230000_backup_export_settings`) adds `backup_export_settings` + admin RLS (`is_admin()` SELECT/INSERT/UPDATE/DELETE) and reuses `set_updated_at()`. Export dumps themselves are not stored; the Next action reads allowlisted tables with the service-role client after `authorizeAction("admin")`. **No new RPCs.**
+
+The admin list search indexes migration (`20261027250000_admin_list_search_indexes`) adds **indexes only** (pg_trgm GIN on searchable text columns for blogs / inquiries / audit_log / app_errors, plus `app_errors(severity, created_at)`). **No new RPCs.**
 
 ## Role / session helpers
 

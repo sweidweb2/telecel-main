@@ -389,11 +389,15 @@ Table inquiries {
     (status, created_at)
     (area_of_interest)
     (delivery_status) [note: 'partial: where delivery_status <> sent — retry queue']
+    full_name [type: gin, note: 'pg_trgm — staff inbox search']
+    email [type: gin, note: 'pg_trgm — staff inbox search']
+    company [type: gin, note: 'pg_trgm — staff inbox search']
   }
 
   Note: '''
-    Migrated in 20261027210000_inquiries. Insert only via server action
-    (Turnstile + rate limit + Zod); anon has no table access. Staff
+    Migrated in 20261027210000_inquiries. Trgm search indexes:
+    20261027250000_admin_list_search_indexes.sql. Insert only via server
+    action (Turnstile + rate limit + Zod); anon has no table access. Staff
     (is_staff) SELECT + UPDATE. recipient_group_id deferred until form
     routing ships. Retention period TBD with Telecel.
   '''
@@ -446,11 +450,11 @@ Table redirects {
 
 Table site_settings {
   key text [pk, note: 'maintenance (live); later: analytics, social_links, footer, privacy_notice, cookie_notice, contact_defaults']
-  value jsonb [not null, note: 'maintenance → { level1: bool, level2: bool }']
+  value jsonb [not null, note: 'maintenance → { mode: off | full }']
   updated_by uuid [ref: > profiles.id]
   updated_at timestamptz [not null, default: `now()`]
 
-  Note: 'Admin-only writes via is_admin(); anon/authenticated SELECT for whitelisted keys (maintenance). Seeded maintenance defaults off.'
+  Note: 'Admin-only writes via is_admin(); anon/authenticated SELECT for whitelisted keys (maintenance). Mode off|full; FORCE_OFF env + REST fail-open are the break-glass contract.'
 }
 
 Table audit_log {
@@ -466,9 +470,12 @@ Table audit_log {
     created_at [note: 'desc']
     (entity_type, entity_id, created_at)
     (actor_id, created_at)
+    action [type: gin, note: 'pg_trgm — admin search']
+    entity_type [type: gin, note: 'pg_trgm — admin search']
+    entity_id [type: gin, note: 'pg_trgm partial where not null']
   }
 
-  Note: '[MIGRATED 20261027120000] Append-only (no UPDATE/DELETE). Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/activity-log.'
+  Note: '[MIGRATED 20261027120000] Append-only (no UPDATE/DELETE). Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/activity-log. Trgm search indexes: 20261027250000.'
 }
 
 Table app_errors {
@@ -485,9 +492,13 @@ Table app_errors {
   indexes {
     created_at [note: 'desc']
     (source, created_at)
+    (severity, created_at) [note: 'desc created_at — severity filter']
+    source [type: gin, note: 'pg_trgm — admin search']
+    message [type: gin, note: 'pg_trgm — admin search']
+    code [type: gin, note: 'pg_trgm partial where not null']
   }
 
-  Note: '[MIGRATED 20261027120000] Append-only. Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/error-log. Not a Sentry replacement.'
+  Note: '[MIGRATED 20261027120000] Append-only. Admin SELECT via is_admin(); INSERT via service role in actions/observability.ts. Admin UI: /dashboard/error-log. Not a Sentry replacement. Trgm + severity indexes: 20261027250000.'
 }
 
 Table backup_export_settings {
