@@ -87,10 +87,10 @@ describe("users validation", () => {
     expect(
       parseUserListQuery({
         page: "2",
-        pageSize: "25",
+        limit: "25",
         search: " ada@example.com ",
         role: "editor",
-      })
+      }),
     ).toEqual({
       page: 2,
       pageSize: 10,
@@ -99,7 +99,16 @@ describe("users validation", () => {
     });
 
     expect(
-      parseUserListQuery({ page: "-1", pageSize: "999", role: "viewer" })
+      parseUserListQuery({ page: "2", limit: "50", role: "editor" }),
+    ).toEqual({
+      page: 2,
+      pageSize: 50,
+      search: "",
+      role: "editor",
+    });
+
+    expect(
+      parseUserListQuery({ page: "-1", limit: "999", role: "viewer" }),
     ).toEqual({ page: 1, pageSize: 10, search: "", role: "all" });
   });
 });

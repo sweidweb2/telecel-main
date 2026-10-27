@@ -14,13 +14,13 @@ describe("parseActivityLogQuery", () => {
     });
   });
 
-  it("parses page and trims search", () => {
+  it("parses page, search, and limit", () => {
     expect(
-      parseActivityLogQuery({ page: "3", search: "  publish  " }),
+      parseActivityLogQuery({ page: "3", search: "  publish  ", limit: "10" }),
     ).toEqual({
       page: 3,
       search: "publish",
-      pageSize: ACTIVITY_LOG_PAGE_SIZE,
+      pageSize: 10,
     });
   });
 

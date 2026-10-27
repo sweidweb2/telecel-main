@@ -7,6 +7,10 @@ import { AccessDenied } from "@/components/layout/access-denied";
 import { ROUTES } from "@/constants/routes";
 import { getActivityLogPage } from "@/data/audit-log";
 import { requireSection } from "@/data/auth";
+import {
+  ADMIN_LIST_PAGE_SIZE,
+  setAdminListPagingParams,
+} from "@/validations/admin-list-query";
 import { parseActivityLogQuery } from "@/validations/audit-log";
 
 export const metadata: Metadata = {
@@ -23,7 +27,12 @@ export default async function ActivityLogPage({
   const list = await getActivityLogPage(session, query);
 
   if (query.page > list.totalPages) {
-    const params = new URLSearchParams({ page: String(list.totalPages) });
+    const params = new URLSearchParams();
+    setAdminListPagingParams(params, {
+      page: list.totalPages,
+      pageSize: query.pageSize,
+      defaultPageSize: ADMIN_LIST_PAGE_SIZE,
+    });
     if (query.search) params.set("search", query.search);
     redirect(`${ROUTES.activityLog}?${params.toString()}`);
   }

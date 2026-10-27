@@ -15,18 +15,19 @@ describe("parseErrorLogQuery", () => {
     });
   });
 
-  it("parses severity and search", () => {
+  it("parses severity, search, and limit", () => {
     expect(
       parseErrorLogQuery({
         page: "2",
         search: " blogs ",
         severity: "warning",
+        limit: "50",
       }),
     ).toEqual({
       page: 2,
       search: "blogs",
       severity: "warning",
-      pageSize: ERROR_LOG_PAGE_SIZE,
+      pageSize: 50,
     });
   });
 

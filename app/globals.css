@@ -105,9 +105,6 @@
   --accent: #ececea;
   --accent-foreground: var(--ink);
   --destructive: #b42318;
-  --toast-success: #067647;
-  --toast-info: #175cd3;
-  --toast-warning: #b54708;
   --border: var(--hairline);
   /* Essential control boundaries need 3:1 against white. */
   --input: #767676;
@@ -152,9 +149,6 @@
   --accent: #2a2a2a;
   --accent-foreground: #f2f2f0;
   --destructive: #f97066;
-  --toast-success: #47cd89;
-  --toast-info: #84caff;
-  --toast-warning: #fdb022;
   --border: #333333;
   --input: #8a8a8a;
   --ring: #f2f2f0;

@@ -5,10 +5,16 @@ import {
   newPasswordSchema,
   PASSWORD_MAX,
 } from "@/validations/auth";
+import {
+  parseAdminListQuery,
+  USER_LIST_PAGE_SIZE,
+  type AdminPageSize,
+  type RawSearchParams,
+} from "@/validations/admin-list-query";
 
 export const USER_ROLES = ["admin", "editor"] as const;
-/** Fixed page size — not configurable via URL or UI. */
-export const USER_PAGE_SIZE = 10;
+/** Default users page size (overridable via URL `limit`: 10 | 20 | 50). */
+export const USER_PAGE_SIZE = USER_LIST_PAGE_SIZE;
 
 export const USER_FULL_NAME_MIN = 2;
 export const USER_FULL_NAME_MAX = 80;
@@ -33,7 +39,7 @@ const roleSchema = z.enum(USER_ROLES, "Choose a role");
 
 /**
  * Admin sets a strong temporary password and shares it out of band; the user
- * changes it from the account menu (or uses "Forgot password" once SMTP is set).
+ * changes it from the account menu (Contact form is the public password-help path).
  */
 export const createUserSchema = z.object({
   fullName: fullNameSchema,
@@ -54,37 +60,24 @@ export const deleteUserSchema = z.object({
   id: z.uuid("Invalid user id"),
 });
 
-const userListQueryInputSchema = z.object({
-  page: z.coerce.number().int().min(1).max(10_000).catch(1),
-  search: z
-    .string()
-    .trim()
-    .max(100, "Search must be 100 characters or fewer")
-    .regex(/^[^,%_()]*$/, "Search contains unsupported characters")
-    .catch(""),
-  role: z.enum(["all", ...USER_ROLES]).catch("all"),
-});
+const roleFilterSchema = z.enum(["all", ...USER_ROLES]).catch("all");
 
-export type UserListQuery = z.infer<typeof userListQueryInputSchema> & {
-  pageSize: typeof USER_PAGE_SIZE;
+export type UserListQuery = {
+  page: number;
+  search: string;
+  role: z.infer<typeof roleFilterSchema>;
+  pageSize: AdminPageSize;
 };
 
-type RawSearchParams = Record<string, string | string[] | undefined>;
-
-function first(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
 export function parseUserListQuery(input: RawSearchParams): UserListQuery {
-  const parsed = userListQueryInputSchema.parse({
-    page: first(input.page) ?? "1",
-    search: first(input.search) ?? "",
-    role: first(input.role) ?? "all",
-  });
+  const base = parseAdminListQuery(input, USER_LIST_PAGE_SIZE);
+  const role = roleFilterSchema.parse(
+    Array.isArray(input.role) ? input.role[0] : (input.role ?? "all"),
+  );
 
   return {
-    ...parsed,
-    pageSize: USER_PAGE_SIZE,
+    ...base,
+    role,
   };
 }
 

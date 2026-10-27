@@ -9,6 +9,10 @@ import { UsersTable } from "@/components/users/users-table";
 import { ROUTES } from "@/constants/routes";
 import { requireSection } from "@/data/auth";
 import { getUsersPageData } from "@/data/users";
+import {
+  setAdminListPagingParams,
+  USER_LIST_PAGE_SIZE,
+} from "@/validations/admin-list-query";
 import { parseUserListQuery } from "@/validations/users";
 
 export const metadata: Metadata = {
@@ -25,7 +29,12 @@ export default async function UsersPage({
   const { list, stats } = await getUsersPageData(session, query);
 
   if (query.page > list.totalPages) {
-    const params = new URLSearchParams({ page: String(list.totalPages) });
+    const params = new URLSearchParams();
+    setAdminListPagingParams(params, {
+      page: list.totalPages,
+      pageSize: query.pageSize,
+      defaultPageSize: USER_LIST_PAGE_SIZE,
+    });
     if (query.search) params.set("search", query.search);
     if (query.role !== "all") params.set("role", query.role);
     redirect(`${ROUTES.users}?${params.toString()}`);
