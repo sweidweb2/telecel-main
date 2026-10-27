@@ -1,39 +1,32 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  maintenanceFlagsSchema,
-  parseMaintenanceFlags,
+  maintenanceModeSchema,
+  parseMaintenanceMode,
 } from "@/validations/site-settings";
 
-describe("maintenanceFlagsSchema", () => {
-  it("passes level1 alone", () => {
-    expect(maintenanceFlagsSchema.parse({ level1: true, level2: false })).toEqual({
-      level1: true,
-      level2: false,
-    });
-  });
-
-  it("forces level1 when level2 is on", () => {
-    expect(maintenanceFlagsSchema.parse({ level1: false, level2: true })).toEqual({
-      level1: true,
-      level2: true,
-    });
+describe("maintenanceModeSchema", () => {
+  it("accepts off and full", () => {
+    expect(maintenanceModeSchema.parse("off")).toBe("off");
+    expect(maintenanceModeSchema.parse("full")).toBe("full");
   });
 });
 
-describe("parseMaintenanceFlags", () => {
-  it("returns defaults for garbage", () => {
-    expect(parseMaintenanceFlags(null)).toEqual({ level1: false, level2: false });
-    expect(parseMaintenanceFlags({ level1: "yes" })).toEqual({
-      level1: false,
-      level2: false,
-    });
+describe("parseMaintenanceMode", () => {
+  it("returns off for garbage", () => {
+    expect(parseMaintenanceMode(null)).toBe("off");
+    expect(parseMaintenanceMode({ mode: "yes" })).toBe("off");
+    expect(parseMaintenanceMode({ level1: "yes" })).toBe("off");
   });
 
-  it("parses valid jsonb", () => {
-    expect(parseMaintenanceFlags({ level1: true, level2: false })).toEqual({
-      level1: true,
-      level2: false,
-    });
+  it("parses current jsonb shape", () => {
+    expect(parseMaintenanceMode({ mode: "full" })).toBe("full");
+    expect(parseMaintenanceMode({ mode: "off" })).toBe("off");
+  });
+
+  it("maps legacy level2 to full; level1-only to off", () => {
+    expect(parseMaintenanceMode({ level1: true, level2: true })).toBe("full");
+    expect(parseMaintenanceMode({ level1: false, level2: true })).toBe("full");
+    expect(parseMaintenanceMode({ level1: true, level2: false })).toBe("off");
   });
 });
