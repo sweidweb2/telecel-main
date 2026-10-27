@@ -21,6 +21,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: absoluteUrl(ROUTES.home), changeFrequency: "weekly", priority: 1 },
+    {
+      url: absoluteUrl(ROUTES.contact),
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
     ...liveLinks().map((link) => ({
       url: absoluteUrl(link.href),
       changeFrequency: "weekly" as const,
