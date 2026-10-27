@@ -6,9 +6,8 @@ import { match, P } from "ts-pattern";
 
 import { recordAppError } from "@/actions/observability";
 import { loginPath, ROUTES } from "@/constants/routes";
-import { getMaintenanceFlags } from "@/data/site-settings";
+import { allowSessionDuringMaintenance } from "@/data/auth";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
-import { isLoginBlocked } from "@/lib/maintenance";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { absoluteUrl } from "@/lib/seo/site";
@@ -29,15 +28,7 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000;
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 const RATE_LIMITED = "Too many attempts. Wait a few minutes and try again.";
 const MAINTENANCE_LOGIN_BLOCKED =
-  "Sign-in is temporarily unavailable while we perform maintenance.";
-
-async function assertLoginAllowed(): Promise<AuthActionResult | null> {
-  const flags = await getMaintenanceFlags();
-  if (isLoginBlocked(flags)) {
-    return { status: "error", message: MAINTENANCE_LOGIN_BLOCKED };
-  }
-  return null;
-}
+  "Only administrators can sign in while maintenance is active.";
 
 async function clientIp(): Promise<string> {
   const headerStore = await headers();
@@ -86,9 +77,6 @@ export async function signIn(
   input: LoginInput,
   next?: string
 ): Promise<AuthActionResult> {
-  const blocked = await assertLoginAllowed();
-  if (blocked) return blocked;
-
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -109,6 +97,11 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { status: "error", message: mapAuthError(error.message) };
 
+  // L1/L2: only active admins may establish a new session.
+  if (!(await allowSessionDuringMaintenance())) {
+    return { status: "error", message: MAINTENANCE_LOGIN_BLOCKED };
+  }
+
   return {
     status: "success",
     message: "Signed in.",
@@ -117,9 +110,7 @@ export async function signIn(
 }
 
 export async function signInWithGoogle(next?: string): Promise<AuthActionResult> {
-  const blocked = await assertLoginAllowed();
-  if (blocked) return blocked;
-
+  // OAuth always starts; auth/callback rejects non-admins during maintenance.
   if (!isGoogleAuthEnabled()) {
     return { status: "error", message: "Google sign-in is not enabled." };
   }

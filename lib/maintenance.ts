@@ -39,6 +39,16 @@ export function isPublicBlocked(flags: MaintenanceFlags): boolean {
 }
 
 /**
+ * Optimistic admin check from JWT `app_metadata.app_role` (proxy only).
+ * Page/action guards still use the DB role via `get_session_context`.
+ */
+export function isAdminClaim(
+  claims: { app_metadata?: Record<string, unknown> } | null | undefined,
+): boolean {
+  return claims?.app_metadata?.app_role === "admin";
+}
+
+/**
  * Proxy-safe fetch with a short in-memory TTL. Uses the anon REST API so it
  * works in the request proxy without importing `server-only` modules.
  */

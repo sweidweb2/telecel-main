@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { loginPath, ROUTES } from "@/constants/routes";
 import {
   getMaintenanceFlagsForProxy,
+  isAdminClaim,
   isLoginBlocked,
   isPublicBlocked,
 } from "@/lib/maintenance";
@@ -88,7 +89,9 @@ export async function proxy(request: NextRequest) {
   // Do not run code between createServerClient and getClaims(): it refreshes
   // an expired access token and writes the new cookies through setAll above.
   const { data } = await supabase.auth.getClaims();
-  const signedIn = Boolean(data?.claims?.sub);
+  const claims = data?.claims;
+  const signedIn = Boolean(claims?.sub);
+  const isAdmin = isAdminClaim(claims);
   const { pathname, search } = request.nextUrl;
 
   if (pathname === LEGACY_FORGOT_PASSWORD) {
@@ -102,35 +105,25 @@ export async function proxy(request: NextRequest) {
   const publicBlocked = isPublicBlocked(maintenance);
 
   if (publicBlocked) {
+    // Admins may browse public pages and use auth surfaces; signed-in staff
+    // keep the dashboard so they can turn maintenance off.
     const allowDashboard = signedIn && isProtectedPath(pathname);
+    const allowAdminBrowse = signedIn && isAdmin;
+    const allowAuth = isAuthSurfacePath(pathname);
     const passthrough = MAINTENANCE_PASSTHROUGH.has(pathname);
-    if (!allowDashboard && !passthrough) {
+    if (!allowDashboard && !allowAdminBrowse && !allowAuth && !passthrough) {
       return rewriteWithCookies(
         new URL(ROUTES.maintenance, request.url),
         response,
       );
     }
-  } else if (loginBlocked && isAuthSurfacePath(pathname)) {
-    // Level 1: keep /login reachable so it can show the maintenance message;
-    // block callback/confirm from establishing new sessions via rewrite.
-    if (
-      pathname === ROUTES.authCallback ||
-      pathname === ROUTES.authConfirm ||
-      pathname === ROUTES.updatePassword
-    ) {
-      const target = new URL(ROUTES.login, request.url);
-      target.searchParams.set("maintenance", "1");
-      return redirectWithCookies(target, response);
-    }
   }
+  // Level 1 / 2: auth surfaces stay reachable so admins can sign in.
+  // Non-admin sessions are rejected in actions/auth and auth route handlers.
 
   if (isProtectedPath(pathname) && !signedIn) {
-    if (publicBlocked || loginBlocked) {
-      return redirectWithCookies(
-        new URL(ROUTES.maintenance, request.url),
-        response,
-      );
-    }
+    // Always send anonymous CMS visitors to login — including during
+    // maintenance, so admins can still authenticate.
     const target = new URL(
       loginPath({ next: `${pathname}${search}` }),
       request.url,
@@ -138,7 +131,11 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(target, response);
   }
 
-  if (AUTH_ONLY_PAGES.has(pathname) && signedIn && !loginBlocked) {
+  if (
+    AUTH_ONLY_PAGES.has(pathname) &&
+    signedIn &&
+    (!loginBlocked || isAdmin)
+  ) {
     return redirectWithCookies(new URL(ROUTES.dashboard, request.url), response);
   }
 

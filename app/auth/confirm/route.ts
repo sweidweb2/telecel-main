@@ -2,8 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { loginPath, ROUTES } from "@/constants/routes";
-import { getMaintenanceFlags } from "@/data/site-settings";
-import { isLoginBlocked } from "@/lib/maintenance";
+import { allowSessionDuringMaintenance } from "@/data/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,13 +17,9 @@ const ALLOWED_TYPES = new Set<EmailOtpType>([
  * Email-link verification (token_hash flow). Unlike the PKCE `code` flow, it
  * works when the link is opened on another device. The email templates in
  * Supabase must point here — see docs/04-runbooks/auth-setup.md.
+ * During L1/L2 maintenance only active admins keep the new session.
  */
 export async function GET(request: NextRequest) {
-  const flags = await getMaintenanceFlags();
-  if (isLoginBlocked(flags)) {
-    return NextResponse.redirect(new URL(ROUTES.maintenance, request.url));
-  }
-
   const { searchParams } = request.nextUrl;
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
@@ -42,7 +37,14 @@ export async function GET(request: NextRequest) {
       token_hash: tokenHash,
     });
     // Redirect to a clean URL so the one-time token never lingers in history.
-    if (!error) return NextResponse.redirect(new URL(next, request.url));
+    if (!error) {
+      if (!(await allowSessionDuringMaintenance())) {
+        return NextResponse.redirect(
+          new URL(loginPath({ reason: "no-access" }), request.url),
+        );
+      }
+      return NextResponse.redirect(new URL(next, request.url));
+    }
     console.error("[auth] verifyOtp failed", error.code ?? error.message);
   }
 

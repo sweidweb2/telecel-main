@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearMaintenanceProxyCache,
+  isAdminClaim,
   isLoginBlocked,
   isMaintenanceForceOff,
   isPublicBlocked,
@@ -36,5 +37,12 @@ describe("resolveMaintenanceFlags", () => {
     expect(isLoginBlocked({ level1: true, level2: false })).toBe(true);
     expect(isPublicBlocked({ level1: true, level2: false })).toBe(false);
     expect(isPublicBlocked({ level1: true, level2: true })).toBe(true);
+  });
+
+  it("reads admin from JWT app_metadata", () => {
+    expect(isAdminClaim({ app_metadata: { app_role: "admin" } })).toBe(true);
+    expect(isAdminClaim({ app_metadata: { app_role: "editor" } })).toBe(false);
+    expect(isAdminClaim({ app_metadata: {} })).toBe(false);
+    expect(isAdminClaim(null)).toBe(false);
   });
 });
