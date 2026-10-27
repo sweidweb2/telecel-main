@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { match, P } from "ts-pattern";
 
+import { recordAppError } from "@/actions/observability";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -121,6 +122,12 @@ export async function signInWithGoogle(next?: string): Promise<AuthActionResult>
   });
 
   if (error || !data.url) {
+    await recordAppError({
+      severity: "error",
+      source: "actions.auth.signInWithGoogle",
+      code: error?.code ?? null,
+      message: error?.message ?? "OAuth URL missing",
+    });
     return { status: "error", message: GENERIC_ERROR };
   }
 
@@ -170,6 +177,12 @@ export async function requestPasswordReset(
   );
   if (error) {
     console.error("[auth] resetPasswordForEmail failed", error.code ?? error.message);
+    await recordAppError({
+      severity: "error",
+      source: "actions.auth.requestPasswordReset",
+      code: error.code ?? null,
+      message: error.message,
+    });
   }
 
   return sent;
