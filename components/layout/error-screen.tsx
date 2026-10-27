@@ -13,7 +13,7 @@ type ErrorScreenProps = {
   children: ReactNode;
 };
 
-/** Shared 403/404/500 layout: notation code, display title, actions, motif. */
+/** Shared 400/401/403/404/500 layout: notation code, display title, actions, motif. */
 export function ErrorScreen({
   icon: Icon,
   code,
