@@ -260,8 +260,13 @@ export async function runBackupExport(
       files = [buildSingleTableFile(setting.tableName, rows, setting.format)];
     } else {
       const tables: Partial<Record<BackupExportTable, BackupRow[]>> = {};
-      for (const tableName of BACKUP_EXPORT_TABLES) {
-        const rows = await fetchTableRows(tableName);
+      const fetched = await Promise.all(
+        BACKUP_EXPORT_TABLES.map(async (tableName) => {
+          const rows = await fetchTableRows(tableName);
+          return [tableName, rows] as const;
+        }),
+      );
+      for (const [tableName, rows] of fetched) {
         tables[tableName] = rows;
         rowCounts[tableName] = rows.length;
       }
