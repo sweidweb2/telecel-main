@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import { requestPasswordReset } from "@/actions/auth";
 import { AuthNotice } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import {
+  EMAIL_MAX,
   forgotPasswordSchema,
   type ForgotPasswordInput,
 } from "@/validations/auth";
@@ -44,25 +45,23 @@ export function ForgotPasswordForm() {
 
   return (
     <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          className="h-12 border-input px-3 text-base"
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@telecel.com"
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "email-error" : undefined}
-          disabled={isPending}
-          {...register("email")}
-        />
-        {errors.email ? (
-          <p id="email-error" className="text-sm text-destructive">
-            {errors.email.message}
-          </p>
-        ) : null}
-      </div>
+      <FieldGroup>
+        <Field data-invalid={Boolean(errors.email)}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            className="h-12 border-input px-3 text-base"
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@telecel.com"
+            maxLength={EMAIL_MAX}
+            aria-invalid={Boolean(errors.email)}
+            disabled={isPending}
+            {...register("email")}
+          />
+          <FieldError>{errors.email?.message}</FieldError>
+        </Field>
+      </FieldGroup>
       <Button type="submit" className="h-12 w-full text-[15px]" disabled={isPending}>
         {isPending ? (
           <>

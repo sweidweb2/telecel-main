@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  EMAIL_MAX,
+  PASSWORD_MAX,
   forgotPasswordSchema,
   loginSchema,
   newPasswordSchema,
@@ -24,6 +26,24 @@ describe("loginSchema", () => {
     ).toBe(false);
     expect(
       loginSchema.safeParse({ email: "a@b.co", password: "" }).success
+    ).toBe(false);
+    expect(
+      loginSchema.safeParse({ email: "", password: "x" }).success
+    ).toBe(false);
+  });
+
+  it("rejects email or password over max length", () => {
+    expect(
+      loginSchema.safeParse({
+        email: `${"a".repeat(EMAIL_MAX)}@x.co`,
+        password: "x",
+      }).success
+    ).toBe(false);
+    expect(
+      loginSchema.safeParse({
+        email: "a@b.co",
+        password: "x".repeat(PASSWORD_MAX + 1),
+      }).success
     ).toBe(false);
   });
 });
@@ -49,6 +69,12 @@ describe("newPasswordSchema", () => {
 
   it("accepts a strong password", () => {
     expect(newPasswordSchema.safeParse("Telecel2026Strong").success).toBe(true);
+  });
+
+  it("rejects passwords over max length", () => {
+    expect(
+      newPasswordSchema.safeParse(`Aa1${"x".repeat(PASSWORD_MAX)}`).success
+    ).toBe(false);
   });
 });
 

@@ -1,13 +1,15 @@
 import { z } from "zod";
 
+export const EMAIL_MAX = 254;
 export const PASSWORD_MIN = 10;
 export const PASSWORD_MAX = 128;
 
 const emailSchema = z
   .string()
   .trim()
+  .min(1, "Email is required")
+  .max(EMAIL_MAX, `Email must be ${EMAIL_MAX} characters or fewer`)
   .toLowerCase()
-  .max(254, "Email must be 254 characters or fewer")
   .pipe(z.email("Enter a valid email address"));
 
 /** Shared strength rule for any password a person chooses or an admin sets. */
@@ -21,7 +23,10 @@ export const newPasswordSchema = z
 
 export const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, "Password is required").max(PASSWORD_MAX),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .max(PASSWORD_MAX, `Password must be ${PASSWORD_MAX} characters or fewer`),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -31,7 +36,10 @@ export const forgotPasswordSchema = z.object({
 export const updatePasswordSchema = z
   .object({
     password: newPasswordSchema,
-    confirmPassword: z.string().min(1, "Confirm your password"),
+    confirmPassword: z
+      .string()
+      .min(1, "Confirm your password")
+      .max(PASSWORD_MAX, `Password must be ${PASSWORD_MAX} characters or fewer`),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

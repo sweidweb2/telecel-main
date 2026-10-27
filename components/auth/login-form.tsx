@@ -8,13 +8,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { signIn, signInWithGoogle } from "@/actions/auth";
+import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { ROUTES } from "@/constants/routes";
-import { loginSchema, type LoginInput } from "@/validations/auth";
+import {
+  EMAIL_MAX,
+  PASSWORD_MAX,
+  loginSchema,
+  type LoginInput,
+} from "@/validations/auth";
 
 function GoogleIcon() {
   return (
@@ -84,51 +90,45 @@ export function LoginForm({
   return (
     <div className="grid gap-4">
       <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            className="h-12 border-input px-3 text-base"
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@telecel.com"
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            disabled={busy}
-            {...register("email")}
-          />
-          {errors.email ? (
-            <p id="email-error" className="text-sm text-destructive">
-              {errors.email.message}
-            </p>
-          ) : null}
-        </div>
-        <div className="grid gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Link
-              href={ROUTES.forgotPassword}
-              className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <Input
-            className="h-12 border-input px-3 text-base"
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? "password-error" : undefined}
-            disabled={busy}
-            {...register("password")}
-          />
-          {errors.password ? (
-            <p id="password-error" className="text-sm text-destructive">
-              {errors.password.message}
-            </p>
-          ) : null}
-        </div>
+        <FieldGroup>
+          <Field data-invalid={Boolean(errors.email)}>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              className="h-12 border-input px-3 text-base"
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@telecel.com"
+              maxLength={EMAIL_MAX}
+              aria-invalid={Boolean(errors.email)}
+              disabled={busy}
+              {...register("email")}
+            />
+            <FieldError>{errors.email?.message}</FieldError>
+          </Field>
+          <Field data-invalid={Boolean(errors.password)}>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <Link
+                href={ROUTES.forgotPassword}
+                className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <PasswordInput
+              className="h-12 border-input px-3 text-base"
+              id="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              maxLength={PASSWORD_MAX}
+              aria-invalid={Boolean(errors.password)}
+              disabled={busy}
+              {...register("password")}
+            />
+            <FieldError>{errors.password?.message}</FieldError>
+          </Field>
+        </FieldGroup>
         <Button type="submit" className="h-12 w-full text-[15px]" disabled={busy}>
           {isPending ? (
             <>
@@ -155,11 +155,7 @@ export function LoginForm({
             disabled={busy}
             onClick={onGoogle}
           >
-            {isGooglePending ? (
-              <Spinner />
-            ) : (
-              <GoogleIcon />
-            )}
+            {isGooglePending ? <Spinner /> : <GoogleIcon />}
             Continue with Google
           </Button>
         </>

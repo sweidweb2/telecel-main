@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { CircleAlertIcon, InfoIcon } from "lucide-react";
+import { ArrowLeftIcon, CircleAlertIcon, InfoIcon } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { SignalMotif } from "@/components/brand/signal-motif";
@@ -43,8 +43,19 @@ export function AuthShell({
         />
       </aside>
 
-      <section className="flex flex-col px-5 py-10 sm:px-10 lg:justify-center lg:px-20">
-        <Link href={ROUTES.home} aria-label="Telecel Global website" className="mx-auto mb-12 w-full max-w-[400px] lg:hidden">
+      <section className="relative flex flex-col px-5 py-10 sm:px-10 lg:justify-center lg:px-20">
+        <Link
+          href={ROUTES.home}
+          aria-label="Back to Telecel Global home"
+          className="absolute top-4 left-4 inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:top-6 sm:left-6"
+        >
+          <ArrowLeftIcon className="size-5" aria-hidden />
+        </Link>
+        <Link
+          href={ROUTES.home}
+          aria-label="Telecel Global website"
+          className="mx-auto mt-4 mb-12 w-full max-w-[400px] lg:hidden"
+        >
           <Logo size="md" priority />
         </Link>
         <div className="mx-auto w-full max-w-[400px]">
