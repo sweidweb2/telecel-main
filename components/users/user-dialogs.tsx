@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 
 import { createUser, deleteUser, updateUser } from "@/actions/users";
+import { PasswordInput } from "@/components/auth/password-input";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -54,6 +55,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Profile, UserRole } from "@/types/profile";
+import { PASSWORD_MIN } from "@/validations/auth";
 import {
   createUserSchema,
   updateUserSchema,
@@ -192,6 +194,7 @@ export function CreateUserDialog() {
                 autoComplete="name"
                 disabled={isPending}
                 maxLength={USER_FULL_NAME_MAX}
+                placeholder="Jane Doe"
                 aria-invalid={Boolean(form.formState.errors.fullName)}
                 {...form.register("fullName")}
               />
@@ -205,6 +208,7 @@ export function CreateUserDialog() {
                 autoComplete="email"
                 disabled={isPending}
                 maxLength={USER_EMAIL_MAX}
+                placeholder="you@telecel.com"
                 aria-invalid={Boolean(form.formState.errors.email)}
                 {...form.register("email")}
               />
@@ -212,13 +216,12 @@ export function CreateUserDialog() {
             </Field>
             <Field data-invalid={Boolean(form.formState.errors.password)}>
               <Label htmlFor="create-password">Temporary password</Label>
-              <Input
+              <PasswordInput
                 id="create-password"
-                type="password"
                 autoComplete="new-password"
                 disabled={isPending}
                 maxLength={USER_PASSWORD_MAX}
-                placeholder="At least 10 characters, Aa1"
+                placeholder={`At least ${PASSWORD_MIN} characters, Aa1`}
                 aria-invalid={Boolean(form.formState.errors.password)}
                 {...form.register("password")}
               />
@@ -409,6 +412,7 @@ export function UserRowActions({
                   id={`edit-name-${user.id}`}
                   disabled={isUpdating}
                   maxLength={USER_FULL_NAME_MAX}
+                  placeholder="Jane Doe"
                   aria-invalid={Boolean(form.formState.errors.fullName)}
                   {...form.register("fullName")}
                 />
@@ -423,6 +427,7 @@ export function UserRowActions({
                   type="email"
                   disabled={isUpdating}
                   maxLength={USER_EMAIL_MAX}
+                  placeholder="you@telecel.com"
                   aria-invalid={Boolean(form.formState.errors.email)}
                   {...form.register("email")}
                 />

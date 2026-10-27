@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { newPasswordSchema, PASSWORD_MAX } from "@/validations/auth";
+import {
+  EMAIL_MAX,
+  newPasswordSchema,
+  PASSWORD_MAX,
+} from "@/validations/auth";
 
 export const USER_ROLES = ["admin", "editor"] as const;
 /** Fixed page size — not configurable via URL or UI. */
@@ -8,7 +12,7 @@ export const USER_PAGE_SIZE = 10;
 
 export const USER_FULL_NAME_MIN = 2;
 export const USER_FULL_NAME_MAX = 80;
-export const USER_EMAIL_MAX = 254;
+export const USER_EMAIL_MAX = EMAIL_MAX;
 export const USER_PASSWORD_MAX = PASSWORD_MAX;
 
 const fullNameSchema = z
@@ -21,7 +25,7 @@ const emailSchema = z
   .string()
   .trim()
   .min(1, "Email is required")
-  .max(USER_EMAIL_MAX, "Email must be 254 characters or fewer")
+  .max(USER_EMAIL_MAX, `Email must be ${USER_EMAIL_MAX} characters or fewer`)
   .email("Enter a valid email address")
   .transform((value) => value.toLowerCase());
 
