@@ -58,8 +58,16 @@ test.describe("CMS authentication", () => {
       const sidebar = page.locator("[data-sidebar=sidebar]").first();
       await expect(sidebar.getByRole("link", { name: "News" })).toBeVisible();
       await expect(sidebar.getByRole("link", { name: "Users" })).toHaveCount(0);
+      await expect(sidebar.getByRole("link", { name: "Activity log" })).toHaveCount(0);
+      await expect(sidebar.getByRole("link", { name: "Error log" })).toHaveCount(0);
 
       await page.goto("/dashboard/users");
+      await expect(page.getByRole("heading", { name: "Access denied" })).toBeVisible();
+
+      await page.goto("/dashboard/activity-log");
+      await expect(page.getByRole("heading", { name: "Access denied" })).toBeVisible();
+
+      await page.goto("/dashboard/error-log");
       await expect(page.getByRole("heading", { name: "Access denied" })).toBeVisible();
 
       await page.goto("/dashboard/blogs");
