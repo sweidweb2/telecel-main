@@ -107,6 +107,27 @@ export async function createUser(
     );
   }
 
+  // Auth Admin createUser sets app_metadata, but the handle_new_user trigger
+  // can still insert profiles.role as NULL on hosted projects. profiles.role
+  // is authoritative for CMS access — set it explicitly.
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({
+      role: parsed.data.role,
+      full_name: parsed.data.fullName,
+      email: parsed.data.email,
+    })
+    .eq("id", data.user.id);
+
+  if (profileError) {
+    await admin.auth.admin.deleteUser(data.user.id);
+    return userUnexpectedError(
+      "actions.users.createUser",
+      auth.session.userId,
+      profileError,
+    );
+  }
+
   await recordActivity({
     actorId: auth.session.userId,
     action: "invite",
