@@ -65,7 +65,6 @@ export function UsersTable({
       <UsersFilters query={query} onSearchChange={onSearchChange} />
 
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -126,7 +125,6 @@ export function UsersTable({
               )}
             </TableBody>
           </Table>
-        </div>
       </CardContent>
 
       <CardFooter className="border-t bg-transparent px-4 py-3">
