@@ -1,6 +1,6 @@
 # Libraries
 
-Board card: *Decide libraries we will use and put them in package.json*. Decided 2026-10-20 (inherited from the ASIP stack, reviewed for Telecel Global). Every dependency is free/OSS; RFQ §13 requires approval before adding any paid plugin, font or service.
+Board card: *Decide libraries we will use and put them in package.json*. Decided 2026-10-20 for Telecel Global. Every dependency is free/OSS; RFQ §13 requires approval before adding any paid plugin, font or service.
 
 Approved stack for this Next.js App Router + Supabase app. Prefer these over alternatives. Do not add Zustand, TanStack Query, or Redux until the conditions below are met.
 

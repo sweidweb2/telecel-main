@@ -1,4 +1,4 @@
-import { IBM_Plex_Mono, IBM_Plex_Sans, Jost } from "next/font/google";
+import localFont from "next/font/local";
 
 /**
  * "Connected Energies" type system (all OFL, no licence cost — RFQ §13):
@@ -6,26 +6,63 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, Jost } from "next/font/google";
  * - IBM Plex Sans: reading/UI face for body copy and the CMS.
  * - IBM Plex Mono: notation only (stage indices, reference labels).
  * Never typeset the Telecel wordmark in any of these; use the supplied logo.
+ *
+ * Latin WOFF2 files live in `assets/fonts/` (OFL texts alongside them).
+ * They are loaded with `next/font/local` so compile does not download
+ * Google Fonts — a failed download is reported as a missing
+ * `@vercel/turbopack-next/internal/font/google/font` module.
  */
-export const displayFont = Jost({
+export const displayFont = localFont({
+  src: [
+    {
+      path: "../assets/fonts/jost-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/jost-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+  ],
   variable: "--font-jost",
-  subsets: ["latin"],
-  weight: ["500", "600"],
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
-export const bodyFont = IBM_Plex_Sans({
+export const bodyFont = localFont({
+  src: [
+    {
+      path: "../assets/fonts/ibm-plex-sans-latin-400-normal.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/ibm-plex-sans-latin-500-normal.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../assets/fonts/ibm-plex-sans-latin-600-normal.woff2",
+      weight: "600",
+      style: "normal",
+    },
+  ],
   variable: "--font-plex-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
-export const monoFont = IBM_Plex_Mono({
+export const monoFont = localFont({
+  src: "../assets/fonts/ibm-plex-mono-latin-400-normal.woff2",
   variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400"],
+  weight: "400",
+  style: "normal",
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["ui-monospace", "monospace"],
 });
 
 export const fontVariables = [

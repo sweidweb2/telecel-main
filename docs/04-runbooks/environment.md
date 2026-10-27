@@ -33,7 +33,7 @@ RFQ §4.2 asks for staging, UAT and production processes. Use separate Supabase 
 
 ## Migrations
 
-- `supabase/migrations/` is append-only **once applied anywhere**. The ASIP history was replaced by a fresh baseline on 2026-10-20, before any Telecel project existed.
+- `supabase/migrations/` is append-only **once applied anywhere**. Telecel Global started from a fresh baseline on 2026-10-20.
 - After the first `db push` to a Telecel project, never edit a merged migration. Add a new one instead.
 - `types/database.ts` was hand-updated for the baseline. Regenerate it after linking the first project and commit the result.
 

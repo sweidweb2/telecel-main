@@ -1,5 +1,4 @@
--- Baseline for Telecel Global (replaces the migration history inherited from
--- the ASIP project; no Telecel environment had applied it).
+-- Baseline for Telecel Global (fresh start; no prior Telecel migration history).
 --
 -- Access model
 -- - CMS is invite-only. Admins create users through the Auth Admin API and set

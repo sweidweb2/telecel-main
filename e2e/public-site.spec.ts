@@ -22,7 +22,7 @@ test.describe("public site", () => {
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   });
 
-  test("legacy ASIP locale and signup routes are gone", async ({ page }) => {
+  test("locale-prefixed and public signup routes are gone", async ({ page }) => {
     for (const path of ["/en", "/fr/login", "/signup", "/register"]) {
       const response = await page.goto(path);
       expect(response?.status(), path).toBe(404);

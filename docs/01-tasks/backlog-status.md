@@ -4,7 +4,7 @@ Branch `feat/foundation-setup`. Status of each board card after this branch.
 
 | Card | Status | Where |
 | --- | --- | --- |
-| Clean leftovers from ASIP copy | ✅ Done | ASIP pages, features, tables, copy, `/en` and `/fr` routing and seed credentials removed. Blog CMS kept and adapted as Insights → News. |
+| Clean leftovers from prior copy | ✅ Done | Unused pages, features, tables, copy, `/en` and `/fr` routing and seed credentials removed. Blog CMS kept and adapted as Insights → News. |
 | Collect all documents | 👤 Team | Store in `docs/client/` (git-ignored). Still needed: text pack and sitemap, brand guide, logo files, V11/V11.1 design. |
 | Prepare the theme + logo + font | ✅ Done (provisional values) | "Connected Energies" system: `docs/02-architecture/design-system.md`. Real wordmark extracted locally (git-ignored). Swap in the official SVGs, red and font when received. |
 | Prepare central error handling pages | ✅ Done | `ErrorScreen` used by `error.tsx`, `global-error.tsx`, `not-found.tsx` (static), `AccessDenied` (403), segment boundaries. |

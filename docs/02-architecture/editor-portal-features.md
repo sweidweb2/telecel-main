@@ -27,7 +27,7 @@ Accounts without a role, or suspended accounts, cannot sign in to the CMS.
 2. **Services**: 5 pillar pages, each with ordered sub-service modules. A module can be promoted to a standalone page (`is_standalone_page`) without redesign.
 3. **Solutions**: 4 pages with linked pillars and use cases.
 4. **Use cases**: 6 pages with linked pillars and solutions.
-5. **News** (Insights): already working (adapted from the ASIP blog CMS): rich text, cover image, author, categories, featured article, draft/publish. Migrate up to 15 existing items.
+5. **News** (Insights): already working: rich text, cover image, author, categories, featured article, draft/publish. Migrate up to 15 existing items.
 6. **Leadership**: profiles with photo, title, bio and manual ordering.
 7. **CTAs**: Talk to Sales and Request a Demo blocks, edited once and reused everywhere, each with a stable analytics event name.
 8. **Media library**: upload with type/size checks, **required alt text**, hero video with poster image.
