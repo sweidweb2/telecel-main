@@ -29,10 +29,16 @@ test.describe("public site", () => {
     }
   });
 
-  test("robots.txt hides the CMS and lists the sitemap", async ({ request }) => {
+  test("robots.txt matches indexing policy", async ({ request }) => {
     const body = await (await request.get("/robots.txt")).text();
-    expect(body).toContain("Disallow: /dashboard/");
-    expect(body).toContain("sitemap.xml");
+    // Staging/UAT set NEXT_PUBLIC_ALLOW_INDEXING=false → block the whole site.
+    // Production leaves it unset/true → allow public pages, disallow CMS/auth.
+    if (process.env.NEXT_PUBLIC_ALLOW_INDEXING === "false") {
+      expect(body).toContain("Disallow: /");
+    } else {
+      expect(body).toContain("Disallow: /dashboard/");
+      expect(body).toContain("sitemap.xml");
+    }
   });
 });
 
