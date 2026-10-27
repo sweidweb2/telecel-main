@@ -4,13 +4,13 @@ import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { updatePassword } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { ROUTES } from "@/constants/routes";
 import {
   PASSWORD_MIN,
@@ -91,7 +91,7 @@ export function UpdatePasswordForm() {
       <Button type="submit" className="h-12 w-full text-[15px]" disabled={isPending}>
         {isPending ? (
           <>
-            <Loader2Icon className="animate-spin" />
+            <Spinner />
             Saving…
           </>
         ) : (

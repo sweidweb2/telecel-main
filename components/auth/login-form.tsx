@@ -5,7 +5,6 @@ import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { signIn, signInWithGoogle } from "@/actions/auth";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 import { ROUTES } from "@/constants/routes";
 import { loginSchema, type LoginInput } from "@/validations/auth";
 
@@ -132,7 +132,7 @@ export function LoginForm({
         <Button type="submit" className="h-12 w-full text-[15px]" disabled={busy}>
           {isPending ? (
             <>
-              <Loader2Icon className="animate-spin" />
+              <Spinner />
               Signing in…
             </>
           ) : (
@@ -156,7 +156,7 @@ export function LoginForm({
             onClick={onGoogle}
           >
             {isGooglePending ? (
-              <Loader2Icon className="animate-spin" />
+              <Spinner />
             ) : (
               <GoogleIcon />
             )}

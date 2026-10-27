@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
+import { SearchIcon, XIcon } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -94,7 +95,7 @@ export function UsersFilters({ query, onSearchChange }: UsersFiltersProps) {
           className="min-h-11 pl-8 sm:min-h-8"
         />
         {isPending ? (
-          <Loader2Icon className="absolute top-1/2 right-2.5 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          <Spinner className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground" />
         ) : null}
       </div>
 

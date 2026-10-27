@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { requestPasswordReset } from "@/actions/auth";
@@ -11,6 +10,7 @@ import { AuthNotice } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   forgotPasswordSchema,
   type ForgotPasswordInput,
@@ -66,7 +66,7 @@ export function ForgotPasswordForm() {
       <Button type="submit" className="h-12 w-full text-[15px]" disabled={isPending}>
         {isPending ? (
           <>
-            <Loader2Icon className="animate-spin" />
+            <Spinner />
             Sending…
           </>
         ) : (

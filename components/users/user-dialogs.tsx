@@ -13,7 +13,6 @@ import { format } from "date-fns";
 import { useRouter } from "nextjs-toploader/app";
 import {
   EyeIcon,
-  Loader2Icon,
   PencilIcon,
   PlusIcon,
   Trash2Icon,
@@ -34,6 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -241,7 +241,7 @@ export function CreateUserDialog() {
           </Button>
           <Button type="submit" form={formId} disabled={isPending}>
             {isPending ? (
-              <Loader2Icon className="animate-spin" />
+              <Spinner />
             ) : (
               <PlusIcon />
             )}
@@ -466,7 +466,7 @@ export function UserRowActions({
             </Button>
             <Button type="submit" form={editFormId} disabled={isUpdating}>
               {isUpdating ? (
-                <Loader2Icon className="animate-spin" />
+                <Spinner />
               ) : (
                 <PencilIcon />
               )}
@@ -506,7 +506,7 @@ export function UserRowActions({
               disabled={isDeleting}
             >
               {isDeleting ? (
-                <Loader2Icon className="animate-spin" />
+                <Spinner />
               ) : (
                 <Trash2Icon />
               )}

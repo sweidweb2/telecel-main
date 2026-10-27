@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon, Trash2Icon, UploadIcon } from "lucide-react";
+import { Trash2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { RECOMMENDED_BLOG_CATEGORIES } from "@/constants/blog-categories";
 import { ROUTES } from "@/constants/routes";
@@ -365,7 +366,7 @@ export function BlogEditorForm({
           <Button type="submit" className="min-h-11" disabled={isPending}>
             {isPending ? (
               <>
-                <Loader2Icon className="animate-spin" />
+                <Spinner />
                 Saving…
               </>
             ) : mode === "create" ? (
@@ -823,7 +824,7 @@ export function BlogEditorForm({
           >
             {isPending ? (
               <>
-                <Loader2Icon className="animate-spin" />
+                <Spinner />
                 Deleting…
               </>
             ) : (

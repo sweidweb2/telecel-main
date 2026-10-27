@@ -4,18 +4,14 @@ import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { format } from "date-fns";
-import {
-  CircleAlertIcon,
-  Loader2Icon,
-  SearchIcon,
-  XIcon,
-} from "lucide-react";
+import { CircleAlertIcon, SearchIcon, XIcon } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Pagination,
   PaginationContent,
@@ -137,7 +133,7 @@ export function ErrorLogTable({
             className="h-11 pl-9"
           />
           {isPending ? (
-            <Loader2Icon className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            <Spinner className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground" />
           ) : null}
         </div>
         <div className="w-full sm:w-40">
