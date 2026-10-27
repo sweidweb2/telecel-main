@@ -18,6 +18,9 @@ Approved stack for this Next.js App Router + Supabase app. Prefer these over alt
 - **clsx** + **tailwind-merge** — used only via `cn()` in `lib/utils.ts` for conditional classNames.
 - **nextjs-toploader** — thin top-of-screen progress bar on route changes (YouTube/GitHub style). Not shadcn. Mount once in `app/layout.tsx`. For `router.push` / `router.replace`, import `useRouter` from `nextjs-toploader/app` so the bar still runs.
 - **next-themes** — class-based light/dark/system theme. Wrap the app with `ThemeProvider` in `app/layout.tsx`; dashboard avatar menu toggles theme.
+- **sonner** — toasts via themed `components/ui/sonner.tsx` (`Toaster` in `app/layout.tsx`). Prefer `toast.success` / `toast.error` for mutation feedback; do not invent parallel toast systems.
+- **Spinner** (`components/ui/spinner.tsx`) — inline pending UI in buttons, filter search fields, and local `useTransition` states. Route progress stays `NextTopLoader`; full-route shells stay `RouteSkeleton` in `loading.tsx`. Do not add one-off CSS loaders.
+- **Pending convention** — form submits and filter navigations: show `Spinner` while pending; surface success/failure with Sonner. Keep loaders local to the control that is waiting.
 - **boneyard-js** — pixel-perfect route skeletons captured from real UI ([docs](https://github.com/0xGF/boneyard)). Colocate `loading.tsx` with `RouteSkeleton` from `components/skeleton/route-skeleton.tsx`; pass shadcn layout as `fallback` until `npm run bones:build`. Registry lives in `bones/registry.ts` (imported once via `BoneyardSetup` in `app/layout.tsx`). Config: `boneyard.config.json`. Keep shadcn `Skeleton` in `components/ui/skeleton` for small inline placeholders (sidebar menu, form suspense) — not for route-level loading.
 
 ## Forms & validation

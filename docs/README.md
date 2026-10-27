@@ -13,7 +13,8 @@ docs/
 │   ├── libraries.md                Approved dependencies
 │   └── design-system.md            "Connected Energies" UI system
 ├── 03-database/
-│   └── schema.dbml     Full Phase 1 data model (migrated + draft tables)
+│   ├── schema.dbml              Full Phase 1 data model (migrated + draft tables)
+│   └── supabase-functions.md    RPCs, triggers, role helpers (is_admin, etc.)
 ├── 04-runbooks/
 │   ├── environment.md  Env vars, secrets sharing, commands, migrations
 │   └── auth-setup.md   Hosted Auth, first admin, Google, password reset, 24h sessions
