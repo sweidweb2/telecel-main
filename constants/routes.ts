@@ -2,9 +2,9 @@ export const ROUTES = {
   home: "/",
   insights: "/insights",
   contact: "/contact",
+  maintenance: "/maintenance",
 
   login: "/login",
-  forgotPassword: "/forgot-password",
   updatePassword: "/update-password",
   authCallback: "/auth/callback",
   authConfirm: "/auth/confirm",
