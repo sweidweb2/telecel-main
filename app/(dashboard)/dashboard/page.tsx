@@ -32,15 +32,8 @@ export default async function DashboardPage() {
                     className="group grid min-h-20 grid-cols-[1fr_auto] items-center gap-4 py-4 outline-none focus-visible:bg-surface"
                   >
                     <span className="min-w-0">
-                      <span className="flex items-center gap-2">
-                        <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">
-                          {item.title}
-                        </span>
-                        {item.ready ? (
-                          <span className="type-notation text-brand">Live</span>
-                        ) : (
-                          <span className="type-notation text-muted-foreground">Soon</span>
-                        )}
+                      <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">
+                        {item.title}
                       </span>
                       <span className="mt-1 block text-sm text-muted-foreground">
                         {item.description}
