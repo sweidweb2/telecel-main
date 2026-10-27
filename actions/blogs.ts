@@ -3,6 +3,10 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { nanoid } from "nanoid";
 
+import {
+  recordActivity,
+  recordAppError,
+} from "@/actions/observability";
 import { insightPath, ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
 import { estimateReadingTimeMinutes } from "@/lib/blog-utils";
@@ -44,18 +48,40 @@ const AUTHOR_MAX_BYTES = 2 * 1024 * 1024;
 // Must match allowed_mime_types on the storage buckets (insights migration).
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-type StaffClient = Extract<
+type StaffAuth = Extract<
   Awaited<ReturnType<typeof authorizeAction>>,
   { status: "success" }
->["session"]["supabase"];
+>["session"];
+
+type StaffClient = StaffAuth["supabase"];
 
 /** Admins and editors manage Insights; RLS (is_staff) re-checks in the DB. */
 async function authorizeStaff(): Promise<
-  { status: "success"; supabase: StaffClient } | { status: "error"; message: string }
+  | { status: "success"; session: StaffAuth; supabase: StaffClient }
+  | { status: "error"; message: string }
 > {
   const auth = await authorizeAction("staff");
   if (auth.status === "error") return auth;
-  return { status: "success", supabase: auth.session.supabase };
+  return {
+    status: "success",
+    session: auth.session,
+    supabase: auth.session.supabase,
+  };
+}
+
+async function blogUnexpectedError(
+  source: string,
+  actorId: string | null | undefined,
+  error: { code?: string; message?: string } | null,
+): Promise<BlogActionResult> {
+  await recordAppError({
+    severity: "error",
+    source,
+    code: error?.code ?? null,
+    message: error?.message ?? MESSAGES.genericError,
+    actorId: actorId ?? null,
+  });
+  return { status: "error", message: MESSAGES.genericError };
 }
 
 /** Revalidates listings, the sitemap and every detail path that changed (old and new slug). */
@@ -146,8 +172,20 @@ export async function createBlog(
     if (uniqueMessage) {
       return { status: "error", message: uniqueMessage };
     }
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.createBlog",
+      session.session.userId,
+      error,
+    );
   }
+
+  await recordActivity({
+    actorId: session.session.userId,
+    action: fields.status === "published" ? "publish" : "create",
+    entityType: "blog",
+    entityId: data.id,
+    summary: { slug: data.slug, status: fields.status },
+  });
 
   refreshBlogPaths(data.slug);
   return {
@@ -186,7 +224,11 @@ export async function updateBlog(
     .maybeSingle();
 
   if (existingError) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.updateBlog",
+      session.session.userId,
+      existingError,
+    );
   }
   if (!existing) {
     return { status: "error", message: MESSAGES.notFound };
@@ -216,11 +258,30 @@ export async function updateBlog(
     if (uniqueMessage) {
       return { status: "error", message: uniqueMessage };
     }
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.updateBlog",
+      session.session.userId,
+      error,
+    );
   }
   if (!data) {
     return { status: "error", message: MESSAGES.notFound };
   }
+
+  const action =
+    existing.status !== "published" && fields.status === "published"
+      ? "publish"
+      : existing.status === "published" && fields.status === "draft"
+        ? "unpublish"
+        : "update";
+
+  await recordActivity({
+    actorId: session.session.userId,
+    action,
+    entityType: "blog",
+    entityId: data.id,
+    summary: { slug: data.slug, status: fields.status },
+  });
 
   refreshBlogPaths(existing.slug, data.slug);
   return { status: "success", message: MESSAGES.updateSuccess, id: data.id };
@@ -267,8 +328,20 @@ export async function deleteBlog(
     .eq("id", parsed.data.id);
 
   if (error) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.deleteBlog",
+      session.session.userId,
+      error,
+    );
   }
+
+  await recordActivity({
+    actorId: session.session.userId,
+    action: "delete",
+    entityType: "blog",
+    entityId: existing.id,
+    summary: { slug: existing.slug },
+  });
 
   refreshBlogPaths(existing.slug);
   return { status: "success", message: MESSAGES.deleteSuccess };
@@ -335,7 +408,11 @@ async function uploadImage(options: {
     .maybeSingle();
 
   if (existingError) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.uploadImage",
+      session.session.userId,
+      existingError,
+    );
   }
   if (!existing) {
     return { status: "error", message: MESSAGES.notFound };
@@ -353,12 +430,20 @@ async function uploadImage(options: {
     });
 
   if (uploadError) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.uploadImage",
+      session.session.userId,
+      uploadError,
+    );
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.uploadImage",
+      session.session.userId,
+      { message: "Missing NEXT_PUBLIC_SUPABASE_URL" },
+    );
   }
 
   const publicUrl = publicObjectUrl(supabaseUrl, bucket, path);
@@ -380,10 +465,21 @@ async function uploadImage(options: {
 
   if (updateError) {
     await session.supabase.storage.from(bucket).remove([path]);
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.uploadImage",
+      session.session.userId,
+      updateError,
+    );
   }
 
   await removeStorageUrlIfOwned(session.supabase, previousUrl, bucket);
+  await recordActivity({
+    actorId: session.session.userId,
+    action: "update",
+    entityType: "blog",
+    entityId: blogId,
+    summary: { image: column },
+  });
   refreshBlogPaths(existing.slug);
   return { status: "success", message: MESSAGES.uploadSuccess, id: blogId };
 }
@@ -438,7 +534,11 @@ export async function removeBlogImage(input: {
     .maybeSingle();
 
   if (existingError) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.removeBlogImage",
+      session.session.userId,
+      existingError,
+    );
   }
   if (!existing) {
     return { status: "error", message: MESSAGES.notFound };
@@ -462,8 +562,20 @@ export async function removeBlogImage(input: {
           .eq("id", input.id);
 
   if (error) {
-    return { status: "error", message: MESSAGES.genericError };
+    return blogUnexpectedError(
+      "actions.blogs.removeBlogImage",
+      session.session.userId,
+      error,
+    );
   }
+
+  await recordActivity({
+    actorId: session.session.userId,
+    action: "update",
+    entityType: "blog",
+    entityId: input.id,
+    summary: { removedImage: input.kind },
+  });
 
   refreshBlogPaths(existing.slug);
   return { status: "success", message: MESSAGES.removeSuccess, id: input.id };
