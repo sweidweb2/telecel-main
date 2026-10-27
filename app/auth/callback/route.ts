@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { loginPath } from "@/constants/routes";
+import { loginPath, ROUTES } from "@/constants/routes";
+import { getMaintenanceFlags } from "@/data/site-settings";
+import { isLoginBlocked } from "@/lib/maintenance";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,6 +12,11 @@ import { createClient } from "@/lib/supabase/server";
  * `code`. Accounts without a CMS role are signed out by requireStaff().
  */
 export async function GET(request: NextRequest) {
+  const flags = await getMaintenanceFlags();
+  if (isLoginBlocked(flags)) {
+    return NextResponse.redirect(new URL(ROUTES.maintenance, request.url));
+  }
+
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");
   const next = safeRedirectPath(searchParams.get("next"));
@@ -24,6 +31,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    new URL(loginPath({ reason: "auth-error" }), request.url)
+    new URL(loginPath({ reason: "auth-error" }), request.url),
   );
 }

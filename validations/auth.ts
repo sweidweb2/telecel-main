@@ -29,10 +29,6 @@ export const loginSchema = z.object({
     .max(PASSWORD_MAX, `Password must be ${PASSWORD_MAX} characters or fewer`),
 });
 
-export const forgotPasswordSchema = z.object({
-  email: emailSchema,
-});
-
 export const updatePasswordSchema = z
   .object({
     password: newPasswordSchema,
@@ -47,5 +43,4 @@ export const updatePasswordSchema = z
   });
 
 export type LoginInput = z.infer<typeof loginSchema>;
-export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;

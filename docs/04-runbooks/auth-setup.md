@@ -38,24 +38,22 @@ The CMS can only create users once an admin exists. For the first one:
 3. Set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true` and redeploy.
 4. Behaviour: only users an admin already created can sign in with Google. Supabase links the Google identity to the existing account when the emails match and are verified. An unknown Google account is rejected and the user lands on `/login?reason=auth-error`.
 
-## 5. Password reset without our own domain email (board card research)
+## 5. Password help (self-serve email reset deferred)
 
-**Finding:** Supabase's built-in email service only delivers to the project's **team members** and is limited to a few emails per hour. It isn't usable for real users, whatever the domain. Password reset needs a custom SMTP server (Authentication → Emails → SMTP Settings).
+Self-serve “Forgot password” email reset is **not** in the product UI. Login links
+**Forgot password? Contact us** → `/contact?intent=general`. Staff handle the
+request from **Dashboard → Inquiries** (or set a temporary password in Users).
 
-Options **without owning a sending domain**:
+**Works today without SMTP:**
 
-| Option | Domain needed? | Notes |
-| --- | --- | --- |
-| **Brevo (Sendinblue) SMTP** | No (single verified sender address) | Free tier is about 300 emails/day. Fastest to set up. Deliverability is fine for low-volume transactional mail. |
-| **Gmail / Google Workspace SMTP** | No | `smtp.gmail.com:587` with an app password (needs 2FA). About 500/day on personal accounts, 2,000/day on Workspace. Sender is the Gmail address. |
-| **Telecel's own SMTP / M365 relay** | Uses Telecel's domain | Best for production branding. Needs Telecel IT. |
-| Resend, Postmark, SES | **Yes** (DNS verification) | Best deliverability, but needs DNS access to a domain. |
+1. User submits the public contact form (or an admin is reached out of band).
+2. Admin sets a strong temporary password in **Dashboard → Users** and shares it securely.
+3. User signs in and changes it from the account menu → *Change password*
+   (`/update-password`).
 
-**Recommendation:** use Brevo or Gmail SMTP for staging and UAT now, and switch to Telecel's SMTP or a domain-verified provider before launch (RFQ: secure, no vendor lock-in).
+**Invite links** still use `/auth/confirm` + `/update-password` when email invites
+are enabled. If you turn invites on later, set the hosted invite template to
+`supabase/templates/invite.html` and configure custom SMTP (built-in Supabase
+mail only reaches project team members).
 
-**No-email fallback (works today):** an admin sets a new strong temporary password for the user in the Users portal and shares it securely. The user then changes it from the account menu → *Change password*.
-
-How the flow works in the app:
-`/forgot-password` → `resetPasswordForEmail` (always shows the same reply, rate-limited) → email link to `/auth/confirm?token_hash=…&type=recovery` (works on any device, single use, 1h) → `/update-password` → other sessions are signed out.
-
-**Required:** set the hosted email templates (Authentication → Emails → Templates) to the contents of `supabase/templates/recovery.html` and `invite.html`. The default templates use a PKCE link that only works in the browser that asked for the reset.
+Legacy `/forgot-password` redirects to `/contact?intent=general`.

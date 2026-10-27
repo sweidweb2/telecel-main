@@ -110,10 +110,10 @@ export function LoginForm({
             <div className="flex items-center justify-between gap-2">
               <FieldLabel htmlFor="password">Password</FieldLabel>
               <Link
-                href={ROUTES.forgotPassword}
+                href={`${ROUTES.contact}?intent=general`}
                 className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                Forgot password?
+                Forgot password? Contact us
               </Link>
             </div>
             <PasswordInput

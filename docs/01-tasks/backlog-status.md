@@ -18,7 +18,7 @@ Branch `feat/foundation-setup`. Status of each board card after this branch.
 | Prepare all shared components | ✅ Base | shadcn primitives, `AuthShell`, `PortalPageHeader`, `PortalPlaceholder`, `AccessDenied`, `Logo`. More come with each feature. |
 | Handle logout + protect portal URL with middleware | ✅ Done | `proxy.ts` (Next 16 rename of middleware) plus server guards in `data/auth.ts` plus RLS. Logout clears the session. |
 | Handle Google login | 🟡 Code done | Needs a Google Cloud OAuth client and the provider enabled: `docs/04-runbooks/auth-setup.md` §4. |
-| Handle reset password (research: without own domain email?) | ✅ Done + research | `/forgot-password` → `/auth/confirm` → `/update-password`. Needs custom SMTP. Answer and options in `auth-setup.md` §5. |
+| Handle reset password (research: without own domain email?) | ✅ Deferred to Contact | Login → Contact us → inquiries portal / admin temp password. See `auth-setup.md` §5. |
 | Handle session timeout — 1 day | ✅ Done | Absolute 24h enforced in the DB and the app: `auth-setup.md` §3. |
 | Prepare portals (library or manual) | ✅ Done (manual) | Built on the existing shadcn sidebar. No admin-template library needed. |
 | Public Pages Front-end (AS) | ➡️ Ready to start | Clean slate: `constants/site-nav.ts` holds the RFQ sitemap. Navbar, footer and placeholder home are wired. |

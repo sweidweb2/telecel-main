@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   EMAIL_MAX,
   PASSWORD_MAX,
-  forgotPasswordSchema,
   loginSchema,
   newPasswordSchema,
   updatePasswordSchema,
@@ -45,17 +44,6 @@ describe("loginSchema", () => {
         password: "x".repeat(PASSWORD_MAX + 1),
       }).success
     ).toBe(false);
-  });
-});
-
-describe("forgotPasswordSchema", () => {
-  it("requires a valid email", () => {
-    expect(forgotPasswordSchema.safeParse({ email: "a@b.co" }).success).toBe(
-      true
-    );
-    expect(forgotPasswordSchema.safeParse({ email: "nope" }).success).toBe(
-      false
-    );
   });
 });
 

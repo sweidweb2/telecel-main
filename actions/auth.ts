@@ -6,16 +6,16 @@ import { match, P } from "ts-pattern";
 
 import { recordAppError } from "@/actions/observability";
 import { loginPath, ROUTES } from "@/constants/routes";
+import { getMaintenanceFlags } from "@/data/site-settings";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
+import { isLoginBlocked } from "@/lib/maintenance";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { absoluteUrl } from "@/lib/seo/site";
 import { createClient } from "@/lib/supabase/server";
 import {
-  forgotPasswordSchema,
   loginSchema,
   updatePasswordSchema,
-  type ForgotPasswordInput,
   type LoginInput,
   type UpdatePasswordInput,
 } from "@/validations/auth";
@@ -25,10 +25,19 @@ export type AuthActionResult =
   | { status: "error"; message: string };
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
-const ONE_HOUR = 60 * 60 * 1000;
 
 const GENERIC_ERROR = "Something went wrong. Please try again.";
 const RATE_LIMITED = "Too many attempts. Wait a few minutes and try again.";
+const MAINTENANCE_LOGIN_BLOCKED =
+  "Sign-in is temporarily unavailable while we perform maintenance.";
+
+async function assertLoginAllowed(): Promise<AuthActionResult | null> {
+  const flags = await getMaintenanceFlags();
+  if (isLoginBlocked(flags)) {
+    return { status: "error", message: MAINTENANCE_LOGIN_BLOCKED };
+  }
+  return null;
+}
 
 async function clientIp(): Promise<string> {
   const headerStore = await headers();
@@ -77,6 +86,9 @@ export async function signIn(
   input: LoginInput,
   next?: string
 ): Promise<AuthActionResult> {
+  const blocked = await assertLoginAllowed();
+  if (blocked) return blocked;
+
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -105,6 +117,9 @@ export async function signIn(
 }
 
 export async function signInWithGoogle(next?: string): Promise<AuthActionResult> {
+  const blocked = await assertLoginAllowed();
+  if (blocked) return blocked;
+
   if (!isGoogleAuthEnabled()) {
     return { status: "error", message: "Google sign-in is not enabled." };
   }
@@ -140,54 +155,6 @@ export async function signOut(): Promise<void> {
   redirect(loginPath({ reason: "signed-out" }));
 }
 
-/**
- * Always reports success so the form cannot be used to discover which emails
- * have accounts. The email links to /auth/confirm (token_hash flow), which
- * works even when opened on a different device than the one that asked.
- */
-export async function requestPasswordReset(
-  input: ForgotPasswordInput
-): Promise<AuthActionResult> {
-  const parsed = forgotPasswordSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      status: "error",
-      message: parsed.error.issues[0]?.message ?? "Enter a valid email address.",
-    };
-  }
-
-  const sent = {
-    status: "success" as const,
-    message:
-      "If an account exists for that email, a reset link is on its way. It expires in 1 hour.",
-  };
-
-  const ip = await clientIp();
-  if (
-    !consumeRateLimit(`reset:ip:${ip}`, 10, ONE_HOUR) ||
-    !consumeRateLimit(`reset:email:${parsed.data.email}`, 3, ONE_HOUR)
-  ) {
-    return sent;
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    parsed.data.email,
-    { redirectTo: absoluteUrl(ROUTES.updatePassword) }
-  );
-  if (error) {
-    console.error("[auth] resetPasswordForEmail failed", error.code ?? error.message);
-    await recordAppError({
-      severity: "error",
-      source: "actions.auth.requestPasswordReset",
-      code: error.code ?? null,
-      message: error.message,
-    });
-  }
-
-  return sent;
-}
-
 /** Sets a new password for the signed-in user (including recovery sessions). */
 export async function updatePassword(
   input: UpdatePasswordInput
@@ -205,7 +172,7 @@ export async function updatePassword(
   if (!claimsData?.claims?.sub) {
     return {
       status: "error",
-      message: "Your reset link has expired. Request a new one.",
+      message: "Sign in again, then choose a new password.",
     };
   }
 

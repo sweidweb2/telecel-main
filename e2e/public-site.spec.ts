@@ -53,12 +53,25 @@ test.describe("CMS entry points (no session)", () => {
     await page.goto("/login?reason=session-expired");
     await expect(page.getByText("Your session expired after 24 hours")).toBeVisible();
     await expect(page.getByRole("link", { name: /sign up/i })).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Forgot password?" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Forgot password? Contact us" })
+    ).toBeVisible();
   });
 
-  test("forgot password page renders", async ({ page }) => {
+  test("contact page renders", async ({ page }) => {
+    await page.goto("/contact");
+    await expect(page.getByRole("heading", { name: "Tell us what you need" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send inquiry" })).toBeVisible();
+  });
+
+  test("legacy forgot-password redirects to contact", async ({ page }) => {
     await page.goto("/forgot-password");
-    await expect(page.getByRole("heading", { name: "Reset password" })).toBeVisible();
+    await expect(page).toHaveURL(/\/contact\?intent=general$/);
+  });
+
+  test("inquiries portal without a session redirects to login", async ({ page }) => {
+    await page.goto("/dashboard/inquiries");
+    await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Finquiries$/);
   });
 
   test("update password without a session goes back to login", async ({ page }) => {

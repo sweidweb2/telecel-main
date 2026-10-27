@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { PASSWORD_MAX } from "@/validations/auth";
@@ -25,23 +24,26 @@ export function PasswordInput({
     <div className="relative">
       <Input
         type={isVisible ? "text" : "password"}
-        className={cn("pr-11", className)}
+        className={cn(className, "pr-11")}
         maxLength={maxLength}
         disabled={disabled}
         {...props}
       />
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="absolute top-1/2 right-1.5 size-9 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        tabIndex={-1}
+        className="absolute inset-y-0 right-0 z-10 flex w-11 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         onClick={() => setIsVisible((value) => !value)}
         disabled={disabled}
         aria-label={isVisible ? "Hide password" : "Show password"}
         aria-pressed={isVisible}
       >
-        {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-      </Button>
+        {isVisible ? (
+          <EyeOffIcon className="size-4" aria-hidden />
+        ) : (
+          <EyeIcon className="size-4" aria-hidden />
+        )}
+      </button>
     </div>
   );
 }
