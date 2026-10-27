@@ -177,6 +177,22 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         ready: true,
       },
       {
+        title: "Activity log",
+        href: ROUTES.activityLog,
+        minRole: "admin",
+        description: "Who created, updated, published or deleted CMS content and users.",
+        planned: [],
+        ready: true,
+      },
+      {
+        title: "Error log",
+        href: ROUTES.errorLog,
+        minRole: "admin",
+        description: "Unexpected server failures from actions and auth providers.",
+        planned: [],
+        ready: true,
+      },
+      {
         title: "Form routing",
         href: ROUTES.formRouting,
         minRole: "admin",
