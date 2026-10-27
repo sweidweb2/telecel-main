@@ -33,5 +33,6 @@ components/, hooks/  →  types/, validations/, constants/
 - Components and hooks never import Supabase
 - `data/` and `actions/` never import from `app/`
 - `lib/supabase/admin.ts` only from server-only files (`actions/`, `app/api/`)
+- Observability writes: `actions/observability.ts` (`recordActivity` / `recordAppError`). Reads: `data/audit-log.ts`, `data/app-errors.ts`
 
 `data/` (reads during render) and `actions/` (writes from forms) stay separate. They are service + repository in one — do not add a extra repository layer unless we swap databases later.

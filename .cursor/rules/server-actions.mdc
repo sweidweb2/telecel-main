@@ -12,6 +12,7 @@ One file per entity: `actions/projects.ts`. Every `'use server'` mutation lives 
 - Use `ts-pattern` for result/error branching instead of long `if`/`switch` chains
 - INSERT/UPDATE/DELETE only — reads belong in `data/`
 - `revalidatePath` / `revalidateTag` after successful mutations
+- After successful CMS/admin mutations call `recordActivity`; on unexpected server failures call `recordAppError` (see `.cursor/rules/observability.mdc`)
 - Never import from `app/`
 
 ```ts

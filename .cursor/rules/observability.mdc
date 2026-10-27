@@ -1,0 +1,39 @@
+---
+description: When and how to write Activity (audit_log) and Error (app_errors) logs from Server Actions
+globs: actions/**/*.ts
+alwaysApply: false
+---
+
+# Observability — activity + error logs
+
+Helpers live in `actions/observability.ts`. Reads live in `data/audit-log.ts` and `data/app-errors.ts`. Admin UIs: `/dashboard/activity-log`, `/dashboard/error-log`.
+
+## `recordActivity` — successful CMS/admin mutations
+
+Call **after** a successful write (blogs, users, future content):
+
+- Actions like `create` | `update` | `publish` | `unpublish` | `delete` | `invite` | `role_change` | `suspend` | `reactivate`
+- Include `actorId`, `entityType`, `entityId`, and a small safe `summary` (slugs, roles, status — never secrets)
+
+Do **not** record logins/logouts or expected user mistakes.
+
+## `recordAppError` — unexpected server failures
+
+Call when a Supabase / Auth Admin / provider call fails in an unexpected way:
+
+- Always still return `{ status: "error", message }` to the UI — logging does not replace that
+- Prefer `source` like `actions.blogs.updateBlog`
+- Safe `message` / `code` / `context` only
+
+Do **not** log:
+
+- Zod / form validation failures
+- `authorizeAction` denials (“Only administrators…”)
+- Expected auth denials (wrong password, rate limit)
+- Passwords, tokens, recovery links, service-role keys, full request bodies
+
+## Hard rules
+
+- Activity ≠ Errors — do not dual-write the same event; on failure prefer error only
+- Helpers must **never throw** into the caller (they already swallow insert failures)
+- Inserts use the service-role client; admins read via RLS `is_admin()`
