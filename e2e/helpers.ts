@@ -42,7 +42,8 @@ export function anonClient(): SupabaseClient {
 /** Creates a confirmed user; `role: null` = account without CMS access. */
 export async function createTestUser(role: "admin" | "editor" | null) {
   const email = `e2e.${role ?? "norole"}.${nanoid(8).toLowerCase()}@example.com`;
-  const { data, error } = await adminClient().auth.admin.createUser({
+  const admin = adminClient();
+  const { data, error } = await admin.auth.admin.createUser({
     email,
     password: TEST_PASSWORD,
     email_confirm: true,
@@ -50,6 +51,21 @@ export async function createTestUser(role: "admin" | "editor" | null) {
     app_metadata: role ? { app_role: role } : {},
   });
   if (error) throw error;
+
+  // Hosted Auth can create the auth user with app_metadata set while the
+  // handle_new_user trigger still inserts profiles.role as NULL. Force the
+  // authoritative CMS role on the profile so E2E matches production invites.
+  if (role) {
+    const { error: roleError } = await admin
+      .from("profiles")
+      .update({ role })
+      .eq("id", data.user.id);
+    if (roleError) {
+      await admin.auth.admin.deleteUser(data.user.id);
+      throw roleError;
+    }
+  }
+
   return {
     id: data.user.id,
     email,
