@@ -9,14 +9,14 @@ export function MaintenanceScreen({
   variant = "full",
   description,
 }: {
-  /** `full` = Level 2 public outage; `login` = Level 1 auth-only block. */
+  /** `full` = Level 2 public outage; `login` kept for rare auth-only messaging. */
   variant?: "full" | "login";
   description?: string;
 }) {
   const copy =
     description ??
     (variant === "login"
-      ? "Sign-in is temporarily unavailable while we perform maintenance. The public site remains available."
+      ? "Sign-in is temporarily limited while we perform maintenance. Administrators may still sign in."
       : "Telecel Global is temporarily unavailable while we perform scheduled maintenance. Please check back shortly.");
 
   return (

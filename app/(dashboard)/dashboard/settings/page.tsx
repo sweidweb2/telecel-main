@@ -35,8 +35,9 @@ export default async function SettingsPage() {
           Maintenance
         </h3>
         <p className="mt-1 mb-6 text-sm text-muted-foreground">
-          Level 1 blocks new sign-ins. Level 2 also replaces public pages with a
-          branded maintenance screen.
+          Level 1 blocks non-admin sign-ins. Level 2 also replaces public pages
+          with a branded maintenance screen (admins can still browse and sign
+          in).
         </p>
         <MaintenanceSettingsForm initialFlags={flags} />
       </section>

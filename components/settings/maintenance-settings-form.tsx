@@ -43,8 +43,9 @@ export function MaintenanceSettingsForm({
             Level 1 — Block login
           </Label>
           <p className="text-sm text-muted-foreground">
-            Visitors cannot sign in. Public marketing pages stay available.
-            Signed-in staff keep dashboard access.
+            Non-admin visitors cannot sign in. Public marketing pages stay
+            available. Admins can still sign in; signed-in staff keep dashboard
+            access.
           </p>
         </div>
         <Switch
@@ -63,8 +64,9 @@ export function MaintenanceSettingsForm({
             Level 2 — Full maintenance
           </Label>
           <p className="text-sm text-muted-foreground">
-            Blocks login and shows a maintenance page on all public routes.
-            Signed-in staff can still open the dashboard to turn this off.
+            Shows a maintenance page on public routes for visitors and editors.
+            Admins can still sign in and browse the public site; signed-in staff
+            keep dashboard access to turn this off.
           </p>
         </div>
         <Switch
