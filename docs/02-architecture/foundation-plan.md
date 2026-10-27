@@ -53,4 +53,4 @@ Codex (gpt-6-astra, high effort) reviewed this plan read-only. Adopted:
 - **No experimental `forbidden()`:** a stable `AccessDenied` component is used instead (decision 9 amended).
 - `not-found.tsx` no longer reads the session. Public pages stay static.
 
-Deferred (tracked in `editor-portal-features.md` / `schema.dbml`): audit log, shared rate limiting, private draft-media bucket, revisions/concurrency, inquiry delivery retries/retention, restore testing.
+Deferred (tracked in `editor-portal-features.md` / `schema.dbml`): shared rate limiting, private draft-media bucket, revisions/concurrency, inquiry delivery retries/retention, restore testing. Activity + error logs shipped (`audit_log` / `app_errors`, admin pages).

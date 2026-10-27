@@ -17,6 +17,10 @@ docs/
 ├── 04-runbooks/
 │   ├── environment.md  Env vars, secrets sharing, commands, migrations
 │   └── auth-setup.md   Hosted Auth, first admin, Google, password reset, 24h sessions
+├── optimization/
+│   └── lightweight-stack.md  Keep / cut / replace deps to slim the app
+├── 05-branch-review/   Local-branch review reports (observability + polish)
+│   └── README.md       Index of architecture / performance / security / smells
 └── client/             (git-ignored) RFQ, text pack, brand assets
 ```
 
