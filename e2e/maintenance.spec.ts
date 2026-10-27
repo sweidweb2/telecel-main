@@ -25,11 +25,12 @@ test.describe("maintenance settings", () => {
     });
   });
 
-  test("admin toggles Level 1 and Level 2; staff session keeps settings", async ({
+  test("admin toggles Level 1 and Level 2; admins keep login and public browse", async ({
     page,
   }) => {
     test.setTimeout(120_000);
     const admin = await createTestUser("admin");
+    const editor = await createTestUser("editor");
 
     try {
       await signInViaForm(page, admin.email, admin.password, "/dashboard/settings");
@@ -47,19 +48,18 @@ test.describe("maintenance settings", () => {
         timeout: 15_000,
       });
 
-      // Proxy caches flags ~15s; poll until Level 1 hits /login.
+      // Proxy caches flags ~15s; poll until Level 1 notice appears on /login.
       await expect
         .poll(
           async () => {
             await page.goto("/login");
-            return page
-              .getByRole("heading", { name: /We'll be right back/i })
-              .count();
+            // Signed-in admin is redirected to dashboard even during L1.
+            if (page.url().includes("/dashboard")) return 1;
+            return page.getByText(/Administrators may continue/i).count();
           },
           { timeout: 25_000 },
         )
         .toBeGreaterThan(0);
-      await expect(page.getByRole("link", { name: /home/i })).toBeVisible();
 
       await page.goto("/");
       await expect(
@@ -74,6 +74,8 @@ test.describe("maintenance settings", () => {
         timeout: 15_000,
       });
 
+      // Anonymous visitors see the maintenance screen on public routes.
+      await page.context().clearCookies();
       await expect
         .poll(
           async () => {
@@ -85,6 +87,27 @@ test.describe("maintenance settings", () => {
           { timeout: 25_000 },
         )
         .toBeGreaterThan(0);
+
+      // Editors cannot sign in during maintenance.
+      await page.goto("/login");
+      await expect(
+        page.getByText(/Administrators may continue/i),
+      ).toBeVisible();
+      await page.getByLabel(/^Email$/i).fill(editor.email);
+      await page.getByLabel(/^Password$/i).fill(editor.password);
+      await page.getByRole("button", { name: /^Sign in$/i }).click();
+      await expect(
+        page.getByText(/Only administrators can sign in/i),
+      ).toBeVisible({ timeout: 15_000 });
+
+      // Admins can still sign in and browse public pages.
+      await signInViaForm(page, admin.email, admin.password, "/dashboard/settings");
+      await expectOnDashboard(page, "/dashboard/settings");
+
+      await page.goto("/");
+      await expect(
+        page.getByRole("heading", { name: /We'll be right back/i }),
+      ).toHaveCount(0);
 
       await page.goto("/dashboard/settings");
       await expectOnDashboard(page, "/dashboard/settings");
@@ -99,7 +122,7 @@ test.describe("maintenance settings", () => {
         });
       }
     } finally {
-      await admin.cleanup();
+      await Promise.all([admin.cleanup(), editor.cleanup()]);
     }
   });
 });
