@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function MaintenancePage() {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <MaintenanceScreen variant="full" />
+      <MaintenanceScreen />
     </div>
   );
 }
