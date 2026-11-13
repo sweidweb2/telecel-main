@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+build
+coverage
+playwright-report
+test-results
+blob-report
+package-lock.json
+pnpm-lock.yaml
+supabase/.branches
+supabase/.temp
+public/brand
+docs
+Bones
+bones
+*.min.js

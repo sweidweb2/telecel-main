@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const recordAppError = vi.fn(async (_input?: unknown) => undefined);
+const recordAppError = vi.fn(async () => undefined);
 
 vi.mock("@/actions/observability", () => ({
   recordAppError: (input: unknown) => recordAppError(input),

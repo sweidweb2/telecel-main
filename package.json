@@ -6,15 +6,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --pass-with-no-tests",
-    "test:ci": "npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e",
+    "test:ci": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e",
     "bones:build": "boneyard-js build http://localhost:3000",
     "bones:watch": "boneyard-js build --watch http://localhost:3000",
-    "brand:extract": "node scripts/extract-brand-assets.mjs"
+    "brand:extract": "node scripts/extract-brand-assets.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,yml,yaml,html}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -55,7 +68,11 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.10.1",
     "shadcn": "^4.19.0",
     "supabase": "^2.115.0",
     "tailwindcss": "^4",

@@ -4,18 +4,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 function ContactFallback() {
   return (
     <main className="flex-1">
-      <section className="container-site grid gap-12 py-14 lg:grid-cols-12 lg:py-24">
-        <div className="space-y-4 lg:col-span-5">
+      <header className="border-b bg-surface">
+        <div className="container-site space-y-4 py-12 sm:py-14 lg:py-20">
           <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-12 w-3/4" />
-          <Skeleton className="h-20 w-full max-w-md" />
+          <Skeleton className="h-12 w-3/4 max-w-xl" />
+          <Skeleton className="h-5 w-full max-w-lg" />
         </div>
-        <div className="space-y-4 lg:col-span-7">
-          <Skeleton className="h-12 w-full" />
+      </header>
+      <section className="container-site grid gap-6 py-10 lg:grid-cols-12 lg:py-16">
+        <div className="space-y-3 lg:col-span-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-1/2" />
+        </div>
+        <div className="space-y-4 lg:col-span-8">
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-12 w-40" />
         </div>
       </section>
     </main>

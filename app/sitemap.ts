@@ -1,16 +1,24 @@
 import type { MetadataRoute } from "next";
 
 import { ROUTES, insightPath } from "@/constants/routes";
-import { SITE_NAV, type SiteNavLink } from "@/constants/site-nav";
+import {
+  SITE_LEGAL_LINKS,
+  SITE_NAV,
+  type SiteNavLink,
+} from "@/constants/site-nav";
 import { getInsightSlugRows } from "@/data/insights";
 import { absoluteUrl } from "@/lib/seo/site";
 
 /** Only routes that exist (`live`) are listed; anchors (#…) never are. */
 function liveLinks(): SiteNavLink[] {
-  const links = SITE_NAV.flatMap((section) => [section, ...(section.children ?? [])]);
+  const links = [
+    ...SITE_NAV.flatMap((section) => [section, ...(section.children ?? [])]),
+    ...SITE_LEGAL_LINKS,
+  ];
   const seen = new Set<string>();
   return links.filter((link) => {
-    if (!link.live || link.href.includes("#") || seen.has(link.href)) return false;
+    if (!link.live || link.href.includes("#") || seen.has(link.href))
+      return false;
     seen.add(link.href);
     return true;
   });

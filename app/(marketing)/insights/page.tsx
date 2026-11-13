@@ -1,20 +1,11 @@
-import { BLOG_LABELS } from "@/components/marketing/blog-labels";
-import { BlogSection } from "@/components/marketing/blog-section";
-import { ROUTES } from "@/constants/routes";
-import { getAllInsights, getFeaturedInsight } from "@/data/insights";
-import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
+import {
+  BlueprintPage,
+  blueprintMetadata,
+} from "@/components/marketing/blueprint-page";
+import { INSIGHTS_BLUEPRINT } from "@/constants/page-blueprints";
 
-export const metadata = buildMarketingMetadata({
-  path: ROUTES.insights,
-  title: "Insights",
-  description: "News, announcements and perspectives from Telecel Global.",
-});
+export const metadata = blueprintMetadata(INSIGHTS_BLUEPRINT);
 
-export default async function InsightsPage() {
-  const [articles, featured] = await Promise.all([
-    getAllInsights(),
-    getFeaturedInsight(),
-  ]);
-
-  return <BlogSection labels={BLOG_LABELS} articles={articles} featured={featured} />;
+export default function Page() {
+  return <BlueprintPage config={INSIGHTS_BLUEPRINT} />;
 }
