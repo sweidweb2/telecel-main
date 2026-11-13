@@ -4,6 +4,8 @@ import { ArrowLeftIcon, CircleAlertIcon, InfoIcon } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { SignalMotif } from "@/components/brand/signal-motif";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
@@ -28,14 +30,23 @@ export function AuthShell({
   return (
     <main className="grid flex-1 lg:grid-cols-[2fr_3fr]">
       <aside className="relative hidden overflow-hidden border-r bg-surface lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <Link href={ROUTES.home} aria-label="Telecel Global website" className="w-fit">
+        <Link
+          href={ROUTES.home}
+          aria-label="Telecel Global website"
+          className="w-fit"
+        >
           <Logo size="lg" priority />
         </Link>
         <div className="relative z-10 max-w-sm">
-          <p className="type-notation text-muted-foreground">Telecel Global · CMS</p>
-          <p className="mt-4 max-w-[24ch] font-heading text-2xl leading-8 font-medium tracking-tight text-ink">
-            Manage the platform story, services and every sales inquiry in one place.
-          </p>
+          <Text variant="notation">Telecel Global · CMS</Text>
+          <Heading
+            level="subtitle"
+            as="p"
+            className="mt-4 max-w-[24ch] leading-8"
+          >
+            Manage the platform story, services and every sales inquiry in one
+            place.
+          </Heading>
         </div>
         <SignalMotif
           rows={8}
@@ -59,13 +70,21 @@ export function AuthShell({
           <Logo size="md" priority />
         </Link>
         <div className="mx-auto w-full max-w-[400px]">
-          <h1 className="font-heading text-[2rem] leading-[2.4rem] font-medium tracking-tight text-ink">
+          <Heading
+            level="title"
+            as="h1"
+            className="text-[2rem] leading-[2.4rem]"
+          >
             {title}
-          </h1>
-          <p className="mt-2 text-base text-muted-foreground">{description}</p>
+          </Heading>
+          <Text variant="body" className="mt-2 text-muted-foreground">
+            {description}
+          </Text>
           {notice ? <div className="mt-8">{notice}</div> : null}
           <div className="mt-8">{children}</div>
-          {footer ? <div className="mt-8 text-sm text-muted-foreground">{footer}</div> : null}
+          {footer ? (
+            <div className="mt-8 text-sm text-muted-foreground">{footer}</div>
+          ) : null}
         </div>
       </section>
     </main>
@@ -86,7 +105,9 @@ export function AuthNotice({
       role={tone === "error" ? "alert" : "status"}
       className={cn(
         "flex gap-3 border-l-2 py-1 pl-3 text-sm leading-5",
-        tone === "error" ? "border-destructive text-destructive" : "border-ink text-ink"
+        tone === "error"
+          ? "border-destructive text-destructive"
+          : "border-ink text-ink",
       )}
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />

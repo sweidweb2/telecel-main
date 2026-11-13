@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { ArrowRightIcon, MenuIcon } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
+import { Container } from "@/components/layout/container";
 import { buttonVariants } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
 import {
   Sheet,
   SheetContent,
@@ -32,8 +34,12 @@ export function SiteNavbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="container-site flex h-[72px] items-center gap-8 min-[75rem]:h-[88px]">
-        <Link href={ROUTES.home} aria-label="Telecel Global home" className="shrink-0">
+      <Container className="flex h-[72px] items-center gap-8 min-[75rem]:h-[88px]">
+        <Link
+          href={ROUTES.home}
+          aria-label="Telecel Global home"
+          className="shrink-0"
+        >
           <Logo size="md" priority />
         </Link>
 
@@ -52,7 +58,7 @@ export function SiteNavbar() {
                   "relative py-2 text-[15px] font-medium text-ink/80 transition-colors duration-150 hover:text-ink",
                   "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:origin-left after:scale-x-0 after:bg-brand after:transition-transform after:duration-150",
                   "hover:after:scale-x-100",
-                  active && "text-ink after:scale-x-100"
+                  active && "text-ink after:scale-x-100",
                 )}
               >
                 {item.label}
@@ -81,7 +87,7 @@ export function SiteNavbar() {
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ink-outline", size: "cta" }),
-                "px-4"
+                "px-4",
               )}
               aria-label="Open menu"
             >
@@ -90,18 +96,27 @@ export function SiteNavbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
               <SheetHeader className="h-[72px] justify-center border-b px-5">
-                <SheetTitle className="type-notation text-muted-foreground">Menu</SheetTitle>
+                <SheetTitle className="type-notation text-muted-foreground">
+                  Menu
+                </SheetTitle>
               </SheetHeader>
-              <nav aria-label="Primary" className="flex flex-1 flex-col overflow-y-auto px-5">
+              <nav
+                aria-label="Primary"
+                className="flex flex-1 flex-col overflow-y-auto px-5"
+              >
                 {SITE_NAV.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    aria-current={isNavActive(pathname, item.href) ? "page" : undefined}
-                    className="flex min-h-16 items-center justify-between border-b font-heading text-xl font-medium text-ink aria-[current=page]:text-brand"
+                    aria-current={
+                      isNavActive(pathname, item.href) ? "page" : undefined
+                    }
+                    className="flex min-h-16 items-center justify-between border-b text-ink aria-[current=page]:text-brand"
                   >
-                    {item.label}
+                    <Heading level="subtitle" as="span" className="text-xl">
+                      {item.label}
+                    </Heading>
                     <ArrowRightIcon className="size-5 text-muted-foreground" />
                   </Link>
                 ))}
@@ -117,14 +132,20 @@ export function SiteNavbar() {
                 <Link
                   href={SITE_CTAS.requestDemo.href}
                   onClick={() => setOpen(false)}
-                  className={buttonVariants({ size: "cta", variant: "ink-outline" })}
+                  className={buttonVariants({
+                    size: "cta",
+                    variant: "ink-outline",
+                  })}
                 >
                   {SITE_CTAS.requestDemo.label}
                 </Link>
                 <Link
                   href={ROUTES.login}
                   onClick={() => setOpen(false)}
-                  className={buttonVariants({ size: "cta", variant: "ink-outline" })}
+                  className={buttonVariants({
+                    size: "cta",
+                    variant: "ink-outline",
+                  })}
                 >
                   Login
                 </Link>
@@ -132,7 +153,7 @@ export function SiteNavbar() {
             </SheetContent>
           </Sheet>
         </div>
-      </div>
+      </Container>
     </header>
   );
 }

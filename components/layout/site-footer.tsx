@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 import { SignalMotif } from "@/components/brand/signal-motif";
+import { Container } from "@/components/layout/container";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { SITE_CTAS, SITE_LEGAL_LINKS, SITE_NAV } from "@/constants/site-nav";
 
 /**
@@ -12,27 +15,39 @@ import { SITE_CTAS, SITE_LEGAL_LINKS, SITE_NAV } from "@/constants/site-nav";
 export function SiteFooter() {
   return (
     <footer className="mt-auto bg-charcoal text-charcoal-foreground">
-      <div className="container-site relative flex gap-10 py-16 lg:py-20">
+      <Container className="relative flex gap-10 py-16 lg:py-20">
         <div className="min-w-0 flex-1">
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="space-y-8 lg:col-span-4">
               <Logo variant="reversed" size="lg" />
               <div className="grid gap-1">
-                <p className="type-notation text-charcoal-muted">Work with us</p>
+                <Text variant="notation" className="text-charcoal-muted">
+                  Work with us
+                </Text>
                 <Link
                   href={SITE_CTAS.talkToSales.href}
-                  className="group flex min-h-11 items-center gap-2 font-heading text-2xl font-medium text-white"
+                  className="group flex min-h-11 items-center gap-2"
                 >
                   <span className="size-2 rounded-full bg-brand" aria-hidden />
-                  <span className="underline-offset-[6px] group-hover:underline">
+                  <Heading
+                    level="subtitle"
+                    as="span"
+                    className="text-white underline-offset-[6px] group-hover:underline"
+                  >
                     {SITE_CTAS.talkToSales.label}
-                  </span>
+                  </Heading>
                 </Link>
                 <Link
                   href={SITE_CTAS.requestDemo.href}
-                  className="flex min-h-11 items-center pl-4 font-heading text-2xl font-medium text-charcoal-foreground/80 underline-offset-[6px] hover:text-white hover:underline"
+                  className="flex min-h-11 items-center pl-4"
                 >
-                  {SITE_CTAS.requestDemo.label}
+                  <Heading
+                    level="subtitle"
+                    as="span"
+                    className="text-charcoal-foreground/80 underline-offset-[6px] hover:text-white hover:underline"
+                  >
+                    {SITE_CTAS.requestDemo.label}
+                  </Heading>
                 </Link>
               </div>
             </div>
@@ -43,11 +58,15 @@ export function SiteFooter() {
             >
               {SITE_NAV.map((section) => (
                 <div key={section.href} className="space-y-4">
-                  <h2 className="font-sans text-sm font-semibold text-white">
+                  <Heading
+                    level="label"
+                    as="h2"
+                    className="font-sans text-sm font-semibold text-white"
+                  >
                     <Link href={section.href} className="hover:underline">
                       {section.label}
                     </Link>
-                  </h2>
+                  </Heading>
                   {section.children ? (
                     <ul className="space-y-2.5">
                       {section.children.map((child) => (
@@ -84,8 +103,12 @@ export function SiteFooter() {
             </nav>
           </div>
         </div>
-        <SignalMotif tone="dark" rows={8} className="hidden h-auto w-16 self-start lg:block" />
-      </div>
+        <SignalMotif
+          tone="dark"
+          rows={8}
+          className="hidden h-auto w-16 self-start lg:block"
+        />
+      </Container>
     </footer>
   );
 }
