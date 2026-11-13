@@ -1,6 +1,6 @@
 import { PageBlueprint } from "@/components/marketing/page-blueprint";
-import type { PageBlueprintConfig } from "@/constants/page-blueprints";
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
+import type { PageBlueprintConfig } from "@/types/marketing-blueprint";
 
 /** Metadata helper for blueprint marketing pages. */
 export function blueprintMetadata(config: PageBlueprintConfig) {

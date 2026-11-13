@@ -26,24 +26,30 @@ function liveLinks(): SiteNavLink[] {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const insightRows = await getInsightSlugRows();
+  const seen = new Set<string>();
+  const entries: MetadataRoute.Sitemap = [];
 
-  return [
-    { url: absoluteUrl(ROUTES.home), changeFrequency: "weekly", priority: 1 },
-    {
-      url: absoluteUrl(ROUTES.contact),
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    ...liveLinks().map((link) => ({
-      url: absoluteUrl(link.href),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    })),
-    ...insightRows.map((row) => ({
-      url: absoluteUrl(insightPath(row.slug)),
+  function add(path: string, meta: Omit<MetadataRoute.Sitemap[number], "url">) {
+    const url = absoluteUrl(path);
+    if (seen.has(url)) return;
+    seen.add(url);
+    entries.push({ url, ...meta });
+  }
+
+  add(ROUTES.home, { changeFrequency: "weekly", priority: 1 });
+  add(ROUTES.contact, { changeFrequency: "monthly", priority: 0.9 });
+
+  for (const link of liveLinks()) {
+    add(link.href, { changeFrequency: "weekly", priority: 0.8 });
+  }
+
+  for (const row of insightRows) {
+    add(insightPath(row.slug), {
       lastModified: row.updated_at ? new Date(row.updated_at) : undefined,
-      changeFrequency: "monthly" as const,
+      changeFrequency: "monthly",
       priority: 0.6,
-    })),
-  ];
+    });
+  }
+
+  return entries;
 }

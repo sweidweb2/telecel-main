@@ -1,7 +1,11 @@
 import Link from "next/link";
 
 import { Heading } from "@/components/ui/heading";
-import { SERVICE_PILLARS } from "@/constants/home-content";
+import {
+  SERVICE_PILLAR_PAGES,
+  marketingChildPath,
+} from "@/constants/marketing-pages";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,10 +31,10 @@ export function ServicePortfolioDiagram({ className }: { className?: string }) {
           aria-hidden
           className="absolute top-[252px] right-0 h-[58px] w-[1.5px] bg-brand"
         />
-        {SERVICE_PILLARS.map((pillar) => (
+        {SERVICE_PILLAR_PAGES.map((pillar) => (
           <li key={pillar.slug} className="relative">
             <Link
-              href={`/services/${pillar.slug}`}
+              href={marketingChildPath(ROUTES.services, pillar.slug)}
               className="group grid h-14 grid-cols-[auto_1fr] items-center gap-3 outline-none"
             >
               <span className="flex items-center gap-3">

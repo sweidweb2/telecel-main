@@ -1,4 +1,3 @@
-import type { BlueprintSectionConfig } from "@/components/marketing/page-blueprint";
 import {
   CASE_STUDIES_PAGE,
   INSIGHTS_PAGE,
@@ -11,29 +10,28 @@ import {
   WHY_TELECEL_PAGE,
   marketingChildPath,
 } from "@/constants/marketing-pages";
+import { HOME_HERO } from "@/constants/home-content";
+import { PLATFORM_STAGES } from "@/constants/platform-stages";
 import { ROUTES } from "@/constants/routes";
+import { SERVICES_HERO } from "@/constants/services-hero";
+import type {
+  BlueprintSectionConfig,
+  PageBlueprintConfig,
+} from "@/types/marketing-blueprint";
 
-export type PageBlueprintConfig = {
-  path: string;
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  metaTitle: string;
-  metaDescription: string;
-  sections: readonly BlueprintSectionConfig[];
-};
+export type { BlueprintSectionConfig, PageBlueprintConfig };
 
-/** Homepage modules from the approved TGS text pack (order locked). */
+/**
+ * Homepage modules from the approved TGS text pack (order locked).
+ * Live `/` uses `HOME_HERO` + real modules; this registry stays aligned.
+ */
 export const HOME_BLUEPRINT: PageBlueprintConfig = {
   path: "/",
-  eyebrow: "Telecel Global",
-  title:
-    "One managed platform for international connectivity and digital services",
-  description:
-    "Blueprint homepage — section shells only. Approved copy and hero film land in later passes.",
+  eyebrow: HOME_HERO.eyebrow,
+  title: HOME_HERO.title,
+  description: HOME_HERO.body,
   metaTitle: "Telecel Global | International Connectivity & Digital Services",
-  metaDescription:
-    "One managed platform for cloud, data centres, cybersecurity, IoT, enterprise connectivity, voice and messaging. Built for operators and enterprises.",
+  metaDescription: HOME_HERO.body,
   sections: [
     {
       id: "hero",
@@ -42,43 +40,43 @@ export const HOME_BLUEPRINT: PageBlueprintConfig = {
     },
     {
       id: "customer-challenge",
-      title: "Customer challenge",
-      note: "High-contrast value statement and one managed relationship graphic.",
+      title: "Customer challenge and value",
+      note: "Move faster with one accountable technology partner.",
     },
     {
       id: "service-pillars",
-      title: "Five service pillars",
-      note: "Interactive cards in approved order linking to each pillar landing page.",
+      title: "Service pillar module",
+      note: "International capability. One managed experience. — five pillar cards in approved order.",
     },
     {
       id: "outcomes",
-      title: "Business outcomes",
-      note: "Grow revenue, scale markets, protect operations, launch faster, create customer value.",
+      title: "Outcome-led value module",
+      note: "Built around how your business grows. — five buyer-value outcomes.",
     },
     {
       id: "solutions-by-customer",
       title: "Solutions by customer",
-      note: "Mobile Operators, Enterprises, Governments & Institutions, Wholesale & Aggregators.",
+      note: "Designed for the decisions you need to make. — four audience pathways.",
     },
     {
       id: "delivery-model",
       title: "Delivery model",
-      note: "Connect → Orchestrate → Deliver → Monitor → Optimize.",
+      note: "From complexity to execution. — Connect, Orchestrate, Deliver, Monitor, Optimize.",
     },
     {
       id: "proof",
       title: "Proof and differentiation",
-      note: "Non-numeric approved proof labels only — no invented metrics or logos.",
+      note: "Built on operator experience. Designed for international growth. — no invented metrics/logos.",
     },
     {
       id: "why-telecel-global",
       title: "Why Telecel Global",
-      note: "Operator-led understanding, one relationship, reach, agility, proximity.",
+      note: "Operator-led understanding, one accountable relationship, reach, agility, proximity.",
     },
     {
       id: "lead-capture",
-      title: "Talk to Sales / Request a Demo",
-      note: "Closing CTA band and routed inquiry entry points.",
+      title: "Final CTA and inquiry form",
+      note: "Ready to connect the next opportunity? — Talk to Sales / Request a Demo.",
     },
   ],
 };
@@ -100,49 +98,29 @@ export const PLATFORM_BLUEPRINT: PageBlueprintConfig = {
     {
       id: "layers",
       title: "Five platform layers",
-      note: "Cloud & Data Centre, Cybersecurity, IoT & Digital, Network & Connectivity, Interactions.",
+      note: "Global Wholesale Connectivity, Enterprise Messaging, Cloud & Hosting, IoT Connectivity, Cybersecurity.",
     },
-    {
-      id: "connect",
-      title: "How we work — Connect",
-      note: "Bring the right networks, platforms and service components together.",
-    },
-    {
-      id: "orchestrate",
-      title: "How we work — Orchestrate",
-      note: "Align technical and commercial requirements through one managed relationship.",
-    },
-    {
-      id: "deliver",
-      title: "How we work — Deliver",
-      note: "Launch the agreed solution with clear ownership and implementation control.",
-    },
-    {
-      id: "monitor",
-      title: "How we work — Monitor",
-      note: "Maintain operational visibility and service continuity.",
-    },
-    {
-      id: "optimize",
-      title: "How we work — Optimize",
-      note: "Improve performance, efficiency and commercial value over time.",
-    },
+    ...PLATFORM_STAGES.map((stage) => ({
+      id: stage.key,
+      title: `How we work — ${stage.title}`,
+      note: stage.blueprintNote,
+    })),
   ],
 };
 
+/** Aligns with `SERVICES_HERO` / `ServicesHero` on the live services hub. */
 export const SERVICES_HUB_BLUEPRINT: PageBlueprintConfig = {
   path: ROUTES.services,
   eyebrow: "Services",
-  title: "Five service pillars",
-  description: "International capability. One managed experience.",
+  title: SERVICES_HERO.headline.replace(/\n/g, " "),
+  description: SERVICES_HERO.subtext,
   metaTitle: "Services | Telecel Global",
-  metaDescription:
-    "Cloud and data centre, cybersecurity, IoT and digital services, network and enterprise connectivity, interactions, voice and messaging.",
+  metaDescription: SERVICES_HERO.subtext,
   sections: [
     {
       id: "pillars",
       title: "Service pillar index",
-      note: "Entry points to the five approved pillar landing pages.",
+      note: "What We Provide — 3×2 illustrated cards linking into pillar landings.",
     },
     {
       id: "cta",

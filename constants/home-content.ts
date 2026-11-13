@@ -1,4 +1,8 @@
-import { SERVICE_PILLAR_PAGES } from "@/constants/marketing-pages";
+import {
+  SOLUTION_PAGES,
+  marketingChildPath,
+} from "@/constants/marketing-pages";
+import { ROUTES } from "@/constants/routes";
 
 export {
   PLATFORM_STAGES,
@@ -18,8 +22,20 @@ export const HOME_HERO = {
   body: "Telecel Global brings networks, cloud, security, IoT and messaging together on one B2B platform for operators, enterprises and institutions.",
 } as const;
 
-/** RFQ §3 order — derived from the slim marketing catalog (voice & messaging last). */
-export const SERVICE_PILLARS = SERVICE_PILLAR_PAGES.map((pillar) => ({
-  slug: pillar.slug,
-  title: pillar.title,
+const BUYER_SUMMARIES = {
+  "mobile-operators":
+    "Services that extend what operators offer their own customers.",
+  enterprises:
+    "Connectivity, cloud and security for organisations working across markets.",
+  "governments-institutions":
+    "Infrastructure and digital services for public bodies.",
+  "wholesale-aggregators":
+    "Capacity and messaging for carriers and aggregators.",
+} as const satisfies Record<(typeof SOLUTION_PAGES)[number]["slug"], string>;
+
+/** Buyer pathways on the homepage — titles/paths from the marketing catalog. */
+export const BUYER_ROUTES = SOLUTION_PAGES.map((page) => ({
+  href: marketingChildPath(ROUTES.solutions, page.slug),
+  title: page.title,
+  summary: BUYER_SUMMARIES[page.slug],
 }));

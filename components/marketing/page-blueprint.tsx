@@ -1,17 +1,14 @@
 import type { ReactNode } from "react";
 
 import { Container } from "@/components/layout/container";
+import { Section } from "@/components/layout/section";
 import { Heading } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
+import type { BlueprintSectionConfig } from "@/types/marketing-blueprint";
 
-export type BlueprintSectionConfig = {
-  id: string;
-  title: string;
-  /** Optional note under the title (blueprint-only, not final copy). */
-  note?: string;
-};
+export type { BlueprintSectionConfig };
 
 type PageBlueprintProps = {
   eyebrow?: string;
@@ -80,10 +77,7 @@ export function BlueprintSection({
   children,
 }: BlueprintSectionProps) {
   return (
-    <section
-      id={id}
-      className={cn("border-b", tone === "surface" && "bg-surface")}
-    >
+    <Section id={id} tone={tone} bleed>
       <Container className="py-10 sm:py-12 lg:py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-4">
@@ -102,7 +96,7 @@ export function BlueprintSection({
           </div>
         </div>
       </Container>
-    </section>
+    </Section>
   );
 }
 

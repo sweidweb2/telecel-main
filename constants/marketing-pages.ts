@@ -1,3 +1,4 @@
+import { PLATFORM_FLOW_LINKS } from "@/constants/platform-stages";
 import { ROUTES } from "@/constants/routes";
 
 /**
@@ -21,14 +22,8 @@ export const PLATFORM_PAGE = {
   title: "One Global B2B Platform",
 } as const satisfies MarketingPathPage;
 
-/** In-page platform flow anchors shown under Platform in the nav. */
-export const PLATFORM_FLOW_LINKS = [
-  { id: "connect", label: "Connect" },
-  { id: "orchestrate", label: "Orchestrate" },
-  { id: "deliver", label: "Deliver" },
-  { id: "monitor", label: "Monitor" },
-  { id: "optimize", label: "Optimize" },
-] as const;
+/** Re-export — single source is `platform-stages`. */
+export { PLATFORM_FLOW_LINKS };
 
 /** RFQ §3 order — voice & messaging stays last. */
 export const SERVICE_PILLAR_PAGES = [

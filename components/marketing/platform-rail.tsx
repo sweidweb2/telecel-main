@@ -10,6 +10,7 @@ import {
   PLATFORM_STAGES,
   type PlatformStage,
 } from "@/constants/platform-stages";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -118,7 +119,7 @@ export function PlatformRail({
               ))}
             </ol>
             <Link
-              href={`/platform#${stage.key}`}
+              href={`${ROUTES.platform}#${stage.key}`}
               className="group/link inline-flex min-h-11 items-center gap-2 font-medium text-ink underline decoration-hairline decoration-2 underline-offset-[6px] hover:decoration-brand"
             >
               How {stage.title.toLowerCase()} works

@@ -1,5 +1,9 @@
-import { SERVICE_PILLARS } from "@/constants/home-content";
-import type { ContactMethod, InquiryIntent, InquiryStatus } from "@/types/inquiry";
+import { SERVICE_PILLAR_PAGES } from "@/constants/marketing-pages";
+import type {
+  ContactMethod,
+  InquiryIntent,
+  InquiryStatus,
+} from "@/types/inquiry";
 
 /** Consent copy version stored with each submission (bump when wording changes). */
 export const CONTACT_CONSENT_VERSION = "contact-v1";
@@ -37,7 +41,7 @@ export const AREA_OF_INTEREST_OPTIONS: readonly {
   value: string;
   label: string;
 }[] = [
-  ...SERVICE_PILLARS.map((pillar) => ({
+  ...SERVICE_PILLAR_PAGES.map((pillar) => ({
     value: pillar.slug,
     label: pillar.title,
   })),
