@@ -1,5 +1,5 @@
 ---
-description: Shared UI and hooks — no direct Supabase, no one-off page components
+description: Shared UI and hooks — design-system primitives only, no Supabase
 globs: components/**/*.{ts,tsx},hooks/**/*.{ts,tsx},stores/**/*.{ts,tsx}
 alwaysApply: false
 ---
@@ -8,16 +8,19 @@ alwaysApply: false
 
 ## components/
 
-- `components/ui/` — shadcn **Base Nova** primitives (`@base-ui/react`). Add with `npx shadcn@latest add <name>`; do not hand-roll Button/Input/Dialog if shadcn has it
+- `components/ui/` — shadcn **Base Nova** (`@base-ui/react`) + Telecel wrappers (`Heading`, `Text`, `SearchInput`, `EmptyState`, `DatePicker`, `FileUpload`, `Link`, …). Add missing shadcn pieces with `npx shadcn@latest add <name>`; do not hand-roll Button/Input/Dialog if shadcn has it
+- `components/layout/` — `Container`, `Section`, `Stack`, `Grid`, `PageContainer`, `SiteNavbar`, `SiteFooter`, error screens. Prefer these over raw `container-site` / ad-hoc section markup when editing UI
 - Do not import Radix. Prefer Base UI `render` over Radix `asChild`. Menu/dialog triggers already render a button — style with `buttonVariants()`, do not nest `<Button>` (nested buttons break hydration)
-- Icons from `lucide-react`. Conditional classes via `cn()` from `lib/utils.ts`
-- `components/[feature]/` — reused across routes (e.g. `components/projects/project-card.tsx`)
-- One-off page UI stays next to the route in `app/`
+- Typography: `Heading` + `Text`. Portal pages: `PortalPageHeader`. Do not add new one-off `font-heading text-*` stacks in feature components
+- Empty / search: `EmptyState`, `SearchInput`
+- Icons from `lucide-react`. Classes via `cn()` from `lib/utils.ts`
+- Dates shown in UI: `formatDate` / `formatDateTime` from `lib/format.ts`
+- `components/[feature]/` — reused across routes; one-off page UI stays in `app/`
 - Never import Supabase clients or `data/`/`actions/` query builders here — pages/actions call those
-- Forms: `react-hook-form` + `zodResolver` against a `validations/` schema
-- Skeletons: put them in the route’s `loading.tsx` via `RouteSkeleton` (boneyard-js). Use shadcn `Skeleton` only for small inline placeholders (sidebar menu, form suspense). Do not use either as a substitute for the `loading.tsx` convention.
+- Forms: `react-hook-form` + `zodResolver` against a `validations/` schema + `Field`
+- Skeletons: route `loading.tsx` via `RouteSkeleton` (boneyard-js). shadcn `Skeleton` only for small inline placeholders
 
 ## hooks/
 
-- Custom hooks: `useUser()`, `useDebounce()`, etc.
-- Realtime wrappers live here (`hooks/use-realtime-projects.ts`) — subscribe only when live updates are required, not by default
+- Shared: `useDebounce`, `useDebouncedSearchParam`, `useMobile`
+- Realtime wrappers only when live updates are required, not by default

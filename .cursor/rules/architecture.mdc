@@ -10,8 +10,8 @@ Colocate by feature, separate by layer. Route folders own UI. Business logic, da
 ## Folders (project root)
 
 - `app/` — routes only (pages, layouts, route handlers, one-off route UI)
-- `components/` — shared UI (`ui/` primitives, `[feature]/` reused widgets)
-- `lib/` — infra only (Supabase clients, utils, third-party SDKs)
+- `components/` — shared UI (`ui/` primitives, `layout/` shells, `[feature]/` widgets). Design tokens + component rules: `design-system.mdc`
+- `lib/` — infra only (Supabase clients, `format.ts`, `permissions.ts`, utils, third-party SDKs)
 - `data/` — reads (SELECT)
 - `actions/` — Server Actions (INSERT/UPDATE/DELETE)
 - `types/` — shared TypeScript types

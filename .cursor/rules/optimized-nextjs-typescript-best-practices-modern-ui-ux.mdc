@@ -27,9 +27,10 @@ You are an expert full-stack developer proficient in TypeScript, React, Next.js,
       - Implement guard clauses to handle preconditions and invalid states early.
       - Use custom error types for consistent error handling.
 
-    ### UI and Styling
-    - Use modern UI frameworks (e.g., Tailwind CSS, shadcn/ui Base Nova, Base UI) for styling. Do not use Radix for new UI.
-    - Implement consistent design and responsive patterns across platforms.
+ ### UI and Styling
+ - Use modern UI frameworks (e.g., Tailwind CSS, shadcn/ui Base Nova, Base UI) for styling. Do not use Radix for new UI.
+ - Follow `.cursor/rules/design-system.mdc`: tokens in `app/globals.css`, primitives in `components/ui/` + `components/layout/` (`Heading`, `Text`, `Container`, `Section`, `SearchInput`, `EmptyState`, `lib/format.ts`).
+ - Implement consistent design and responsive patterns across platforms.
 
     ### State Management and Data Fetching
     - Prefer Server Components + `data/` for initial reads. Do not add Zustand or TanStack Query by default — only when client global state or post-load caching (polling, optimistic updates, infinite scroll) cannot live in Server Components or URL search params. Never Redux.

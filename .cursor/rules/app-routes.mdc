@@ -9,6 +9,9 @@ alwaysApply: false
 Allowed files: `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `global-error.tsx`, `not-found.tsx`, `route.ts`, and UI used on that route only.
 
 - Group routes: `app/(auth)/`, `app/(dashboard)/`, `app/(marketing)/`
+- Layouts already wrap with `PageContainer` (+ navbar/footer or sidebar). Pages own content only
+- Marketing width/sections: `Container` / `Section` / `Heading` / `Text` from shared layout/ui
+- CMS pages: `<main className="dashboard-page">` + `PortalPageHeader`
 - If a component is used on more than one route, move it to `components/`
 - Pages fetch via `data/` in Server Components — never call Supabase here
 - Mutations go through `actions/`, not inline in pages

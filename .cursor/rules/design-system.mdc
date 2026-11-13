@@ -1,0 +1,49 @@
+---
+description: Use only Connected Energies tokens and shared components — no one-off UI kits
+alwaysApply: true
+---
+
+# Design system — Connected Energies
+
+**Source of truth:** `app/globals.css` (tokens) · `docs/02-architecture/design-system.md` · `components/ui/` · `components/layout/`.
+
+## Mandatory patterns
+
+| Need | Use |
+| --- | --- |
+| Colors / radius / motion / z-index / sizes | CSS tokens / Tailwind theme classes from `globals.css` (`bg-brand`, `text-ink`, `bg-surface`, `border-hairline`, `text-success`, `shadow-sm`, `duration-fast`, `z-overlay`, …) |
+| Page width | `Container` (`components/layout/container`) — prefer over raw `container-site` in new/edited UI |
+| Public section | `Section` |
+| Flex / grid spacing | `Stack` / `Grid` |
+| Route body shell | `PageContainer` (already in marketing / auth / dashboard layouts) |
+| Headings / body copy | `Heading` / `Text` — do not invent new `font-heading` + size stacks |
+| Portal page chrome | `PortalPageHeader` + `dashboard-page` on the page `<main>` |
+| Search field | `SearchInput` |
+| Empty lists / tables | `EmptyState` |
+| Dates / money | `lib/format.ts` (`formatDate`, `formatDateTime`, `formatCurrency`, …) — not ad-hoc `date-fns` `format` in feature UI |
+| Roles | `lib/permissions.ts` + `data/auth` guards + `constants/dashboard-nav` |
+| Forms | `react-hook-form` + Zod in `validations/` + `Field` / ui inputs |
+| Icons | `lucide-react` + `cn()` from `lib/utils.ts` |
+| Toasts / spinners / route progress | Sonner · `Spinner` · `NextTopLoader` · `RouteSkeleton` only |
+
+## Do not
+
+- Parallel theme files, CSS-in-JS, or product hex (brand hex only in `:root`)
+- Radix / hand-rolled Button, Dialog, Select, etc. when shadcn has it
+- Second toast / spinner / progress systems
+- i18n routing, bottom tab bars, or steppers unless commissioned
+- Supabase / `data/` / `actions/` imports inside shared presentational components
+- After `npx shadcn@latest add`: restore Telecel button variants (`cta`, `ink-outline`) and `@/lib/utils` if the CLI rewrites them
+
+## Layout map
+
+| Surface | Shell |
+| --- | --- |
+| Public | `(marketing)/layout` → `SiteNavbar` + `PageContainer` + `SiteFooter` |
+| Auth | `(auth)/layout` → `PageContainer` + `AuthShell` |
+| CMS | `(dashboard)/layout` → `AppSidebar` + `DashboardHeader` + `PageContainer` |
+| Errors | `ErrorScreen` / `RouteError` / `AccessDenied` / `not-found` |
+
+## When editing old UI
+
+Refactor the touched file onto these primitives (Heading/Text/Container/format/SearchInput/EmptyState) instead of leaving one-off classes.
