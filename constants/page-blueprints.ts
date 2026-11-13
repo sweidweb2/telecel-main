@@ -538,3 +538,65 @@ export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = [
     ],
   },
 ];
+
+/** Every public blueprint page — single registry for lookup and sitemap helpers. */
+export const ALL_PAGE_BLUEPRINTS: readonly PageBlueprintConfig[] = [
+  HOME_BLUEPRINT,
+  PLATFORM_BLUEPRINT,
+  SERVICES_HUB_BLUEPRINT,
+  ...SERVICE_PILLAR_BLUEPRINTS,
+  SOLUTIONS_HUB_BLUEPRINT,
+  ...SOLUTION_BLUEPRINTS,
+  USE_CASES_HUB_BLUEPRINT,
+  ...USE_CASE_BLUEPRINTS,
+  WHY_TELECEL_BLUEPRINT,
+  LEADERSHIP_BLUEPRINT,
+  INSIGHTS_BLUEPRINT,
+  CASE_STUDIES_BLUEPRINT,
+  CONTACT_BLUEPRINT,
+  ...LEGAL_BLUEPRINTS,
+];
+
+const BLUEPRINT_BY_PATH = new Map(
+  ALL_PAGE_BLUEPRINTS.map((blueprint) => [blueprint.path, blueprint]),
+);
+
+/** Lookup a blueprint by its canonical path (e.g. `/services/cybersecurity`). */
+export function getBlueprintByPath(
+  path: string,
+): PageBlueprintConfig | undefined {
+  return BLUEPRINT_BY_PATH.get(path);
+}
+
+/** Same as `getBlueprintByPath`, but throws when the registry is missing an entry. */
+export function requireBlueprint(path: string): PageBlueprintConfig {
+  const blueprint = getBlueprintByPath(path);
+  if (!blueprint) {
+    throw new Error(`Missing page blueprint for path: ${path}`);
+  }
+  return blueprint;
+}
+
+/** Last path segment under a hub prefix (`/services` + `cybersecurity`). */
+export function blueprintPathForSlug(hubPath: string, slug: string): string {
+  return `${hubPath}/${slug}`;
+}
+
+/** Slug segment from a blueprint path under a hub (`/services/foo` → `foo`). */
+export function blueprintSlug(path: string, hubPath: string): string {
+  const prefix = `${hubPath}/`;
+  if (!path.startsWith(prefix)) {
+    throw new Error(`Path ${path} is not under hub ${hubPath}`);
+  }
+  return path.slice(prefix.length);
+}
+
+/** `generateStaticParams` entries for a family of hub child blueprints. */
+export function blueprintStaticParams(
+  blueprints: readonly PageBlueprintConfig[],
+  hubPath: string,
+): { slug: string }[] {
+  return blueprints.map((blueprint) => ({
+    slug: blueprintSlug(blueprint.path, hubPath),
+  }));
+}

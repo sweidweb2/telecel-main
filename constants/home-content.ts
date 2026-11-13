@@ -1,3 +1,9 @@
+import {
+  SERVICE_PILLAR_BLUEPRINTS,
+  blueprintSlug,
+} from "@/constants/page-blueprints";
+import { ROUTES } from "@/constants/routes";
+
 /**
  * PROVISIONAL home copy — structure from the RFQ §3 sitemap; every sentence
  * must be replaced by the approved Telecel Global Text Pack before launch
@@ -11,14 +17,11 @@ export const HOME_HERO = {
   body: "Telecel Global brings networks, cloud, security, IoT and messaging together on one B2B platform for operators, enterprises and institutions.",
 } as const;
 
-/** RFQ §3 order — voice & messaging stays last in service sequences (RFQ §6). */
-export const SERVICE_PILLARS = [
-  { slug: "cloud-data-centre", title: "Cloud & Data Centre Services" },
-  { slug: "cybersecurity", title: "Cybersecurity" },
-  { slug: "iot-digital-services", title: "IoT & Digital Services" },
-  { slug: "network-enterprise-connectivity", title: "Network & Enterprise Connectivity" },
-  { slug: "interactions-voice-messaging", title: "Interactions, Voice & Messaging" },
-] as const;
+/** RFQ §3 order — derived from service pillar blueprints (voice & messaging last). */
+export const SERVICE_PILLARS = SERVICE_PILLAR_BLUEPRINTS.map((pillar) => ({
+  slug: blueprintSlug(pillar.path, ROUTES.services),
+  title: pillar.title,
+}));
 
 export const PLATFORM_STAGES = [
   {
@@ -29,7 +32,8 @@ export const PLATFORM_STAGES = [
   {
     key: "orchestrate",
     title: "Orchestrate",
-    summary: "Coordinate services and partners through a single operating layer.",
+    summary:
+      "Coordinate services and partners through a single operating layer.",
   },
   {
     key: "deliver",
@@ -45,28 +49,5 @@ export const PLATFORM_STAGES = [
     key: "optimize",
     title: "Optimize",
     summary: "Refine cost, reliability and reach as needs change.",
-  },
-] as const;
-
-export const BUYER_ROUTES = [
-  {
-    href: "/solutions/mobile-operators",
-    title: "Mobile Operators",
-    summary: "Services that extend what operators offer their own customers.",
-  },
-  {
-    href: "/solutions/enterprises",
-    title: "Enterprises",
-    summary: "Connectivity, cloud and security for organisations working across markets.",
-  },
-  {
-    href: "/solutions/governments-institutions",
-    title: "Governments & Institutions",
-    summary: "Infrastructure and digital services for public bodies.",
-  },
-  {
-    href: "/solutions/wholesale-aggregators",
-    title: "Wholesale & Aggregators",
-    summary: "Capacity and messaging for carriers and aggregators.",
   },
 ] as const;

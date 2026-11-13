@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
+import { Container } from "@/components/layout/container";
+import { Grid } from "@/components/layout/grid";
+import { Section } from "@/components/layout/section";
+import { Heading } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 
 export type BlueprintSectionConfig = {
@@ -28,26 +33,23 @@ export function PageBlueprint({
   sections,
 }: PageBlueprintProps) {
   return (
-    <main className="flex-1">
+    <main>
       <header className="border-b bg-surface">
-        <div className="container-site py-12 sm:py-14 lg:py-20">
-          {eyebrow ? (
-            <p className="type-notation text-brand">{eyebrow}</p>
-          ) : null}
-          <h1
-            className={cn(
-              "max-w-[22ch] type-display text-balance text-ink",
-              eyebrow && "mt-4",
-            )}
+        <Container className="py-12 sm:py-14 lg:py-20">
+          {eyebrow ? <Text variant="brand">{eyebrow}</Text> : null}
+          <Heading
+            level="display"
+            as="h1"
+            className={cn("max-w-[22ch]", eyebrow && "mt-4")}
           >
             {title}
-          </h1>
+          </Heading>
           {description ? (
-            <p className="mt-5 max-w-[56ch] text-base leading-7 text-muted-foreground sm:text-lg">
+            <Text variant="lead" className="mt-5 max-w-[56ch]">
               {description}
-            </p>
+            </Text>
           ) : null}
-        </div>
+        </Container>
       </header>
 
       {sections.map((section, index) => (
@@ -80,27 +82,26 @@ export function BlueprintSection({
   children,
 }: BlueprintSectionProps) {
   return (
-    <section
-      id={id}
-      className={cn("border-b", tone === "surface" && "bg-surface")}
-    >
-      <div className="container-site py-10 sm:py-12 lg:py-16">
-        <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
+    <Section id={id} tone={tone} bleed>
+      <Container className="py-10 sm:py-12 lg:py-16">
+        <Grid cols={12} gap="10">
           <div className="lg:col-span-4">
-            <p className="type-notation text-muted-foreground">Section</p>
-            <h2 className="mt-3 max-w-[20ch] type-section text-ink">{title}</h2>
+            <Text variant="notation">Section</Text>
+            <Heading level="section" className="mt-3 max-w-[20ch]">
+              {title}
+            </Heading>
             {note ? (
-              <p className="mt-3 max-w-[36ch] text-sm leading-6 text-muted-foreground">
+              <Text variant="muted" className="mt-3 max-w-[36ch]">
                 {note}
-              </p>
+              </Text>
             ) : null}
           </div>
           <div className="min-w-0 lg:col-span-8">
             {children ?? <BlueprintPlaceholder />}
           </div>
-        </div>
-      </div>
-    </section>
+        </Grid>
+      </Container>
+    </Section>
   );
 }
 

@@ -1,3 +1,17 @@
+import {
+  CASE_STUDIES_BLUEPRINT,
+  INSIGHTS_BLUEPRINT,
+  LEADERSHIP_BLUEPRINT,
+  LEGAL_BLUEPRINTS,
+  PLATFORM_BLUEPRINT,
+  SERVICE_PILLAR_BLUEPRINTS,
+  SOLUTION_BLUEPRINTS,
+  USE_CASE_BLUEPRINTS,
+  WHY_TELECEL_BLUEPRINT,
+  type PageBlueprintConfig,
+} from "@/constants/page-blueprints";
+import { ROUTES } from "@/constants/routes";
+
 /**
  * Public sitemap from the approved TGS text pack & developer brief.
  * Navbar, footer and sitemap.xml read from here. `live: true` includes the
@@ -13,142 +27,116 @@ export type SiteNavSection = SiteNavLink & {
   children?: readonly SiteNavLink[];
 };
 
+function navLinksFromBlueprints(
+  blueprints: readonly PageBlueprintConfig[],
+): SiteNavLink[] {
+  return blueprints.map((blueprint) => ({
+    label: blueprint.title,
+    href: blueprint.path,
+    live: true,
+  }));
+}
+
+const PLATFORM_FLOW_IDS = new Set([
+  "connect",
+  "orchestrate",
+  "deliver",
+  "monitor",
+  "optimize",
+]);
+
 export const SITE_NAV: readonly SiteNavSection[] = [
   {
+    label: "Home",
+    href: ROUTES.home,
+    live: true,
+  },
+  {
     label: "Platform",
-    href: "/platform",
+    href: PLATFORM_BLUEPRINT.path,
     live: true,
     children: [
-      { label: "One Global B2B Platform", href: "/platform", live: true },
-      { label: "Connect", href: "/platform#connect" },
-      { label: "Orchestrate", href: "/platform#orchestrate" },
-      { label: "Deliver", href: "/platform#deliver" },
-      { label: "Monitor", href: "/platform#monitor" },
-      { label: "Optimize", href: "/platform#optimize" },
+      {
+        label: PLATFORM_BLUEPRINT.title,
+        href: PLATFORM_BLUEPRINT.path,
+        live: true,
+      },
+      ...PLATFORM_BLUEPRINT.sections
+        .filter((section) => PLATFORM_FLOW_IDS.has(section.id))
+        .map((section) => ({
+          label: section.title.replace(/^How we work — /, ""),
+          href: `${PLATFORM_BLUEPRINT.path}#${section.id}`,
+        })),
     ],
   },
   {
     label: "Services",
-    href: "/services",
+    href: ROUTES.services,
     live: true,
-    children: [
-      {
-        label: "Cloud & Data Centre Services",
-        href: "/services/cloud-data-centre",
-        live: true,
-      },
-      { label: "Cybersecurity", href: "/services/cybersecurity", live: true },
-      {
-        label: "IoT & Digital Services",
-        href: "/services/iot-digital-services",
-        live: true,
-      },
-      {
-        label: "Network & Enterprise Connectivity",
-        href: "/services/network-enterprise-connectivity",
-        live: true,
-      },
-      {
-        label: "Interactions, Voice & Messaging",
-        href: "/services/interactions-voice-messaging",
-        live: true,
-      },
-    ],
+    children: navLinksFromBlueprints(SERVICE_PILLAR_BLUEPRINTS),
   },
   {
     label: "Solutions",
-    href: "/solutions",
+    href: ROUTES.solutions,
     live: true,
-    children: [
-      {
-        label: "Mobile Operators",
-        href: "/solutions/mobile-operators",
-        live: true,
-      },
-      { label: "Enterprises", href: "/solutions/enterprises", live: true },
-      {
-        label: "Governments & Institutions",
-        href: "/solutions/governments-institutions",
-        live: true,
-      },
-      {
-        label: "Wholesale & Aggregators",
-        href: "/solutions/wholesale-aggregators",
-        live: true,
-      },
-    ],
+    children: navLinksFromBlueprints(SOLUTION_BLUEPRINTS),
   },
   {
     label: "Use Cases",
-    href: "/use-cases",
+    href: ROUTES.useCases,
     live: true,
-    children: [
-      {
-        label: "Grow International Revenue",
-        href: "/use-cases/grow-international-revenue",
-        live: true,
-      },
-      {
-        label: "Modernize Customer Engagement",
-        href: "/use-cases/modernize-customer-engagement",
-        live: true,
-      },
-      {
-        label: "Secure Messaging Traffic",
-        href: "/use-cases/secure-messaging-traffic",
-        live: true,
-      },
-      {
-        label: "Scale Across Markets",
-        href: "/use-cases/scale-across-markets",
-        live: true,
-      },
-      {
-        label: "Build Resilient Infrastructure",
-        href: "/use-cases/build-resilient-infrastructure",
-        live: true,
-      },
-      {
-        label: "Launch New Digital Services",
-        href: "/use-cases/launch-new-digital-services",
-        live: true,
-      },
-    ],
+    children: navLinksFromBlueprints(USE_CASE_BLUEPRINTS),
   },
   {
     label: "Why Telecel Global",
-    href: "/why-telecel-global",
+    href: WHY_TELECEL_BLUEPRINT.path,
     live: true,
     children: [
-      { label: "Our Approach", href: "/why-telecel-global#approach" },
       {
-        label: "Leadership",
-        href: "/why-telecel-global/leadership",
+        label: "Our Approach",
+        href: `${WHY_TELECEL_BLUEPRINT.path}#approach`,
+      },
+      {
+        label: LEADERSHIP_BLUEPRINT.title,
+        href: LEADERSHIP_BLUEPRINT.path,
         live: true,
       },
-      { label: "Global Reach", href: "/why-telecel-global#global-reach" },
-      { label: "Partners & Ecosystem", href: "/why-telecel-global#partners" },
+      {
+        label: "Global Reach",
+        href: `${WHY_TELECEL_BLUEPRINT.path}#global-reach`,
+      },
+      {
+        label: "Partners & Ecosystem",
+        href: `${WHY_TELECEL_BLUEPRINT.path}#partners`,
+      },
     ],
   },
   {
     label: "Insights",
-    href: "/insights",
+    href: INSIGHTS_BLUEPRINT.path,
     live: true,
     children: [
-      { label: "News", href: "/insights", live: true },
-      { label: "Case Studies", href: "/insights/case-studies", live: true },
+      { label: "News", href: INSIGHTS_BLUEPRINT.path, live: true },
+      {
+        label: CASE_STUDIES_BLUEPRINT.title,
+        href: CASE_STUDIES_BLUEPRINT.path,
+        live: true,
+      },
     ],
   },
 ] as const;
 
 /** Primary conversion CTAs — shown in the header and footer. */
 export const SITE_CTAS = {
-  talkToSales: { label: "Talk to Sales", href: "/contact?intent=sales" },
-  requestDemo: { label: "Request a Demo", href: "/contact?intent=demo" },
+  talkToSales: {
+    label: "Talk to Sales",
+    href: `${ROUTES.contact}?intent=sales`,
+  },
+  requestDemo: {
+    label: "Request a Demo",
+    href: `${ROUTES.contact}?intent=demo`,
+  },
 } as const;
 
-export const SITE_LEGAL_LINKS: readonly SiteNavLink[] = [
-  { label: "Privacy Policy", href: "/privacy", live: true },
-  { label: "Cookie Policy", href: "/cookies", live: true },
-  { label: "Terms of Use", href: "/terms", live: true },
-];
+export const SITE_LEGAL_LINKS: readonly SiteNavLink[] =
+  navLinksFromBlueprints(LEGAL_BLUEPRINTS);
