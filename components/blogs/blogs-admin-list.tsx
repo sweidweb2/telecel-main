@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useTransition } from "react";
-import { PlusIcon, SearchIcon } from "lucide-react";
+import { FileTextIcon, PlusIcon } from "lucide-react";
 
 import { BlogAdminCard } from "@/components/blogs/blog-admin-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Select,
   SelectContent,
@@ -66,16 +67,14 @@ export function BlogsAdminList({
             });
           }}
         >
-          <div className="relative min-w-0 flex-1">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              name="search"
-              defaultValue={query.search}
-              placeholder="Search title, slug, or author"
-              className="min-h-11 pl-9"
-              disabled={isPending}
-            />
-          </div>
+          <SearchInput
+            name="search"
+            defaultValue={query.search}
+            placeholder="Search title, slug, or author"
+            className="h-11 min-w-0 flex-1"
+            disabled={isPending}
+            pending={isPending}
+          />
           <Select
             value={query.status}
             onValueChange={(value) => {
@@ -112,21 +111,21 @@ export function BlogsAdminList({
       </p>
 
       {blogs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed p-10 text-center">
-          <p className="font-heading text-lg font-semibold">No blogs yet</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Create your first insight post to appear on the public Insights
-            pages.
-          </p>
-          <Button
-            className="mt-6 min-h-11"
-            nativeButton={false}
-            render={<Link href={`${ROUTES.blogs}/new`} />}
-          >
-            <PlusIcon className="size-4" />
-            New blog
-          </Button>
-        </div>
+        <EmptyState
+          icon={FileTextIcon}
+          title="No blogs yet"
+          description="Create your first insight post to appear on the public Insights pages."
+          action={
+            <Button
+              className="min-h-11"
+              nativeButton={false}
+              render={<Link href={`${ROUTES.blogs}/new`} />}
+            >
+              <PlusIcon className="size-4" />
+              New blog
+            </Button>
+          }
+        />
       ) : (
         <ul className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
           {blogs.map((blog) => (

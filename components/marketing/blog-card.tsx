@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heading } from "@/components/ui/heading";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
 
@@ -40,9 +41,12 @@ export function BlogCard({ article }: BlogCardProps) {
           {article.category.name}
         </p>
         <div className="flex gap-4">
-          <h3 className="flex-1 font-heading text-lg font-semibold tracking-tight text-balance group-hover:underline group-hover:underline-offset-4">
+          <Heading
+            level="label"
+            className="flex-1 text-lg font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4"
+          >
             {article.title}
-          </h3>
+          </Heading>
           <ArrowUpRight className="mt-0.5 size-5 shrink-0" />
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">
@@ -57,7 +61,9 @@ export function BlogCard({ article }: BlogCardProps) {
           <AvatarFallback>{authorInitials(article.author.name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{article.author.name}</p>
+          <p className="truncate text-sm font-semibold">
+            {article.author.name}
+          </p>
           <p className="text-sm text-muted-foreground">
             {article.publishedAt} · {article.readingTime}
           </p>

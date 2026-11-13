@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
 import { PortalPageHeader } from "@/components/dashboard/portal-page-header";
+import { Text } from "@/components/ui/text";
 import { canAccessSection, PORTAL_NAV } from "@/constants/dashboard-nav";
 import { ROUTES } from "@/constants/routes";
 import { requireSection } from "@/data/auth";
@@ -16,14 +17,16 @@ export default async function DashboardPage() {
         description={`Signed in as ${session.email}. Your role: ${session.role}.`}
       />
       {PORTAL_NAV.filter((group) => group.label !== "Overview").map((group) => {
-        const items = group.items.filter((item) => canAccessSection(session.role, item));
+        const items = group.items.filter((item) =>
+          canAccessSection(session.role, item),
+        );
         if (items.length === 0) return null;
 
         return (
           <section key={group.label} aria-labelledby={`group-${group.label}`}>
-            <h3 id={`group-${group.label}`} className="type-notation text-muted-foreground">
+            <Text id={`group-${group.label}`} variant="notation">
               {group.label}
-            </h3>
+            </Text>
             <ul className="mt-3 grid border-t md:grid-cols-2 md:gap-x-10">
               {items.map((item) => (
                 <li key={item.href} className="border-b">

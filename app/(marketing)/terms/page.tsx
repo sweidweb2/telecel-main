@@ -2,12 +2,13 @@ import {
   BlueprintPage,
   blueprintMetadata,
 } from "@/components/marketing/blueprint-page";
-import { LEGAL_BLUEPRINTS } from "@/constants/page-blueprints";
+import { requireBlueprint } from "@/constants/page-blueprints";
+import { ROUTES } from "@/constants/routes";
 
-const config = LEGAL_BLUEPRINTS.find((page) => page.path === "/terms")!;
+const config = requireBlueprint(ROUTES.terms);
 
 export const metadata = blueprintMetadata(config);
 
-export default function Page() {
+export default function TermsPage() {
   return <BlueprintPage config={config} />;
 }

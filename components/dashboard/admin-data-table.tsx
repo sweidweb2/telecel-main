@@ -6,14 +6,14 @@ import {
   type ReactNode,
   type TransitionStartFunction,
 } from "react";
-import { SearchIcon, XIcon, type LucideIcon } from "lucide-react";
+import { XIcon, type LucideIcon } from "lucide-react";
 
 import { ListPagination } from "@/components/dashboard/list-pagination";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
   TableBody,
@@ -133,15 +133,14 @@ export function AdminDataTable({
   return (
     <Card className="min-w-0 gap-0 overflow-hidden py-0">
       <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
           <Label htmlFor={searchId} className="sr-only">
             {searchLabel}
           </Label>
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+          <SearchInput
             id={searchId}
-            type="search"
             value={search}
+            pending={isPending}
             onChange={(event) => {
               const value = event.target.value;
               handleSearchChange(value);
@@ -150,11 +149,8 @@ export function AdminDataTable({
             placeholder={searchPlaceholder}
             maxLength={100}
             autoComplete="off"
-            className="min-h-11 pl-8 sm:min-h-8"
+            className="h-11 sm:h-8"
           />
-          {isPending ? (
-            <Spinner className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground" />
-          ) : null}
         </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -197,19 +193,13 @@ export function AdminDataTable({
           <TableBody>
             {isEmpty ? (
               <TableRow>
-                <TableCell
-                  colSpan={allColumns.length}
-                  className="h-48 text-center"
-                >
-                  <div className="mx-auto flex max-w-sm flex-col items-center gap-2 whitespace-normal">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-muted">
-                      <EmptyIcon className="size-5 text-muted-foreground" />
-                    </span>
-                    <p className="font-medium">{emptyTitle}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {emptyDescription}
-                    </p>
-                  </div>
+                <TableCell colSpan={allColumns.length} className="p-4">
+                  <EmptyState
+                    icon={EmptyIcon}
+                    title={emptyTitle}
+                    description={emptyDescription}
+                    className="border-0 py-10"
+                  />
                 </TableCell>
               </TableRow>
             ) : (

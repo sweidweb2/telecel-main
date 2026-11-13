@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
 import { ArrowUpRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Heading } from "@/components/ui/heading";
 import { ROUTES } from "@/constants/routes";
+import { formatDate } from "@/lib/format";
 import type { BlogListItem } from "@/types/blog";
 
 type BlogAdminCardProps = {
@@ -16,9 +17,7 @@ type BlogAdminCardProps = {
 export function BlogAdminCard({ blog }: BlogAdminCardProps) {
   const href = `${ROUTES.blogs}/${blog.id}`;
   const category = blog.categories[0] ?? "Uncategorized";
-  const dateLabel = blog.published_at
-    ? format(new Date(blog.published_at), "d MMM yyyy")
-    : format(new Date(blog.created_at), "d MMM yyyy");
+  const dateLabel = formatDate(blog.published_at ?? blog.created_at);
 
   return (
     <Link
@@ -36,7 +35,9 @@ export function BlogAdminCard({ blog }: BlogAdminCardProps) {
           />
         ) : null}
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <Badge variant={blog.status === "published" ? "default" : "secondary"}>
+          <Badge
+            variant={blog.status === "published" ? "default" : "secondary"}
+          >
             {blog.status}
           </Badge>
           {blog.is_featured ? <Badge variant="outline">Hero</Badge> : null}
@@ -45,9 +46,12 @@ export function BlogAdminCard({ blog }: BlogAdminCardProps) {
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-primary">{category}</p>
         <div className="flex gap-3">
-          <h3 className="flex-1 font-heading text-lg font-semibold tracking-tight text-balance group-hover:underline group-hover:underline-offset-4">
+          <Heading
+            level="label"
+            className="flex-1 text-lg font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4"
+          >
             {blog.title}
-          </h3>
+          </Heading>
           <ArrowUpRight className="mt-0.5 size-5 shrink-0" />
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground">

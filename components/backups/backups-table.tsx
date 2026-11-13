@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { format, parseISO } from "date-fns";
 import { useRouter } from "nextjs-toploader/app";
 import { DatabaseBackupIcon, DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { BACKUP_TABLE_LABELS } from "@/constants/backup-tables";
+import { formatDateTime } from "@/lib/format";
 import type { BackupExportSetting } from "@/types/backups";
 
 function scopeLabel(setting: BackupExportSetting): string {
@@ -36,11 +36,8 @@ function scopeLabel(setting: BackupExportSetting): string {
 
 function formatTimestamp(value: string | null): string {
   if (!value) return "Never";
-  try {
-    return format(parseISO(value), "dd MMM yyyy HH:mm");
-  } catch {
-    return value;
-  }
+  const formatted = formatDateTime(value);
+  return formatted === "—" ? value : formatted;
 }
 
 function ExportButton({ setting }: { setting: BackupExportSetting }) {
@@ -83,7 +80,11 @@ function ExportButton({ setting }: { setting: BackupExportSetting }) {
   );
 }
 
-export function BackupsTable({ settings }: { settings: BackupExportSetting[] }) {
+export function BackupsTable({
+  settings,
+}: {
+  settings: BackupExportSetting[];
+}) {
   if (settings.length === 0) {
     return (
       <Card>
@@ -148,7 +149,9 @@ export function BackupsTable({ settings }: { settings: BackupExportSetting[] }) 
             <CardContent className="flex flex-col gap-4 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                  <p className="truncate font-medium text-ink">{setting.name}</p>
+                  <p className="truncate font-medium text-ink">
+                    {setting.name}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {scopeLabel(setting)} · {setting.format.toUpperCase()}
                   </p>

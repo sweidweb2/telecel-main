@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
+import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Text } from "@/components/ui/text";
 import { PLATFORM_STAGES } from "@/constants/home-content";
 import { cn } from "@/lib/utils";
 
@@ -49,9 +51,13 @@ export function PlatformRail({ className }: { className?: string }) {
                 <span className="type-notation text-muted-foreground">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="font-heading text-base font-normal text-ink/70 decoration-brand decoration-2 underline-offset-[6px] group-hover:text-ink group-data-active:font-semibold group-data-active:text-ink group-data-active:underline sm:text-lg">
+                <Heading
+                  level="label"
+                  as="span"
+                  className="text-base font-normal text-ink/70 decoration-brand decoration-2 underline-offset-[6px] group-hover:text-ink group-data-active:font-semibold group-data-active:text-ink group-data-active:underline sm:text-lg"
+                >
                   {stage.title}
-                </span>
+                </Heading>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -68,12 +74,10 @@ export function PlatformRail({ className }: { className?: string }) {
             Stage {String(index + 1).padStart(2, "0")} / 05
           </p>
           <div className="md:col-span-7">
-            <h3 className="font-heading text-2xl font-medium text-ink">
-              {stage.title}
-            </h3>
-            <p className="mt-2 max-w-[60ch] text-lg leading-7 text-muted-foreground">
+            <Heading level="subtitle">{stage.title}</Heading>
+            <Text variant="lead" className="mt-2 max-w-[60ch]">
               {stage.summary}
-            </p>
+            </Text>
           </div>
           <div className="grid content-start gap-4 md:col-span-3">
             <ol aria-label="Sequence" className="grid gap-1.5">

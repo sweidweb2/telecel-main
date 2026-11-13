@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { PortalPageHeader } from "@/components/dashboard/portal-page-header";
@@ -17,6 +16,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { requireSection } from "@/data/auth";
 import { getInquiryById } from "@/data/inquiries";
+import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 function labelFor(
   options: readonly { value: string; label: string }[],
-  value: string
+  value: string,
 ) {
   return options.find((option) => option.value === value)?.label ?? value;
 }
@@ -61,7 +61,7 @@ export default async function InquiryDetailPage({
             href={ROUTES.inquiries}
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "min-h-11"
+              "min-h-11",
             )}
           >
             <ArrowLeftIcon />
@@ -86,22 +86,19 @@ export default async function InquiryDetailPage({
               label="Area of interest"
               value={labelFor(
                 AREA_OF_INTEREST_OPTIONS,
-                inquiry.area_of_interest
+                inquiry.area_of_interest,
               )}
             />
             <DetailItem
               label="Preferred contact"
               value={labelFor(
                 CONTACT_METHODS,
-                inquiry.preferred_contact_method
+                inquiry.preferred_contact_method,
               )}
             />
             <DetailItem
               label="Received"
-              value={format(
-                new Date(inquiry.created_at),
-                "MMM d, yyyy HH:mm"
-              )}
+              value={formatDateTime(inquiry.created_at, "MMM d, yyyy HH:mm")}
             />
             {inquiry.source_path ? (
               <DetailItem label="Source" value={inquiry.source_path} />

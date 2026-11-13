@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Heading } from "@/components/ui/heading";
 import {
   Dialog,
   DialogContent,
@@ -321,11 +322,11 @@ export function BlogEditorForm({
   }
 
   const coverPreview =
-    mode === "create" ? pendingCoverPreview : blog?.thumbnail_url ?? null;
+    mode === "create" ? pendingCoverPreview : (blog?.thumbnail_url ?? null);
   const hasCover = Boolean(coverPreview);
   const avatarFileLabel =
     mode === "create"
-      ? pendingAvatar?.name ?? null
+      ? (pendingAvatar?.name ?? null)
       : blog?.author_avatar_url
         ? "Avatar uploaded"
         : null;
@@ -335,489 +336,493 @@ export function BlogEditorForm({
 
   return (
     <>
-    <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
-              {heading}
-            </h2>
-            <Badge variant={status === "published" ? "default" : "secondary"}>
-              {status === "published" ? "Published" : "Draft"}
-            </Badge>
-            {isFeatured ? <Badge variant="outline">Featured hero</Badge> : null}
+      <form className="grid gap-6" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Heading level="subtitle" className="font-semibold">
+                {heading}
+              </Heading>
+              <Badge variant={status === "published" ? "default" : "secondary"}>
+                {status === "published" ? "Published" : "Draft"}
+              </Badge>
+              {isFeatured ? (
+                <Badge variant="outline">Featured hero</Badge>
+              ) : null}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+            {mode === "edit" ? (
+              <Button
+                type="button"
+                variant="destructive"
+                className="min-h-11"
+                disabled={isPending}
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash2Icon className="size-4" />
+                Delete
+              </Button>
+            ) : null}
+            <Button type="submit" className="min-h-11" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Spinner />
+                  Saving…
+                </>
+              ) : mode === "create" ? (
+                "Create blog"
+              ) : (
+                "Save changes"
+              )}
+            </Button>
+          </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
-          {mode === "edit" ? (
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)] lg:items-start">
+          {/* Left: content fields */}
+          <div className="grid min-w-0 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2">
+                <FieldLabel
+                  htmlFor="blog-title"
+                  hint={`2–${BLOG_TITLE_MAX} chars`}
+                >
+                  Title
+                </FieldLabel>
+                <Input
+                  id="blog-title"
+                  className="min-h-11"
+                  placeholder="e.g. Improve your design skills"
+                  disabled={isPending}
+                  aria-invalid={Boolean(errors.title)}
+                  {...register("title", {
+                    onChange: (event) => {
+                      if (mode === "create" && !slugTouched) {
+                        setValue("slug", slugifyTitle(event.target.value), {
+                          shouldValidate: false,
+                        });
+                      }
+                    },
+                  })}
+                />
+                <FieldError>{errors.title?.message}</FieldError>
+              </div>
+              <div className="grid gap-2">
+                <FieldLabel
+                  htmlFor="blog-slug"
+                  hint={`2–${BLOG_SLUG_MAX} · a-z 0-9 -`}
+                >
+                  Slug
+                </FieldLabel>
+                <Input
+                  id="blog-slug"
+                  className="min-h-11"
+                  placeholder="e.g. improve-your-design-skills"
+                  disabled={isPending}
+                  aria-invalid={Boolean(errors.slug)}
+                  {...register("slug", {
+                    onChange: () => {
+                      setSlugTouched(true);
+                    },
+                  })}
+                />
+                <FieldError>{errors.slug?.message}</FieldError>
+              </div>
+              <div className="grid gap-2 sm:col-span-2 xl:col-span-1">
+                <FieldLabel
+                  htmlFor="blog-author"
+                  hint={`2–${BLOG_AUTHOR_NAME_MAX} chars`}
+                >
+                  Author
+                </FieldLabel>
+                <Input
+                  id="blog-author"
+                  className="min-h-11"
+                  placeholder="e.g. Amélie Laurent"
+                  disabled={isPending}
+                  aria-invalid={Boolean(errors.authorName)}
+                  {...register("authorName")}
+                />
+                <FieldError>{errors.authorName?.message}</FieldError>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <FieldLabel
+                htmlFor="blog-summary"
+                hint={`2–${BLOG_SUMMARY_MAX} chars`}
+              >
+                Summary
+              </FieldLabel>
+              <Textarea
+                id="blog-summary"
+                rows={3}
+                className="min-h-24"
+                placeholder="Short summary shown on cards and search results"
+                disabled={isPending}
+                aria-invalid={Boolean(errors.summary)}
+                {...register("summary")}
+              />
+              <FieldError>{errors.summary?.message}</FieldError>
+            </div>
+
+            <div className="grid gap-2">
+              <FieldLabel hint={`max ${BLOG_BODY_MAX.toLocaleString()} chars`}>
+                Body
+              </FieldLabel>
+              <Controller
+                name="bodyHtml"
+                control={control}
+                render={({ field }) => (
+                  <BlogRichTextEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isPending}
+                    placeholder="Write the article body…"
+                  />
+                )}
+              />
+              <FieldError>{errors.bodyHtml?.message}</FieldError>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card size="sm" className="min-w-0">
+                <CardHeader className="border-b">
+                  <CardTitle>Publishing</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Visibility and hero placement
+                  </p>
+                </CardHeader>
+                <CardContent className="grid gap-3">
+                  <div className="flex items-center gap-3">
+                    <Controller
+                      name="status"
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          id="blog-published"
+                          checked={field.value === "published"}
+                          disabled={isPending}
+                          onCheckedChange={(checked) => {
+                            const next =
+                              checked === true ? "published" : "draft";
+                            field.onChange(next);
+                            if (next === "draft") {
+                              setValue("isFeatured", false, {
+                                shouldDirty: true,
+                              });
+                            }
+                          }}
+                          className="size-5"
+                        />
+                      )}
+                    />
+                    <Label htmlFor="blog-published" className="font-normal">
+                      Published (visible on Insights)
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Controller
+                      name="isFeatured"
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          id="blog-featured"
+                          checked={field.value}
+                          disabled={isPending || status !== "published"}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                          className="size-5"
+                        />
+                      )}
+                    />
+                    <Label
+                      htmlFor="blog-featured"
+                      className={
+                        status !== "published"
+                          ? "font-normal text-muted-foreground"
+                          : "font-normal"
+                      }
+                    >
+                      Featured hero (only one at a time)
+                    </Label>
+                  </div>
+                  <FieldError>{errors.isFeatured?.message}</FieldError>
+                </CardContent>
+              </Card>
+
+              <Card size="sm" className="min-w-0">
+                <CardHeader className="border-b">
+                  <CardTitle>Author avatar</CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    JPEG/PNG/WebP/GIF · max 2MB
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={(event) => onPickAvatar(event.target.files)}
+                  />
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11 shrink-0"
+                      disabled={isPending}
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      <UploadIcon className="size-4" />
+                      {hasAvatar ? "Replace" : "Choose file"}
+                    </Button>
+                    {hasAvatar ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-11 shrink-0"
+                        disabled={isPending}
+                        onClick={onRemoveAvatar}
+                      >
+                        Remove
+                      </Button>
+                    ) : null}
+                    <span className="min-w-0 truncate text-sm text-muted-foreground">
+                      {avatarFileLabel ?? "No file selected"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Right: cover + categories */}
+          <aside className="grid gap-4 lg:sticky lg:top-4">
+            <Card size="sm">
+              <CardHeader className="border-b">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <CardTitle>Cover image</CardTitle>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      JPEG/PNG/WebP/GIF · max 5MB
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(event) => onPickCover(event.target.files)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="min-h-11"
+                      disabled={isPending}
+                      onClick={() => coverInputRef.current?.click()}
+                    >
+                      <UploadIcon className="size-4" />
+                      Upload
+                    </Button>
+                    {hasCover ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-11"
+                        disabled={isPending}
+                        onClick={onRemoveCover}
+                      >
+                        Remove
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="relative aspect-[1.5] w-full overflow-hidden rounded-lg bg-muted">
+                  {coverPreview ? (
+                    mode === "create" ? (
+                      // Local File preview (blob:) — native img avoids next/image remote rules
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={coverPreview}
+                        alt={title || "Cover preview"}
+                        className="absolute inset-0 size-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={coverPreview}
+                        alt={title || "Cover preview"}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 22rem"
+                      />
+                    )
+                  ) : (
+                    <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      No cover yet
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card size="sm">
+              <CardHeader className="border-b">
+                <CardTitle>Categories</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  up to {BLOG_CATEGORIES_MAX} · each max {BLOG_CATEGORY_MAX}{" "}
+                  chars
+                </p>
+              </CardHeader>
+              <CardContent className="grid gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {RECOMMENDED_BLOG_CATEGORIES.map((name) => {
+                    const active = categories.includes(name);
+                    return (
+                      <Button
+                        key={name}
+                        type="button"
+                        size="sm"
+                        variant={active ? "default" : "outline"}
+                        className="min-h-11"
+                        disabled={isPending}
+                        onClick={() => toggleCategory(name)}
+                      >
+                        {name}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Input
+                  className="min-h-11"
+                  placeholder="Add custom category and press Enter"
+                  disabled={isPending}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    const value = event.currentTarget.value.trim();
+                    if (!value || categories.includes(value)) return;
+                    setValue("categories", [...categories, value], {
+                      shouldValidate: false,
+                    });
+                    event.currentTarget.value = "";
+                  }}
+                />
+                {categories.length > 0 ? (
+                  <ul className="flex flex-wrap gap-2">
+                    {categories.map((name) => (
+                      <li key={name}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          className="min-h-11"
+                          disabled={isPending}
+                          onClick={() => toggleCategory(name)}
+                        >
+                          {name} ×
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {errors.categories ? (
+                  <FieldError>
+                    {errors.categories.message ??
+                      errors.categories.root?.message}
+                  </FieldError>
+                ) : null}
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
+      </form>
+
+      <Dialog
+        open={isCreateSuccessOpen}
+        onOpenChange={(open) => {
+          if (!open) goToBlogsList();
+        }}
+      >
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Blog created</DialogTitle>
+            <DialogDescription>
+              Your post was saved. What would you like to do next?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col sm:justify-stretch">
+            <Button
+              type="button"
+              className="min-h-11 w-full"
+              onClick={goToCreatedBlog}
+            >
+              Edit this post
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full"
+              onClick={continueCreating}
+            >
+              Create another
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11 w-full"
+              onClick={goToBlogsList}
+            >
+              Back to blogs
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle>Delete this blog?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {blog?.title
+                ? `This permanently deletes “${blog.title}”. This cannot be undone.`
+                : "This permanently deletes the blog post. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
               className="min-h-11"
               disabled={isPending}
-              onClick={() => setIsDeleteOpen(true)}
+              onClick={onDelete}
             >
-              <Trash2Icon className="size-4" />
-              Delete
-            </Button>
-          ) : null}
-          <Button type="submit" className="min-h-11" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Spinner />
-                Saving…
-              </>
-            ) : mode === "create" ? (
-              "Create blog"
-            ) : (
-              "Save changes"
-            )}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)] lg:items-start">
-        {/* Left: content fields */}
-        <div className="grid min-w-0 gap-4">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="grid gap-2">
-              <FieldLabel htmlFor="blog-title" hint={`2–${BLOG_TITLE_MAX} chars`}>
-                Title
-              </FieldLabel>
-              <Input
-                id="blog-title"
-                className="min-h-11"
-                placeholder="e.g. Improve your design skills"
-                disabled={isPending}
-                aria-invalid={Boolean(errors.title)}
-                {...register("title", {
-                  onChange: (event) => {
-                    if (mode === "create" && !slugTouched) {
-                      setValue("slug", slugifyTitle(event.target.value), {
-                        shouldValidate: false,
-                      });
-                    }
-                  },
-                })}
-              />
-              <FieldError>{errors.title?.message}</FieldError>
-            </div>
-            <div className="grid gap-2">
-              <FieldLabel
-                htmlFor="blog-slug"
-                hint={`2–${BLOG_SLUG_MAX} · a-z 0-9 -`}
-              >
-                Slug
-              </FieldLabel>
-              <Input
-                id="blog-slug"
-                className="min-h-11"
-                placeholder="e.g. improve-your-design-skills"
-                disabled={isPending}
-                aria-invalid={Boolean(errors.slug)}
-                {...register("slug", {
-                  onChange: () => {
-                    setSlugTouched(true);
-                  },
-                })}
-              />
-              <FieldError>{errors.slug?.message}</FieldError>
-            </div>
-            <div className="grid gap-2 sm:col-span-2 xl:col-span-1">
-              <FieldLabel
-                htmlFor="blog-author"
-                hint={`2–${BLOG_AUTHOR_NAME_MAX} chars`}
-              >
-                Author
-              </FieldLabel>
-              <Input
-                id="blog-author"
-                className="min-h-11"
-                placeholder="e.g. Amélie Laurent"
-                disabled={isPending}
-                aria-invalid={Boolean(errors.authorName)}
-                {...register("authorName")}
-              />
-              <FieldError>{errors.authorName?.message}</FieldError>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <FieldLabel
-              htmlFor="blog-summary"
-              hint={`2–${BLOG_SUMMARY_MAX} chars`}
-            >
-              Summary
-            </FieldLabel>
-            <Textarea
-              id="blog-summary"
-              rows={3}
-              className="min-h-24"
-              placeholder="Short summary shown on cards and search results"
-              disabled={isPending}
-              aria-invalid={Boolean(errors.summary)}
-              {...register("summary")}
-            />
-            <FieldError>{errors.summary?.message}</FieldError>
-          </div>
-
-          <div className="grid gap-2">
-            <FieldLabel hint={`max ${BLOG_BODY_MAX.toLocaleString()} chars`}>
-              Body
-            </FieldLabel>
-            <Controller
-              name="bodyHtml"
-              control={control}
-              render={({ field }) => (
-                <BlogRichTextEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={isPending}
-                  placeholder="Write the article body…"
-                />
+              {isPending ? (
+                <>
+                  <Spinner />
+                  Deleting…
+                </>
+              ) : (
+                <>
+                  <Trash2Icon className="size-4" />
+                  Delete
+                </>
               )}
-            />
-            <FieldError>{errors.bodyHtml?.message}</FieldError>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Card size="sm" className="min-w-0">
-              <CardHeader className="border-b">
-                <CardTitle>Publishing</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Visibility and hero placement
-                </p>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <div className="flex items-center gap-3">
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        id="blog-published"
-                        checked={field.value === "published"}
-                        disabled={isPending}
-                        onCheckedChange={(checked) => {
-                          const next =
-                            checked === true ? "published" : "draft";
-                          field.onChange(next);
-                          if (next === "draft") {
-                            setValue("isFeatured", false, {
-                              shouldDirty: true,
-                            });
-                          }
-                        }}
-                        className="size-5"
-                      />
-                    )}
-                  />
-                  <Label htmlFor="blog-published" className="font-normal">
-                    Published (visible on Insights)
-                  </Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Controller
-                    name="isFeatured"
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        id="blog-featured"
-                        checked={field.value}
-                        disabled={isPending || status !== "published"}
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked === true)
-                        }
-                        className="size-5"
-                      />
-                    )}
-                  />
-                  <Label
-                    htmlFor="blog-featured"
-                    className={
-                      status !== "published"
-                        ? "font-normal text-muted-foreground"
-                        : "font-normal"
-                    }
-                  >
-                    Featured hero (only one at a time)
-                  </Label>
-                </div>
-                <FieldError>{errors.isFeatured?.message}</FieldError>
-              </CardContent>
-            </Card>
-
-            <Card size="sm" className="min-w-0">
-              <CardHeader className="border-b">
-                <CardTitle>Author avatar</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  JPEG/PNG/WebP/GIF · max 2MB
-                </p>
-              </CardHeader>
-              <CardContent>
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={(event) => onPickAvatar(event.target.files)}
-                />
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="min-h-11 shrink-0"
-                    disabled={isPending}
-                    onClick={() => avatarInputRef.current?.click()}
-                  >
-                    <UploadIcon className="size-4" />
-                    {hasAvatar ? "Replace" : "Choose file"}
-                  </Button>
-                  {hasAvatar ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="min-h-11 shrink-0"
-                      disabled={isPending}
-                      onClick={onRemoveAvatar}
-                    >
-                      Remove
-                    </Button>
-                  ) : null}
-                  <span className="min-w-0 truncate text-sm text-muted-foreground">
-                    {avatarFileLabel ?? "No file selected"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Right: cover + categories */}
-        <aside className="grid gap-4 lg:sticky lg:top-4">
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <CardTitle>Cover image</CardTitle>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    JPEG/PNG/WebP/GIF · max 5MB
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    ref={coverInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    className="hidden"
-                    onChange={(event) => onPickCover(event.target.files)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="min-h-11"
-                    disabled={isPending}
-                    onClick={() => coverInputRef.current?.click()}
-                  >
-                    <UploadIcon className="size-4" />
-                    Upload
-                  </Button>
-                  {hasCover ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="min-h-11"
-                      disabled={isPending}
-                      onClick={onRemoveCover}
-                    >
-                      Remove
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-[1.5] w-full overflow-hidden rounded-lg bg-muted">
-                {coverPreview ? (
-                  mode === "create" ? (
-                    // Local File preview (blob:) — native img avoids next/image remote rules
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={coverPreview}
-                      alt={title || "Cover preview"}
-                      className="absolute inset-0 size-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={coverPreview}
-                      alt={title || "Cover preview"}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 22rem"
-                    />
-                  )
-                ) : (
-                  <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                    No cover yet
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card size="sm">
-            <CardHeader className="border-b">
-              <CardTitle>Categories</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                up to {BLOG_CATEGORIES_MAX} · each max {BLOG_CATEGORY_MAX} chars
-              </p>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              <div className="flex flex-wrap gap-2">
-                {RECOMMENDED_BLOG_CATEGORIES.map((name) => {
-                  const active = categories.includes(name);
-                  return (
-                    <Button
-                      key={name}
-                      type="button"
-                      size="sm"
-                      variant={active ? "default" : "outline"}
-                      className="min-h-11"
-                      disabled={isPending}
-                      onClick={() => toggleCategory(name)}
-                    >
-                      {name}
-                    </Button>
-                  );
-                })}
-              </div>
-              <Input
-                className="min-h-11"
-                placeholder="Add custom category and press Enter"
-                disabled={isPending}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") return;
-                  event.preventDefault();
-                  const value = event.currentTarget.value.trim();
-                  if (!value || categories.includes(value)) return;
-                  setValue("categories", [...categories, value], {
-                    shouldValidate: false,
-                  });
-                  event.currentTarget.value = "";
-                }}
-              />
-              {categories.length > 0 ? (
-                <ul className="flex flex-wrap gap-2">
-                  {categories.map((name) => (
-                    <li key={name}>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="min-h-11"
-                        disabled={isPending}
-                        onClick={() => toggleCategory(name)}
-                      >
-                        {name} ×
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {errors.categories ? (
-                <FieldError>
-                  {errors.categories.message ?? errors.categories.root?.message}
-                </FieldError>
-              ) : null}
-            </CardContent>
-          </Card>
-        </aside>
-      </div>
-    </form>
-
-    <Dialog
-      open={isCreateSuccessOpen}
-      onOpenChange={(open) => {
-        if (!open) goToBlogsList();
-      }}
-    >
-      <DialogContent
-        className="sm:max-w-md"
-        showCloseButton={false}
-      >
-        <DialogHeader>
-          <DialogTitle>Blog created</DialogTitle>
-          <DialogDescription>
-            Your post was saved. What would you like to do next?
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex-col gap-2 sm:flex-col sm:justify-stretch">
-          <Button
-            type="button"
-            className="min-h-11 w-full"
-            onClick={goToCreatedBlog}
-          >
-            Edit this post
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="min-h-11 w-full"
-            onClick={continueCreating}
-          >
-            Create another
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-11 w-full"
-            onClick={goToBlogsList}
-          >
-            Back to blogs
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader className="text-left">
-          <AlertDialogTitle>Delete this blog?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {blog?.title
-              ? `This permanently deletes “${blog.title}”. This cannot be undone.`
-              : "This permanently deletes the blog post. This cannot be undone."}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <Button
-            type="button"
-            variant="destructive"
-            className="min-h-11"
-            disabled={isPending}
-            onClick={onDelete}
-          >
-            {isPending ? (
-              <>
-                <Spinner />
-                Deleting…
-              </>
-            ) : (
-              <>
-                <Trash2Icon className="size-4" />
-                Delete
-              </>
-            )}
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

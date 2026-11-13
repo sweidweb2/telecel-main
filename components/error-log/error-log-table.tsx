@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "nextjs-toploader/app";
-import { format } from "date-fns";
 import { CircleAlertIcon } from "lucide-react";
 
 import {
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ROUTES } from "@/constants/routes";
+import { formatDateTime } from "@/lib/format";
 import type { ErrorLogRow } from "@/types/observability";
 import {
   ADMIN_LIST_PAGE_SIZE,
@@ -136,7 +136,7 @@ export function ErrorLogTable({
             index={index}
           />
           <TableCell className="whitespace-nowrap text-muted-foreground">
-            {format(new Date(row.created_at), "dd MMM yyyy HH:mm")}
+            {formatDateTime(row.created_at)}
           </TableCell>
           <TableCell>
             <Badge
@@ -161,7 +161,7 @@ export function ErrorLogTable({
               fields={[
                 {
                   label: "When",
-                  value: format(new Date(row.created_at), "dd MMM yyyy HH:mm:ss"),
+                  value: formatDateTime(row.created_at, "dd MMM yyyy HH:mm:ss"),
                 },
                 { label: "Severity", value: row.severity },
                 { label: "Source", value: row.source },

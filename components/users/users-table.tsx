@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
-import { format } from "date-fns";
 import { UserRoundSearchIcon } from "lucide-react";
 
 import {
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ROUTES } from "@/constants/routes";
+import { formatDate } from "@/lib/format";
 import type { Profile } from "@/types/profile";
 import {
   setAdminListPagingParams,
@@ -177,10 +177,10 @@ export function UsersTable({
             </div>
           </TableCell>
           <TableCell className="whitespace-nowrap text-muted-foreground">
-            {format(new Date(user.created_at), "MMM d, yyyy")}
+            {formatDate(user.created_at, "MMM d, yyyy")}
           </TableCell>
           <TableCell className="whitespace-nowrap text-muted-foreground">
-            {format(new Date(user.updated_at), "MMM d, yyyy")}
+            {formatDate(user.updated_at, "MMM d, yyyy")}
           </TableCell>
           <TableCell className="pr-4 text-right">
             <UserRowActions

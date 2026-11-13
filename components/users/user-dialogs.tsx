@@ -9,14 +9,8 @@ import {
   type Path,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
 import { useRouter } from "nextjs-toploader/app";
-import {
-  EyeIcon,
-  PencilIcon,
-  PlusIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { EyeIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
 import { createUser, deleteUser, updateUser } from "@/actions/users";
@@ -54,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatDate } from "@/lib/format";
 import type { Profile, UserRole } from "@/types/profile";
 import { PASSWORD_MIN } from "@/validations/auth";
 import {
@@ -72,8 +67,16 @@ function FormFieldError({ message }: { message?: string }) {
 }
 
 const ROLE_OPTIONS: { value: UserRole; label: string; hint: string }[] = [
-  { value: "editor", label: "Editor", hint: "Manages website content, news and inquiries." },
-  { value: "admin", label: "Admin", hint: "Everything editors can do, plus users and settings." },
+  {
+    value: "editor",
+    label: "Editor",
+    hint: "Manages website content, news and inquiries.",
+  },
+  {
+    value: "admin",
+    label: "Admin",
+    hint: "Everything editors can do, plus users and settings.",
+  },
 ];
 
 function RoleField<T extends FieldValues & { role: UserRole }>({
@@ -97,7 +100,11 @@ function RoleField<T extends FieldValues & { role: UserRole }>({
             onValueChange={(value) => field.onChange(value)}
             disabled={disabled}
           >
-            <SelectTrigger id={id} className="w-full" aria-invalid={Boolean(fieldState.error)}>
+            <SelectTrigger
+              id={id}
+              className="w-full"
+              aria-invalid={Boolean(fieldState.error)}
+            >
               <SelectValue placeholder="Choose a role" />
             </SelectTrigger>
             <SelectContent>
@@ -166,9 +173,7 @@ export function CreateUserDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        render={
-          <Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />
-        }
+        render={<Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />}
       >
         <PlusIcon />
         Create user
@@ -177,15 +182,12 @@ export function CreateUserDialog() {
         <DialogHeader>
           <DialogTitle>Create user</DialogTitle>
           <DialogDescription>
-            Create a confirmed login. Share the temporary password securely; the user changes it after signing in.
+            Create a confirmed login. Share the temporary password securely; the
+            user changes it after signing in.
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          id={formId}
-          onSubmit={form.handleSubmit(onSubmit)}
-          noValidate
-        >
+        <form id={formId} onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FieldGroup>
             <Field data-invalid={Boolean(form.formState.errors.fullName)}>
               <Label htmlFor="create-full-name">Full name</Label>
@@ -198,7 +200,9 @@ export function CreateUserDialog() {
                 aria-invalid={Boolean(form.formState.errors.fullName)}
                 {...form.register("fullName")}
               />
-              <FormFieldError message={form.formState.errors.fullName?.message} />
+              <FormFieldError
+                message={form.formState.errors.fullName?.message}
+              />
             </Field>
             <Field data-invalid={Boolean(form.formState.errors.email)}>
               <Label htmlFor="create-email">Email</Label>
@@ -229,7 +233,11 @@ export function CreateUserDialog() {
                 message={form.formState.errors.password?.message}
               />
             </Field>
-            <RoleField id="create-role" control={form.control} disabled={isPending} />
+            <RoleField
+              id="create-role"
+              control={form.control}
+              disabled={isPending}
+            />
           </FieldGroup>
         </form>
 
@@ -243,11 +251,7 @@ export function CreateUserDialog() {
             Cancel
           </Button>
           <Button type="submit" form={formId} disabled={isPending}>
-            {isPending ? (
-              <Spinner />
-            ) : (
-              <PlusIcon />
-            )}
+            {isPending ? <Spinner /> : <PlusIcon />}
             {isPending ? "Creating…" : "Create user"}
           </Button>
         </DialogFooter>
@@ -352,7 +356,9 @@ export function UserRowActions({
               <dd>
                 <Badge variant="outline">{user.role ?? "no access"}</Badge>
                 {user.is_active ? null : (
-                  <Badge variant="destructive" className="ml-1">suspended</Badge>
+                  <Badge variant="destructive" className="ml-1">
+                    suspended
+                  </Badge>
                 )}
               </dd>
             </div>
@@ -364,13 +370,13 @@ export function UserRowActions({
               <div className="grid gap-1">
                 <dt className="text-muted-foreground">Created</dt>
                 <dd className="font-medium">
-                  {format(new Date(user.created_at), "MMM d, yyyy")}
+                  {formatDate(user.created_at, "MMM d, yyyy")}
                 </dd>
               </div>
               <div className="grid gap-1">
                 <dt className="text-muted-foreground">Updated</dt>
                 <dd className="font-medium">
-                  {format(new Date(user.updated_at), "MMM d, yyyy")}
+                  {formatDate(user.updated_at, "MMM d, yyyy")}
                 </dd>
               </div>
             </div>
@@ -448,11 +454,14 @@ export function UserRowActions({
                     <Checkbox
                       id={`edit-active-${user.id}`}
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
                       disabled={isUpdating || isCurrentUser}
                     />
                     <Label htmlFor={`edit-active-${user.id}`}>
-                      Account active (unchecked = suspended, signed out everywhere)
+                      Account active (unchecked = suspended, signed out
+                      everywhere)
                     </Label>
                   </Field>
                 )}
@@ -470,11 +479,7 @@ export function UserRowActions({
               Cancel
             </Button>
             <Button type="submit" form={editFormId} disabled={isUpdating}>
-              {isUpdating ? (
-                <Spinner />
-              ) : (
-                <PencilIcon />
-              )}
+              {isUpdating ? <Spinner /> : <PencilIcon />}
               {isUpdating ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
@@ -510,11 +515,7 @@ export function UserRowActions({
               onClick={onDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? (
-                <Spinner />
-              ) : (
-                <Trash2Icon />
-              )}
+              {isDeleting ? <Spinner /> : <Trash2Icon />}
               {isDeleting ? "Deleting…" : "Delete user"}
             </Button>
           </AlertDialogFooter>

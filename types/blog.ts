@@ -1,7 +1,7 @@
 import type { Tables } from "@/types/database";
 import type { Article, ArticleListItem } from "@/types/article";
 import { insightPath } from "@/constants/routes";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/format";
 
 export type BlogStatus = "draft" | "published";
 
@@ -55,7 +55,7 @@ function readingTimeLabel(minutes: number): string {
 
 function formatPublishedAt(value: string | null): string {
   if (!value) return "Draft";
-  return format(new Date(value), "d MMM yyyy");
+  return formatDate(value);
 }
 
 function toArticleListFields(blog: BlogPublicListItem): ArticleListItem {

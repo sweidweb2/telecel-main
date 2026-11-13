@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "nextjs-toploader/app";
-import { format } from "date-fns";
 import { ClipboardListIcon } from "lucide-react";
 
 import {
@@ -15,6 +14,7 @@ import {
 } from "@/components/dashboard/record-detail-dialog";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { ROUTES } from "@/constants/routes";
+import { formatDateTime } from "@/lib/format";
 import type { ActivityLogRow } from "@/types/observability";
 import {
   ADMIN_LIST_PAGE_SIZE,
@@ -25,7 +25,11 @@ import type { ActivityLogQuery } from "@/validations/audit-log";
 
 function activityHref(
   query: ActivityLogQuery,
-  patch: Partial<{ page: number; pageSize: AdminPageSize; search: string }> = {},
+  patch: Partial<{
+    page: number;
+    pageSize: AdminPageSize;
+    search: string;
+  }> = {},
 ): string {
   const page = patch.page ?? query.page;
   const pageSize = patch.pageSize ?? query.pageSize;
@@ -92,7 +96,7 @@ export function ActivityLogTable({
             index={index}
           />
           <TableCell className="whitespace-nowrap text-muted-foreground">
-            {format(new Date(row.created_at), "dd MMM yyyy HH:mm")}
+            {formatDateTime(row.created_at)}
           </TableCell>
           <TableCell className="max-w-[10rem] truncate sm:max-w-[14rem]">
             {actorLabel(row.actor)}
@@ -109,7 +113,7 @@ export function ActivityLogTable({
               fields={[
                 {
                   label: "When",
-                  value: format(new Date(row.created_at), "dd MMM yyyy HH:mm:ss"),
+                  value: formatDateTime(row.created_at, "dd MMM yyyy HH:mm:ss"),
                 },
                 { label: "Actor", value: actorLabel(row.actor) },
                 { label: "Action", value: row.action },

@@ -2,11 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
+import { Container } from "@/components/layout/container";
 import { BlogCard } from "@/components/marketing/blog-card";
 import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { ROUTES } from "@/constants/routes";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import type { Article, ArticleListItem } from "@/types/article";
@@ -61,7 +64,7 @@ export function InsightDetailPage({
       <JsonLd data={structuredData} />
 
       <article className="pb-16 lg:pb-24">
-        <div className="container-site pt-8 sm:pt-10 lg:pt-12">
+        <Container className="pt-8 sm:pt-10 lg:pt-12">
           <Link
             href={ROUTES.insights}
             className={cn(
@@ -77,14 +80,16 @@ export function InsightDetailPage({
             <p className="text-sm font-semibold text-primary">
               {article.category.name}
             </p>
-            <h1 className="type-display mt-3 text-balance">{article.title}</h1>
-            <p className="mt-4 text-base text-muted-foreground sm:mt-6 sm:text-lg">
+            <Heading level="display" as="h1" className="mt-3">
+              {article.title}
+            </Heading>
+            <Text variant="lead" className="mt-4 sm:mt-6">
               {article.summary}
-            </p>
+            </Text>
           </header>
-        </div>
+        </Container>
 
-        <div className="container-site mt-8 sm:mt-10">
+        <Container className="mt-8 sm:mt-10">
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted md:aspect-[2/1]">
             {article.thumbnailUrl ? (
               <Image
@@ -97,9 +102,9 @@ export function InsightDetailPage({
               />
             ) : null}
           </div>
-        </div>
+        </Container>
 
-        <div className="container-site mt-8 sm:mt-10">
+        <Container className="mt-8 sm:mt-10">
           <div className="flex flex-col gap-8 border-b pb-8 sm:flex-row sm:items-end sm:justify-between lg:pb-10">
             <div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
               <div className="flex flex-col gap-2">
@@ -137,19 +142,21 @@ export function InsightDetailPage({
               </ul>
             </div>
           </div>
-        </div>
+        </Container>
 
-        <div className="container-site mt-8 sm:mt-10">
+        <Container className="mt-8 sm:mt-10">
           <div
             className="prose prose-neutral dark:prose-invert mx-auto max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
-        </div>
+        </Container>
 
         {related.length > 0 ? (
-          <section className="container-site mt-16 sm:mt-20">
+          <Container as="section" className="mt-16 sm:mt-20">
             <div className="flex items-end justify-between gap-4">
-              <h2 className="type-section text-balance">{labels.moreInsights}</h2>
+              <Heading level="section" className="text-balance">
+                {labels.moreInsights}
+              </Heading>
               <Link
                 href={ROUTES.insights}
                 className={cn(
@@ -168,7 +175,7 @@ export function InsightDetailPage({
                 </li>
               ))}
             </ul>
-          </section>
+          </Container>
         ) : null}
       </article>
     </main>

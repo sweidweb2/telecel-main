@@ -5,10 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
+import { Container } from "@/components/layout/container";
 import { BlogCard } from "@/components/marketing/blog-card";
 import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Text } from "@/components/ui/text";
 import { categoryToTabId, type BlogTabId } from "@/constants/blog-ui";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
@@ -59,9 +62,13 @@ function FeaturedPost({
           <div className="flex w-full flex-col gap-6 p-6 lg:p-8">
             <div className="flex flex-col gap-2">
               <div className="flex gap-4">
-                <p className="flex-1 font-heading text-xl font-semibold text-white text-balance lg:text-2xl">
+                <Heading
+                  level="subtitle"
+                  as="p"
+                  className="flex-1 text-xl font-semibold text-white lg:text-2xl"
+                >
                   {article.title}
-                </p>
+                </Heading>
                 <ArrowUpRight className="size-6 shrink-0 text-white" />
               </div>
               <p className="line-clamp-2 text-sm text-white/90 sm:text-base">
@@ -126,11 +133,7 @@ function FeaturedPost({
   );
 }
 
-export function BlogSection({
-  labels,
-  articles,
-  featured,
-}: BlogSectionProps) {
+export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
   const [tab, setTab] = useState<BlogTabId>("all");
 
   const filteredArticles = useMemo(() => {
@@ -143,25 +146,23 @@ export function BlogSection({
   return (
     <main>
       <section className="py-10 sm:py-14 lg:py-16">
-        <div className="container-site">
+        <Container>
           <div className="flex w-full max-w-3xl flex-col">
             <span className="text-sm font-semibold text-primary">
               {labels.eyebrow}
             </span>
-            <h1 className="type-display mt-3 text-balance">
+            <Heading level="display" as="h1" className="mt-3">
               {labels.title}
-            </h1>
-            <p className="mt-4 text-base text-muted-foreground sm:mt-6 sm:text-lg">
+            </Heading>
+            <Text variant="lead" className="mt-4 sm:mt-6">
               {labels.description}
-            </p>
+            </Text>
           </div>
-        </div>
+        </Container>
       </section>
 
-      <div className="container-site flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
-        {featured ? (
-          <FeaturedPost labels={labels} article={featured} />
-        ) : null}
+      <Container className="flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
+        {featured ? <FeaturedPost labels={labels} article={featured} /> : null}
 
         <Tabs
           value={tab}
@@ -185,7 +186,7 @@ export function BlogSection({
         </Tabs>
 
         {filteredArticles.length === 0 ? (
-          <p className="text-muted-foreground">{labels.emptyState}</p>
+          <Text variant="muted">{labels.emptyState}</Text>
         ) : (
           <ul className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
             {filteredArticles.map((article) => (
@@ -195,7 +196,7 @@ export function BlogSection({
             ))}
           </ul>
         )}
-      </div>
+      </Container>
     </main>
   );
 }

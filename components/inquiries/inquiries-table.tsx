@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
-import { format } from "date-fns";
 import { InboxIcon } from "lucide-react";
 
 import {
@@ -25,6 +24,7 @@ import {
   INQUIRY_STATUSES,
 } from "@/constants/inquiries";
 import { ROUTES } from "@/constants/routes";
+import { formatDateTime } from "@/lib/format";
 import type { InquiryListItem } from "@/types/inquiry";
 import {
   ADMIN_LIST_PAGE_SIZE,
@@ -216,7 +216,7 @@ export function InquiriesTable({
             </Badge>
           </TableCell>
           <TableCell className="whitespace-nowrap pr-4 text-muted-foreground">
-            {format(new Date(inquiry.created_at), "MMM d, yyyy HH:mm")}
+            {formatDateTime(inquiry.created_at, "MMM d, yyyy HH:mm")}
           </TableCell>
         </TableRow>
       ))}

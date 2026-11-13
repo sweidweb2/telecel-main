@@ -16,6 +16,7 @@ import { useTheme } from "next-themes";
 import { signOut } from "@/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +39,11 @@ const THEME_OPTIONS = [
 const emptySubscribe = () => () => {};
 
 function useIsClient() {
-  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 function initials(email: string): string {
@@ -69,7 +74,9 @@ export function DashboardHeader({
   return (
     <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b bg-background px-4 sm:px-6">
       <SidebarTrigger className="-ml-1" />
-      <h1 className="min-w-0 truncate font-heading text-lg font-medium text-ink">{title}</h1>
+      <Heading level="label" as="h1" className="min-w-0 truncate text-lg">
+        {title}
+      </Heading>
       <DropdownMenu>
         {/*
           Base UI Menu Trigger already renders a <button>.
@@ -90,7 +97,9 @@ export function DashboardHeader({
         <DropdownMenuContent align="end" className="w-56 min-w-56">
           <div className="px-2 py-1.5">
             <p className="truncate text-sm font-medium">{user.email}</p>
-            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {user.role}
+            </p>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem

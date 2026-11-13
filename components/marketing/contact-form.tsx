@@ -9,7 +9,13 @@ import { submitInquiry } from "@/actions/inquiries";
 import { TurnstileWidget } from "@/components/security/turnstile-widget";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { Text } from "@/components/ui/text";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AREA_OF_INTEREST_OPTIONS,
@@ -70,7 +77,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
     (token: string) => {
       setValue("turnstileToken", token, { shouldValidate: true });
     },
-    [setValue]
+    [setValue],
   );
 
   const clearTurnstileToken = useCallback(() => {
@@ -86,7 +93,8 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
         return;
       }
       setSentMessage(
-        result.message ?? "Thanks — we received your inquiry and will be in touch."
+        result.message ??
+          "Thanks — we received your inquiry and will be in touch.",
       );
     });
   }
@@ -94,11 +102,13 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
   if (sentMessage) {
     return (
       <div className="rounded-lg border border-hairline bg-surface px-6 py-10">
-        <p className="type-notation text-brand">Sent</p>
-        <h2 className="mt-3 type-section text-ink">We have your message</h2>
-        <p className="mt-4 max-w-[48ch] text-base leading-7 text-muted-foreground">
+        <Text variant="brand">Sent</Text>
+        <Heading level="section" className="mt-3">
+          We have your message
+        </Heading>
+        <Text variant="lead" className="mt-4 max-w-[48ch]">
           {sentMessage}
-        </p>
+        </Text>
       </div>
     );
   }
@@ -279,7 +289,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={Boolean(fieldState.error)}>
-              <FieldLabel htmlFor="contact-method">Preferred contact</FieldLabel>
+              <FieldLabel htmlFor="contact-method">
+                Preferred contact
+              </FieldLabel>
               <Select
                 value={field.value}
                 onValueChange={(value) => {

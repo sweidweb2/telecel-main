@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Heading } from "@/components/ui/heading";
 import { SERVICE_PILLARS } from "@/constants/home-content";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,14 @@ export function ServicePortfolioDiagram({ className }: { className?: string }) {
       <ol className="relative">
         {/* Bus: rows are h-14 (56px). Grey trunk joins pillar 01→05 (centres at
             28px…252px); the single red route runs from 05 into the platform. */}
-        <span aria-hidden className="absolute top-7 right-0 h-56 w-[1.5px] bg-ink/25" />
-        <span aria-hidden className="absolute top-[252px] right-0 h-[58px] w-[1.5px] bg-brand" />
+        <span
+          aria-hidden
+          className="absolute top-7 right-0 h-56 w-[1.5px] bg-ink/25"
+        />
+        <span
+          aria-hidden
+          className="absolute top-[252px] right-0 h-[58px] w-[1.5px] bg-brand"
+        />
         {SERVICE_PILLARS.map((pillar) => (
           <li key={pillar.slug} className="relative">
             <Link
@@ -36,7 +43,10 @@ export function ServicePortfolioDiagram({ className }: { className?: string }) {
                 </span>
               </span>
               {/* Route into the bus, with a junction node. */}
-              <span aria-hidden className="relative ml-2 h-[1.5px] bg-ink/25 transition-colors duration-150 group-hover:bg-ink/60">
+              <span
+                aria-hidden
+                className="relative ml-2 h-[1.5px] bg-ink/25 transition-colors duration-150 group-hover:bg-ink/60"
+              >
                 <span className="absolute -top-[3.25px] -right-[3.5px] size-2 rounded-full bg-ink/40" />
               </span>
             </Link>
@@ -49,9 +59,13 @@ export function ServicePortfolioDiagram({ className }: { className?: string }) {
                 aria-hidden
                 className="size-4 rounded-full bg-brand ring-[6px] ring-brand/12"
               />
-              <span className="font-heading text-xl font-semibold tracking-tight text-ink">
+              <Heading
+                level="subtitle"
+                as="span"
+                className="text-xl font-semibold tracking-tight"
+              >
                 One Global B2B Platform
-              </span>
+              </Heading>
             </span>
             <span aria-hidden className="ml-2 h-[1.5px] bg-brand" />
           </div>
