@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const HAS_BRAND_LOGO = process.env.NEXT_PUBLIC_HAS_BRAND_LOGO === "true";
 
-/** Rendered heights in px; the source artwork is 248×84 (wordmark + tagline). */
+/** Rendered heights in px; source artwork is 1003×274 (mark + wordmark). */
 const HEIGHTS = { sm: 32, md: 42, lg: 56 } as const;
 
 type LogoProps = {
@@ -16,12 +16,17 @@ type LogoProps = {
 };
 
 /**
- * Official Telecel wordmark ("telecel" + "Connecting Energies").
+ * Official Telecel Global Services lockup (mark + "telecel" + "Global Services").
  * Never retype the wordmark in a web font. When the confidential artwork is
  * not present locally (see public/brand/README.md) a neutral text label is
  * shown instead, clearly not an imitation of the logo.
  */
-export function Logo({ className, size = "md", variant = "color", priority }: LogoProps) {
+export function Logo({
+  className,
+  size = "md",
+  variant = "color",
+  priority,
+}: LogoProps) {
   const height = HEIGHTS[size];
 
   if (!HAS_BRAND_LOGO) {
@@ -30,7 +35,7 @@ export function Logo({ className, size = "md", variant = "color", priority }: Lo
         className={cn(
           "inline-flex items-center font-heading text-lg font-semibold tracking-tight",
           variant === "reversed" ? "text-white" : "text-ink",
-          className
+          className,
         )}
         style={{ height }}
       >
@@ -42,15 +47,15 @@ export function Logo({ className, size = "md", variant = "color", priority }: Lo
   return (
     <Image
       src="/brand/telecel-wordmark.png"
-      alt="Telecel — Connecting Energies"
-      width={248}
-      height={84}
+      alt="Telecel Global Services"
+      width={1003}
+      height={274}
       priority={priority}
       unoptimized
       className={cn(
         "w-auto select-none",
         variant === "reversed" && "brightness-0 invert",
-        className
+        className,
       )}
       style={{ height }}
     />

@@ -57,3 +57,6 @@ next-env.d.ts
 # confidential client material — repo is public
 /public/brand/*
 !/public/brand/README.md
+/app/icon.png
+/app/apple-icon.png
+/app/favicon.ico
