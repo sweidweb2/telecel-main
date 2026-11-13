@@ -73,6 +73,7 @@ export function SiteFooter() {
                         <li key={child.href}>
                           <Link
                             href={child.href}
+                            prefetch={false}
                             className="text-sm leading-5 text-charcoal-muted transition-colors duration-150 hover:text-white"
                           >
                             {child.label}
@@ -95,6 +96,7 @@ export function SiteFooter() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={false}
                   className="inline-flex min-h-11 items-center text-sm text-charcoal-muted hover:text-white"
                 >
                   {link.label}
