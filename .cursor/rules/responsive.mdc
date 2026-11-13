@@ -14,7 +14,7 @@ Every UI change must work on mobile (~375), tablet (~768), and desktop (~1280). 
 3. **Breakpoints** — stack on small screens; split from `md:` or `lg:` (e.g. `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`).
 4. **Touch targets** — interactive controls at least ~44px (`min-h-11` / `min-w-11`) on mobile.
 5. **Typography** — use shared `Heading` / `Text` (they already scale). Keep body readable (`text-base`+). Use `text-balance` on big titles when helpful.
-6. **Spacing** — tighter padding on mobile (`px-4 py-10`), more on larger (`sm:px-6 lg:py-16`). Prefer `Container` / `Section` / `Stack` / `Grid` over one-off width grids.
+6. **Spacing** — tighter padding on mobile (`px-4 py-10`), more on larger (`sm:px-6 lg:py-16`). Prefer `Container` / `Section` for width and public sections; use Tailwind flex/grid utilities for spacing.
 7. **CTAs / forms** — full-width buttons on mobile (`w-full sm:w-auto`); form fields `w-full`. Marketing CTAs: `Button` `size="cta"`.
 8. **Images / video** — `next/image` with responsive `sizes`; never force overflow. Optimize for constrained mobile bandwidth.
 9. **Tables / dense data** — allow `overflow-x-auto` on the table container, or stack rows on small screens — never blow out the page width. Empty tables: `EmptyState`.

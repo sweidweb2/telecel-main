@@ -11,7 +11,7 @@ If it does not know about app entities (projects, users, teams), it belongs here
 - Supabase clients: `lib/supabase/client.ts`, `server.ts`, `admin.ts`
 - Generic utils: `lib/utils.ts` (`cn()` via clsx + tailwind-merge)
 - Display formatters: `lib/format.ts` (`formatDate`, `formatDateTime`, `formatRelative`, `formatCurrency`, `formatNumber`) — feature UI should import these instead of calling `date-fns` `format` directly
-- Permissions helpers: `lib/permissions.ts` (with `constants/dashboard-nav` + `data/auth` for real guards)
+- Role / section gates live in `data/auth` + `constants/dashboard-nav` — do not add a parallel `lib/permissions` layer
 - Fonts: `lib/fonts.ts` (`next/font`). Used by `app/layout.tsx` and `app/global-error.tsx`
 - Client temp IDs: `nanoid`. Low-level date math may use `date-fns` named imports inside `lib/` only
 - Third-party SDK setup (Stripe, Resend, etc.)

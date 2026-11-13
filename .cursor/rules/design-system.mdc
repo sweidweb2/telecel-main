@@ -7,30 +7,35 @@ alwaysApply: true
 
 **Source of truth:** `app/globals.css` (tokens) · `docs/02-architecture/design-system.md` · `components/ui/` · `components/layout/`.
 
-## Mandatory patterns
+## Adopted primitives (use these)
 
 | Need | Use |
 | --- | --- |
 | Colors / radius / motion / z-index / sizes | CSS tokens / Tailwind theme classes from `globals.css` (`bg-brand`, `text-ink`, `bg-surface`, `border-hairline`, `text-success`, `shadow-sm`, `duration-fast`, `z-overlay`, …) |
 | Page width | `Container` (`components/layout/container`) — prefer over raw `container-site` in new/edited UI |
 | Public section | `Section` |
-| Flex / grid spacing | `Stack` / `Grid` |
+| Flex / grid spacing | Tailwind utilities (`flex flex-col gap-4`, `grid grid-cols-1 md:grid-cols-2`, …) — do not add Stack/Grid wrappers |
 | Route body shell | `PageContainer` (already in marketing / auth / dashboard layouts) |
 | Headings / body copy | `Heading` / `Text` — do not invent new `font-heading` + size stacks |
 | Portal page chrome | `PortalPageHeader` + `dashboard-page` on the page `<main>` |
-| Search field | `SearchInput` |
+| Search field | `SearchInput` (+ `InputGroup` under the hood) |
 | Empty lists / tables | `EmptyState` |
 | Dates / money | `lib/format.ts` (`formatDate`, `formatDateTime`, `formatCurrency`, …) — not ad-hoc `date-fns` `format` in feature UI |
-| Roles | `lib/permissions.ts` + `data/auth` guards + `constants/dashboard-nav` |
+| Roles | `data/auth` guards + `constants/dashboard-nav` (`canAccessSection`) |
 | Forms | `react-hook-form` + Zod in `validations/` + `Field` / ui inputs |
 | Icons | `lucide-react` + `cn()` from `lib/utils.ts` |
 | Toasts / spinners / route progress | Sonner · `Spinner` · `NextTopLoader` · `RouteSkeleton` only |
+
+Add missing shadcn pieces with `npx shadcn@latest add <name>` **when a feature needs them** — do not pre-add DatePicker, Combobox, FileUpload, etc.
+
+Public nav/footer/sitemap must import `constants/site-nav` → `constants/marketing-pages` only — never `page-blueprints` (keeps wireframe meta/section notes out of the marketing client bundle).
 
 ## Do not
 
 - Parallel theme files, CSS-in-JS, or product hex (brand hex only in `:root`)
 - Radix / hand-rolled Button, Dialog, Select, etc. when shadcn has it
 - Second toast / spinner / progress systems
+- Thin React wrappers for `flex`/`gap`/`grid` (Stack/Grid)
 - i18n routing, bottom tab bars, or steppers unless commissioned
 - Supabase / `data/` / `actions/` imports inside shared presentational components
 - After `npx shadcn@latest add`: restore Telecel button variants (`cta`, `ink-outline`) and `@/lib/utils` if the CLI rewrites them
@@ -46,4 +51,4 @@ alwaysApply: true
 
 ## When editing old UI
 
-Refactor the touched file onto these primitives (Heading/Text/Container/format/SearchInput/EmptyState) instead of leaving one-off classes.
+Refactor the touched file onto these primitives (Heading/Text/Container/Section/format/SearchInput/EmptyState) instead of leaving one-off classes.
