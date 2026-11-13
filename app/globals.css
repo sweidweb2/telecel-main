@@ -122,14 +122,14 @@
   --spacing-20: 5rem;
   --spacing-24: 6rem;
 
-  /* Controls 4px, panels max 8px. Circles only for emblem + network nodes. */
-  --radius-sm: 2px;
-  --radius-md: 3px;
+  /* Controls 8px, panels up to 12px. Circles only for emblem + network nodes. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --radius-lg: var(--radius);
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 8px;
-  --radius-4xl: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
+  --radius-4xl: 12px;
 
   /* Border */
   --border-width: 1px;
@@ -203,7 +203,7 @@
 }
 
 :root {
-  --radius: 4px;
+  --radius: 8px;
 
   /* Provisional Telecel red (white text ≈ 4.65:1). Confirm with brand guide. */
   --brand: #e51b23;
@@ -412,5 +412,148 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes services-cloud-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(3.5%);
+  }
+}
+
+@keyframes services-cloud-bank {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(1.5%) translateY(-4px);
+  }
+}
+
+@keyframes services-hero-dashboard-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes platform-layer-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility services-cloud-drift {
+  animation: services-cloud-drift 28s var(--ease-standard) infinite alternate;
+}
+
+@utility services-cloud-drift-slow {
+  animation: services-cloud-drift 42s var(--ease-standard) infinite
+    alternate-reverse;
+}
+
+@utility services-cloud-bank {
+  animation: services-cloud-bank 16s var(--ease-standard) infinite;
+}
+
+@utility services-cloud-bank-alt {
+  animation: services-cloud-bank 22s var(--ease-standard) infinite reverse;
+}
+
+@utility services-hero-fade-up {
+  animation: fade-in-up 700ms var(--ease-standard) both;
+}
+
+@utility services-hero-fade-up-delay {
+  animation-delay: 120ms;
+}
+
+@utility services-hero-fade-up-delay-2 {
+  animation-delay: 220ms;
+}
+
+@utility services-hero-dashboard-rise {
+  animation: services-hero-dashboard-rise 900ms var(--ease-standard) 280ms both;
+}
+
+/* Services “What We Provide” — gentle hover motion on abstract UI scenes. */
+@keyframes services-provide-float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes services-provide-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes services-provide-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes services-provide-bar {
+  from {
+    transform: scaleY(0.72);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .services-provide-card:hover .services-provide-float,
+  .services-provide-card:focus-visible .services-provide-float {
+    animation: services-provide-float 560ms var(--ease-standard) alternate
+      infinite;
+  }
+
+  .services-provide-card:hover .services-provide-float-delay,
+  .services-provide-card:focus-visible .services-provide-float-delay {
+    animation: services-provide-float 560ms var(--ease-standard) 120ms alternate
+      infinite;
+  }
+
+  .services-provide-card:hover .services-provide-pulse,
+  .services-provide-card:focus-visible .services-provide-pulse {
+    animation: services-provide-pulse 900ms var(--ease-standard) infinite;
+  }
+
+  .services-provide-card:hover .services-provide-flow,
+  .services-provide-card:focus-visible .services-provide-flow {
+    animation: services-provide-flow 700ms linear infinite;
+  }
+
+  .services-provide-bar {
+    transform-origin: bottom center;
+    transition: transform 500ms var(--ease-standard);
+  }
+
+  .services-provide-card:hover .services-provide-bar,
+  .services-provide-card:focus-visible .services-provide-bar {
+    animation: services-provide-bar 480ms var(--ease-standard) both;
   }
 }
