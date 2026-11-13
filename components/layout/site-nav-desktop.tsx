@@ -4,11 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { SiteNavSection } from "@/constants/site-nav";
+import { isNavActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-
-function isNavActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
 
 type SiteNavDesktopProps = {
   items: readonly SiteNavSection[];

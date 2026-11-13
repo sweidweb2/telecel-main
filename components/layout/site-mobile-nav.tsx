@@ -16,11 +16,8 @@ import {
 } from "@/components/ui/sheet";
 import { ROUTES } from "@/constants/routes";
 import type { SiteNavSection } from "@/constants/site-nav";
+import { isNavActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-
-function isNavActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
 
 type Cta = { label: string; href: string };
 
@@ -32,7 +29,7 @@ type SiteMobileNavProps = {
 
 /**
  * Mobile menu island — Sheet + pathname only.
- * Prefetch off: sheet lists every hub; avoid warming all static routes on open.
+ * Prefetch off: sheet lists hubs and children; avoid warming every static route.
  */
 export function SiteMobileNav({
   items,
@@ -66,21 +63,38 @@ export function SiteMobileNav({
             className="flex flex-1 flex-col overflow-y-auto px-5"
           >
             {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={false}
-                onClick={() => setOpen(false)}
-                aria-current={
-                  isNavActive(pathname, item.href) ? "page" : undefined
-                }
-                className="flex min-h-16 items-center justify-between border-b text-ink aria-[current=page]:text-brand"
-              >
-                <Heading level="subtitle" as="span" className="text-xl">
-                  {item.label}
-                </Heading>
-                <ArrowRightIcon className="size-5 text-muted-foreground" />
-              </Link>
+              <div key={item.href} className="border-b">
+                <Link
+                  href={item.href}
+                  prefetch={false}
+                  onClick={() => setOpen(false)}
+                  aria-current={
+                    isNavActive(pathname, item.href) ? "page" : undefined
+                  }
+                  className="flex min-h-16 items-center justify-between text-ink aria-[current=page]:text-brand"
+                >
+                  <Heading level="subtitle" as="span" className="text-xl">
+                    {item.label}
+                  </Heading>
+                  <ArrowRightIcon className="size-5 text-muted-foreground" />
+                </Link>
+                {item.children?.length ? (
+                  <ul className="mb-4 space-y-1 pb-2 pl-1">
+                    {item.children.map((child) => (
+                      <li key={child.href}>
+                        <Link
+                          href={child.href}
+                          prefetch={false}
+                          onClick={() => setOpen(false)}
+                          className="flex min-h-11 items-center text-sm text-muted-foreground hover:text-ink"
+                        >
+                          {child.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
             ))}
           </nav>
           <div className="grid gap-3 border-t p-5">
