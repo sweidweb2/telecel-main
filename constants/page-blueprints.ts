@@ -1,4 +1,17 @@
 import type { BlueprintSectionConfig } from "@/components/marketing/page-blueprint";
+import {
+  CASE_STUDIES_PAGE,
+  INSIGHTS_PAGE,
+  LEADERSHIP_PAGE,
+  LEGAL_PAGES,
+  PLATFORM_PAGE,
+  SERVICE_PILLAR_PAGES,
+  SOLUTION_PAGES,
+  USE_CASE_PAGES,
+  WHY_TELECEL_PAGE,
+  marketingChildPath,
+} from "@/constants/marketing-pages";
+import { ROUTES } from "@/constants/routes";
 
 export type PageBlueprintConfig = {
   path: string;
@@ -71,9 +84,9 @@ export const HOME_BLUEPRINT: PageBlueprintConfig = {
 };
 
 export const PLATFORM_BLUEPRINT: PageBlueprintConfig = {
-  path: "/platform",
+  path: PLATFORM_PAGE.path,
   eyebrow: "Platform",
-  title: "One Global B2B Platform",
+  title: PLATFORM_PAGE.title,
   description: "One managed platform. More ways to grow.",
   metaTitle: "One Global B2B Platform | Telecel Global",
   metaDescription:
@@ -118,7 +131,7 @@ export const PLATFORM_BLUEPRINT: PageBlueprintConfig = {
 };
 
 export const SERVICES_HUB_BLUEPRINT: PageBlueprintConfig = {
-  path: "/services",
+  path: ROUTES.services,
   eyebrow: "Services",
   title: "Five service pillars",
   description: "International capability. One managed experience.",
@@ -154,63 +167,52 @@ const SERVICE_PILLAR_SECTIONS: readonly BlueprintSectionConfig[] = [
   { id: "cta", title: "Page CTA", note: "Talk to Sales / specialist routing." },
 ];
 
-export const SERVICE_PILLAR_BLUEPRINTS: readonly PageBlueprintConfig[] = [
-  {
-    path: "/services/cloud-data-centre",
-    eyebrow: "Services",
-    title: "Cloud & Data Centre Services",
+const SERVICE_PILLAR_COPY = {
+  "cloud-data-centre": {
     description: "Modernize infrastructure without adding complexity.",
     metaTitle: "Cloud & Data Centre Services | Telecel Global",
     metaDescription:
       "Managed cloud, professional services, public and private cloud, colocation and data centre services for operators and enterprises.",
-    sections: SERVICE_PILLAR_SECTIONS,
   },
-  {
-    path: "/services/cybersecurity",
-    eyebrow: "Services",
-    title: "Cybersecurity",
+  cybersecurity: {
     description:
       "Protect connected operations with practical, layered security.",
     metaTitle: "Cybersecurity Services | Telecel Global",
     metaDescription:
       "Cybersecurity services for connected operations, including prevention, threat monitoring, penetration testing and secure connectivity.",
-    sections: SERVICE_PILLAR_SECTIONS,
   },
-  {
-    path: "/services/iot-digital-services",
-    eyebrow: "Services",
-    title: "IoT & Digital Services",
+  "iot-digital-services": {
     description: "Turn connectivity into new digital value.",
     metaTitle: "IoT & Digital Services | Telecel Global",
     metaDescription:
       "IoT, telecom VAS, fintech, digital content and travel eSIM solutions designed to improve operations and create new customer value.",
-    sections: SERVICE_PILLAR_SECTIONS,
   },
-  {
-    path: "/services/network-enterprise-connectivity",
-    eyebrow: "Services",
-    title: "Network & Enterprise Connectivity",
+  "network-enterprise-connectivity": {
     description: "Connect markets, operations and opportunities.",
     metaTitle: "Network & Enterprise Connectivity | Telecel Global",
     metaDescription:
       "International data connectivity, IP transit, SD-WAN, satellite, IP-VPN, roaming and enterprise networking services.",
-    sections: SERVICE_PILLAR_SECTIONS,
   },
-  {
-    path: "/services/interactions-voice-messaging",
-    eyebrow: "Services",
-    title: "Interactions, Voice & Messaging",
+  "interactions-voice-messaging": {
     description:
       "Turn every interaction into stronger customer and commercial value.",
     metaTitle: "Interactions, Voice & Messaging | Telecel Global",
     metaDescription:
       "CPaaS, omnichannel engagement, enterprise messaging, A2P, P2P, P2A, SMS Firewall, managed services and international voice.",
-    sections: SERVICE_PILLAR_SECTIONS,
   },
-];
+} as const;
+
+export const SERVICE_PILLAR_BLUEPRINTS: readonly PageBlueprintConfig[] =
+  SERVICE_PILLAR_PAGES.map((page) => ({
+    path: marketingChildPath(ROUTES.services, page.slug),
+    eyebrow: "Services",
+    title: page.title,
+    ...SERVICE_PILLAR_COPY[page.slug],
+    sections: SERVICE_PILLAR_SECTIONS,
+  }));
 
 export const SOLUTIONS_HUB_BLUEPRINT: PageBlueprintConfig = {
-  path: "/solutions",
+  path: ROUTES.solutions,
   eyebrow: "Solutions",
   title: "Designed for the decisions you need to make",
   description: "Outcome-led journeys by customer type.",
@@ -242,53 +244,46 @@ const SOLUTION_SECTIONS: readonly BlueprintSectionConfig[] = [
   { id: "cta", title: "Page CTA", note: "Tell us the outcome you need." },
 ];
 
-export const SOLUTION_BLUEPRINTS: readonly PageBlueprintConfig[] = [
-  {
-    path: "/solutions/mobile-operators",
-    eyebrow: "Solutions",
-    title: "Mobile Operators",
+const SOLUTION_COPY = {
+  "mobile-operators": {
     description: "Grow international revenue. Create more subscriber value.",
     metaTitle: "Solutions for Mobile Operators | Telecel Global",
     metaDescription:
       "Connect international traffic, protect messaging ecosystems and launch digital services shaped around operator economics.",
-    sections: SOLUTION_SECTIONS,
   },
-  {
-    path: "/solutions/enterprises",
-    eyebrow: "Solutions",
-    title: "Enterprises",
+  enterprises: {
     description:
       "Connect operations. Modernize infrastructure. Engage customers.",
     metaTitle: "Solutions for Enterprises | Telecel Global",
     metaDescription:
       "Cloud, data centres, security, enterprise connectivity and customer engagement in one managed relationship.",
-    sections: SOLUTION_SECTIONS,
   },
-  {
-    path: "/solutions/governments-institutions",
-    eyebrow: "Solutions",
-    title: "Governments & Institutions",
+  "governments-institutions": {
     description: "Build secure digital services that can scale.",
     metaTitle: "Solutions for Governments & Institutions | Telecel Global",
     metaDescription:
       "Secure infrastructure, international connectivity and digital platforms for public and institutional operations.",
-    sections: SOLUTION_SECTIONS,
   },
-  {
-    path: "/solutions/wholesale-aggregators",
-    eyebrow: "Solutions",
-    title: "Wholesale & Aggregators",
+  "wholesale-aggregators": {
     description:
       "Access international capability through one accountable relationship.",
     metaTitle: "Wholesale & Aggregator Solutions | Telecel Global",
     metaDescription:
       "Connectivity, messaging, voice and managed support for wholesale and aggregator partners.",
-    sections: SOLUTION_SECTIONS,
   },
-];
+} as const;
+
+export const SOLUTION_BLUEPRINTS: readonly PageBlueprintConfig[] =
+  SOLUTION_PAGES.map((page) => ({
+    path: marketingChildPath(ROUTES.solutions, page.slug),
+    eyebrow: "Solutions",
+    title: page.title,
+    ...SOLUTION_COPY[page.slug],
+    sections: SOLUTION_SECTIONS,
+  }));
 
 export const USE_CASES_HUB_BLUEPRINT: PageBlueprintConfig = {
-  path: "/use-cases",
+  path: ROUTES.useCases,
   eyebrow: "Use Cases",
   title: "Start from the outcome you need",
   description: "Six buyer outcomes mapped to the service portfolio.",
@@ -324,74 +319,59 @@ const USE_CASE_SECTIONS: readonly BlueprintSectionConfig[] = [
   },
 ];
 
-export const USE_CASE_BLUEPRINTS: readonly PageBlueprintConfig[] = [
-  {
-    path: "/use-cases/grow-international-revenue",
-    eyebrow: "Use Cases",
-    title: "Grow International Revenue",
+const USE_CASE_COPY = {
+  "grow-international-revenue": {
     description:
       "Turn connectivity and digital services into new commercial opportunity.",
     metaTitle: "Grow International Revenue | Telecel Global",
     metaDescription:
       "Support operator growth through international traffic, subscriber services, enterprise engagement and digital monetization.",
-    sections: USE_CASE_SECTIONS,
   },
-  {
-    path: "/use-cases/modernize-customer-engagement",
-    eyebrow: "Use Cases",
-    title: "Modernize Customer Engagement",
+  "modernize-customer-engagement": {
     description: "Create more relevant interactions across every channel.",
     metaTitle: "Modernize Customer Engagement | Telecel Global",
     metaDescription:
       "Use APIs, omnichannel platforms, analytics and customer-value tools to improve communication and engagement.",
-    sections: USE_CASE_SECTIONS,
   },
-  {
-    path: "/use-cases/secure-messaging-traffic",
-    eyebrow: "Use Cases",
-    title: "Secure Messaging Traffic",
+  "secure-messaging-traffic": {
     description: "Protect traffic. Recover value. Improve control.",
     metaTitle: "Secure Messaging Traffic | Telecel Global",
     metaDescription:
       "Strengthen messaging ecosystems through firewall technology, managed operations and traffic insight.",
-    sections: USE_CASE_SECTIONS,
   },
-  {
-    path: "/use-cases/scale-across-markets",
-    eyebrow: "Use Cases",
-    title: "Scale Across Markets",
+  "scale-across-markets": {
     description: "Connect new locations without multiplying complexity.",
     metaTitle: "Scale Across Markets | Telecel Global",
     metaDescription:
       "Bring international data, IP, cloud and managed networking requirements into one coordinated engagement.",
-    sections: USE_CASE_SECTIONS,
   },
-  {
-    path: "/use-cases/build-resilient-infrastructure",
-    eyebrow: "Use Cases",
-    title: "Build Resilient Infrastructure",
+  "build-resilient-infrastructure": {
     description: "Make infrastructure ready for growth and disruption.",
     metaTitle: "Build Resilient Infrastructure | Telecel Global",
     metaDescription:
       "Combine cloud, data centres, secure connectivity and cybersecurity to strengthen operational continuity.",
-    sections: USE_CASE_SECTIONS,
   },
-  {
-    path: "/use-cases/launch-new-digital-services",
-    eyebrow: "Use Cases",
-    title: "Launch New Digital Services",
+  "launch-new-digital-services": {
     description:
       "Move from idea to market with the right platform and operating support.",
     metaTitle: "Launch New Digital Services | Telecel Global",
     metaDescription:
       "Build and launch connected, customer-facing services across IoT, VAS, fintech, content and eSIM.",
-    sections: USE_CASE_SECTIONS,
   },
-];
+} as const;
+
+export const USE_CASE_BLUEPRINTS: readonly PageBlueprintConfig[] =
+  USE_CASE_PAGES.map((page) => ({
+    path: marketingChildPath(ROUTES.useCases, page.slug),
+    eyebrow: "Use Cases",
+    title: page.title,
+    ...USE_CASE_COPY[page.slug],
+    sections: USE_CASE_SECTIONS,
+  }));
 
 export const WHY_TELECEL_BLUEPRINT: PageBlueprintConfig = {
-  path: "/why-telecel-global",
-  eyebrow: "Why Telecel Global",
+  path: WHY_TELECEL_PAGE.path,
+  eyebrow: WHY_TELECEL_PAGE.title,
   title: "International capability, delivered with operator understanding",
   description:
     "Telecel Global is the international B2B arm of Telecel — blueprint sections only for now.",
@@ -419,9 +399,9 @@ export const WHY_TELECEL_BLUEPRINT: PageBlueprintConfig = {
 };
 
 export const LEADERSHIP_BLUEPRINT: PageBlueprintConfig = {
-  path: "/why-telecel-global/leadership",
-  eyebrow: "Why Telecel Global",
-  title: "Leadership",
+  path: LEADERSHIP_PAGE.path,
+  eyebrow: WHY_TELECEL_PAGE.title,
+  title: LEADERSHIP_PAGE.title,
   description: "Leadership connected to customers, markets and delivery.",
   metaTitle: "Leadership | Telecel Global",
   metaDescription:
@@ -436,9 +416,9 @@ export const LEADERSHIP_BLUEPRINT: PageBlueprintConfig = {
 };
 
 export const INSIGHTS_BLUEPRINT: PageBlueprintConfig = {
-  path: "/insights",
+  path: INSIGHTS_PAGE.path,
   eyebrow: "Insights",
-  title: "News",
+  title: INSIGHTS_PAGE.title,
   description: "News, announcements and perspectives from Telecel Global.",
   metaTitle: "Insights | Telecel Global",
   metaDescription: "News, announcements and perspectives from Telecel Global.",
@@ -455,16 +435,16 @@ export const INSIGHTS_BLUEPRINT: PageBlueprintConfig = {
     },
     {
       id: "case-studies",
-      title: "Case Studies",
+      title: CASE_STUDIES_PAGE.title,
       note: "Hidden or empty until a case study is approved.",
     },
   ],
 };
 
 export const CASE_STUDIES_BLUEPRINT: PageBlueprintConfig = {
-  path: "/insights/case-studies",
+  path: CASE_STUDIES_PAGE.path,
   eyebrow: "Insights",
-  title: "Case Studies",
+  title: CASE_STUDIES_PAGE.title,
   description: "Template and listing slot — unpublished until cleared.",
   metaTitle: "Case Studies | Telecel Global",
   metaDescription:
@@ -479,7 +459,7 @@ export const CASE_STUDIES_BLUEPRINT: PageBlueprintConfig = {
 };
 
 export const CONTACT_BLUEPRINT: PageBlueprintConfig = {
-  path: "/contact",
+  path: ROUTES.contact,
   eyebrow: "Contact",
   title: "Start with the outcome you need",
   description:
@@ -506,38 +486,32 @@ export const CONTACT_BLUEPRINT: PageBlueprintConfig = {
   ],
 };
 
-export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = [
-  {
-    path: "/privacy",
-    eyebrow: "Legal",
-    title: "Privacy Policy",
+const LEGAL_COPY = {
+  [ROUTES.privacy]: {
     metaTitle: "Privacy Policy | Telecel Global",
     metaDescription: "Privacy Policy for Telecel Global.",
-    sections: [
-      { id: "content", title: "Policy content", note: "Legal copy pending." },
-    ],
   },
-  {
-    path: "/cookies",
-    eyebrow: "Legal",
-    title: "Cookie Policy",
+  [ROUTES.cookies]: {
     metaTitle: "Cookie Policy | Telecel Global",
     metaDescription: "Cookie Policy for Telecel Global.",
-    sections: [
-      { id: "content", title: "Policy content", note: "Legal copy pending." },
-    ],
   },
-  {
-    path: "/terms",
-    eyebrow: "Legal",
-    title: "Terms of Use",
+  [ROUTES.terms]: {
     metaTitle: "Terms of Use | Telecel Global",
     metaDescription: "Terms of Use for Telecel Global.",
+  },
+} as const;
+
+export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = LEGAL_PAGES.map(
+  (page) => ({
+    path: page.path,
+    eyebrow: "Legal",
+    title: page.title,
+    ...LEGAL_COPY[page.path],
     sections: [
       { id: "content", title: "Policy content", note: "Legal copy pending." },
     ],
-  },
-];
+  }),
+);
 
 /** Every public blueprint page — single registry for lookup and sitemap helpers. */
 export const ALL_PAGE_BLUEPRINTS: readonly PageBlueprintConfig[] = [
@@ -579,7 +553,7 @@ export function requireBlueprint(path: string): PageBlueprintConfig {
 
 /** Last path segment under a hub prefix (`/services` + `cybersecurity`). */
 export function blueprintPathForSlug(hubPath: string, slug: string): string {
-  return `${hubPath}/${slug}`;
+  return marketingChildPath(hubPath, slug);
 }
 
 /** Slug segment from a blueprint path under a hub (`/services/foo` → `foo`). */

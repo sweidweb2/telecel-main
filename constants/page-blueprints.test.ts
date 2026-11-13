@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  LEGAL_PAGES,
+  SERVICE_PILLAR_PAGES,
+  SOLUTION_PAGES,
+  USE_CASE_PAGES,
+  marketingChildPath,
+} from "@/constants/marketing-pages";
+import {
   ALL_PAGE_BLUEPRINTS,
+  LEGAL_BLUEPRINTS,
   SERVICE_PILLAR_BLUEPRINTS,
+  SOLUTION_BLUEPRINTS,
+  USE_CASE_BLUEPRINTS,
   blueprintPathForSlug,
   blueprintSlug,
   blueprintStaticParams,
@@ -31,8 +41,58 @@ describe("page blueprint registry", () => {
     expect(
       blueprintStaticParams(SERVICE_PILLAR_BLUEPRINTS, ROUTES.services),
     ).toEqual(
+      SERVICE_PILLAR_PAGES.map((page) => ({
+        slug: page.slug,
+      })),
+    );
+  });
+
+  it("keeps family blueprints aligned with the slim marketing catalog", () => {
+    expect(
       SERVICE_PILLAR_BLUEPRINTS.map((blueprint) => ({
-        slug: blueprintSlug(blueprint.path, ROUTES.services),
+        path: blueprint.path,
+        title: blueprint.title,
+      })),
+    ).toEqual(
+      SERVICE_PILLAR_PAGES.map((page) => ({
+        path: marketingChildPath(ROUTES.services, page.slug),
+        title: page.title,
+      })),
+    );
+
+    expect(
+      SOLUTION_BLUEPRINTS.map((blueprint) => ({
+        path: blueprint.path,
+        title: blueprint.title,
+      })),
+    ).toEqual(
+      SOLUTION_PAGES.map((page) => ({
+        path: marketingChildPath(ROUTES.solutions, page.slug),
+        title: page.title,
+      })),
+    );
+
+    expect(
+      USE_CASE_BLUEPRINTS.map((blueprint) => ({
+        path: blueprint.path,
+        title: blueprint.title,
+      })),
+    ).toEqual(
+      USE_CASE_PAGES.map((page) => ({
+        path: marketingChildPath(ROUTES.useCases, page.slug),
+        title: page.title,
+      })),
+    );
+
+    expect(
+      LEGAL_BLUEPRINTS.map((blueprint) => ({
+        path: blueprint.path,
+        title: blueprint.title,
+      })),
+    ).toEqual(
+      LEGAL_PAGES.map((page) => ({
+        path: page.path,
+        title: page.title,
       })),
     );
   });

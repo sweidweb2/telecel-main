@@ -1,18 +1,14 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
+import { BlogArticleFilters } from "@/components/marketing/blog-article-filters";
 import { BlogCard } from "@/components/marketing/blog-card";
 import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heading } from "@/components/ui/heading";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
-import { categoryToTabId, type BlogTabId } from "@/constants/blog-ui";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
 
@@ -133,16 +129,11 @@ function FeaturedPost({
   );
 }
 
+/**
+ * Insights listing shell (Server Component). Header + featured stay on the
+ * server; tab filtering is a client island.
+ */
 export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
-  const [tab, setTab] = useState<BlogTabId>("all");
-
-  const filteredArticles = useMemo(() => {
-    if (tab === "all") return articles;
-    return articles.filter(
-      (article) => categoryToTabId(article.category.name) === tab,
-    );
-  }, [articles, tab]);
-
   return (
     <main>
       <section className="py-10 sm:py-14 lg:py-16">
@@ -164,38 +155,10 @@ export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
       <Container className="flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
         {featured ? <FeaturedPost labels={labels} article={featured} /> : null}
 
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as BlogTabId)}
-          className="min-w-0 w-full"
-        >
-          <TabsList
-            variant="line"
-            className="h-auto w-full min-h-11 justify-start overflow-x-auto rounded-none p-0"
-          >
-            {labels.tabs.map((item) => (
-              <TabsTrigger
-                key={item.id}
-                value={item.id}
-                className="min-h-11 shrink-0 px-3"
-              >
-                {item.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        {filteredArticles.length === 0 ? (
-          <Text variant="muted">{labels.emptyState}</Text>
-        ) : (
-          <ul className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-            {filteredArticles.map((article) => (
-              <li key={article.id}>
-                <BlogCard article={article} />
-              </li>
-            ))}
-          </ul>
-        )}
+        <BlogArticleFilters
+          labels={{ tabs: labels.tabs, emptyState: labels.emptyState }}
+          articles={articles}
+        />
       </Container>
     </main>
   );

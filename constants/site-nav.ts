@@ -1,21 +1,27 @@
 import {
-  CASE_STUDIES_BLUEPRINT,
-  INSIGHTS_BLUEPRINT,
-  LEADERSHIP_BLUEPRINT,
-  LEGAL_BLUEPRINTS,
-  PLATFORM_BLUEPRINT,
-  SERVICE_PILLAR_BLUEPRINTS,
-  SOLUTION_BLUEPRINTS,
-  USE_CASE_BLUEPRINTS,
-  WHY_TELECEL_BLUEPRINT,
-  type PageBlueprintConfig,
-} from "@/constants/page-blueprints";
+  CASE_STUDIES_PAGE,
+  INSIGHTS_PAGE,
+  LEADERSHIP_PAGE,
+  LEGAL_PAGES,
+  PLATFORM_FLOW_LINKS,
+  PLATFORM_PAGE,
+  SERVICE_PILLAR_PAGES,
+  SOLUTION_PAGES,
+  USE_CASE_PAGES,
+  WHY_TELECEL_PAGE,
+  marketingChildPath,
+  type MarketingChildPage,
+  type MarketingPathPage,
+} from "@/constants/marketing-pages";
 import { ROUTES } from "@/constants/routes";
 
 /**
  * Public sitemap from the approved TGS text pack & developer brief.
  * Navbar, footer and sitemap.xml read from here. `live: true` includes the
  * URL in sitemap.xml (anchors are never listed).
+ *
+ * Imports only the slim `marketing-pages` catalog — never `page-blueprints` —
+ * so client chrome does not ship blueprint meta/section notes.
  */
 export type SiteNavLink = {
   label: string;
@@ -27,23 +33,24 @@ export type SiteNavSection = SiteNavLink & {
   children?: readonly SiteNavLink[];
 };
 
-function navLinksFromBlueprints(
-  blueprints: readonly PageBlueprintConfig[],
+function navLinksFromChildren(
+  hubPath: string,
+  pages: readonly MarketingChildPage[],
 ): SiteNavLink[] {
-  return blueprints.map((blueprint) => ({
-    label: blueprint.title,
-    href: blueprint.path,
+  return pages.map((page) => ({
+    label: page.title,
+    href: marketingChildPath(hubPath, page.slug),
     live: true,
   }));
 }
 
-const PLATFORM_FLOW_IDS = new Set([
-  "connect",
-  "orchestrate",
-  "deliver",
-  "monitor",
-  "optimize",
-]);
+function navLinksFromPaths(pages: readonly MarketingPathPage[]): SiteNavLink[] {
+  return pages.map((page) => ({
+    label: page.title,
+    href: page.path,
+    live: true,
+  }));
+}
 
 export const SITE_NAV: readonly SiteNavSection[] = [
   {
@@ -53,78 +60,76 @@ export const SITE_NAV: readonly SiteNavSection[] = [
   },
   {
     label: "Platform",
-    href: PLATFORM_BLUEPRINT.path,
+    href: PLATFORM_PAGE.path,
     live: true,
     children: [
       {
-        label: PLATFORM_BLUEPRINT.title,
-        href: PLATFORM_BLUEPRINT.path,
+        label: PLATFORM_PAGE.title,
+        href: PLATFORM_PAGE.path,
         live: true,
       },
-      ...PLATFORM_BLUEPRINT.sections
-        .filter((section) => PLATFORM_FLOW_IDS.has(section.id))
-        .map((section) => ({
-          label: section.title.replace(/^How we work — /, ""),
-          href: `${PLATFORM_BLUEPRINT.path}#${section.id}`,
-        })),
+      ...PLATFORM_FLOW_LINKS.map((link) => ({
+        label: link.label,
+        href: `${PLATFORM_PAGE.path}#${link.id}`,
+      })),
     ],
   },
   {
     label: "Services",
     href: ROUTES.services,
     live: true,
-    children: navLinksFromBlueprints(SERVICE_PILLAR_BLUEPRINTS),
+    children: navLinksFromChildren(ROUTES.services, SERVICE_PILLAR_PAGES),
   },
   {
     label: "Solutions",
     href: ROUTES.solutions,
     live: true,
-    children: navLinksFromBlueprints(SOLUTION_BLUEPRINTS),
+    children: navLinksFromChildren(ROUTES.solutions, SOLUTION_PAGES),
   },
   {
     label: "Use Cases",
     href: ROUTES.useCases,
     live: true,
-    children: navLinksFromBlueprints(USE_CASE_BLUEPRINTS),
+    children: navLinksFromChildren(ROUTES.useCases, USE_CASE_PAGES),
   },
   {
-    label: "Why Telecel Global",
-    href: WHY_TELECEL_BLUEPRINT.path,
+    label: WHY_TELECEL_PAGE.title,
+    href: WHY_TELECEL_PAGE.path,
     live: true,
     children: [
       {
         label: "Our Approach",
-        href: `${WHY_TELECEL_BLUEPRINT.path}#approach`,
+        href: `${WHY_TELECEL_PAGE.path}#approach`,
       },
       {
-        label: LEADERSHIP_BLUEPRINT.title,
-        href: LEADERSHIP_BLUEPRINT.path,
+        label: LEADERSHIP_PAGE.title,
+        href: LEADERSHIP_PAGE.path,
         live: true,
       },
       {
         label: "Global Reach",
-        href: `${WHY_TELECEL_BLUEPRINT.path}#global-reach`,
+        href: `${WHY_TELECEL_PAGE.path}#global-reach`,
       },
       {
         label: "Partners & Ecosystem",
-        href: `${WHY_TELECEL_BLUEPRINT.path}#partners`,
+        href: `${WHY_TELECEL_PAGE.path}#partners`,
       },
     ],
   },
   {
     label: "Insights",
-    href: INSIGHTS_BLUEPRINT.path,
+    href: INSIGHTS_PAGE.path,
     live: true,
     children: [
-      { label: "News", href: INSIGHTS_BLUEPRINT.path, live: true },
+      { label: INSIGHTS_PAGE.title, href: INSIGHTS_PAGE.path, live: true },
       {
-        label: CASE_STUDIES_BLUEPRINT.title,
-        href: CASE_STUDIES_BLUEPRINT.path,
+        label: CASE_STUDIES_PAGE.title,
+        href: CASE_STUDIES_PAGE.path,
         live: true,
       },
     ],
   },
-] as const;
+];
 
 /** Primary conversion CTAs — shown in the header and footer. */
 export const SITE_CTAS = {
@@ -139,4 +144,4 @@ export const SITE_CTAS = {
 } as const;
 
 export const SITE_LEGAL_LINKS: readonly SiteNavLink[] =
-  navLinksFromBlueprints(LEGAL_BLUEPRINTS);
+  navLinksFromPaths(LEGAL_PAGES);

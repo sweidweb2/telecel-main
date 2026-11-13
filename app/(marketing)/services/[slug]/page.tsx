@@ -8,6 +8,9 @@ import {
 } from "@/constants/page-blueprints";
 import { ROUTES } from "@/constants/routes";
 
+/** Fixed pillar set — unknown slugs 404 without an on-demand render. */
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return blueprintStaticParams(SERVICE_PILLAR_BLUEPRINTS, ROUTES.services);
 }

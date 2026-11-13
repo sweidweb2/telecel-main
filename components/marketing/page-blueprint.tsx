@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 
 import { Container } from "@/components/layout/container";
-import { Grid } from "@/components/layout/grid";
-import { Section } from "@/components/layout/section";
 import { Heading } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
@@ -82,9 +80,12 @@ export function BlueprintSection({
   children,
 }: BlueprintSectionProps) {
   return (
-    <Section id={id} tone={tone} bleed>
+    <section
+      id={id}
+      className={cn("border-b", tone === "surface" && "bg-surface")}
+    >
       <Container className="py-10 sm:py-12 lg:py-16">
-        <Grid cols={12} gap="10">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-4">
             <Text variant="notation">Section</Text>
             <Heading level="section" className="mt-3 max-w-[20ch]">
@@ -99,9 +100,9 @@ export function BlueprintSection({
           <div className="min-w-0 lg:col-span-8">
             {children ?? <BlueprintPlaceholder />}
           </div>
-        </Grid>
+        </div>
       </Container>
-    </Section>
+    </section>
   );
 }
 

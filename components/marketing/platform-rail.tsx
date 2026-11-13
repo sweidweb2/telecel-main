@@ -6,7 +6,10 @@ import { ArrowRightIcon } from "lucide-react";
 import { Heading } from "@/components/ui/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/text";
-import { PLATFORM_STAGES } from "@/constants/home-content";
+import {
+  PLATFORM_STAGES,
+  type PlatformStage,
+} from "@/constants/platform-stages";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,10 +17,19 @@ import { cn } from "@/lib/utils";
  * (arrow keys via Base UI); the selected station gets the red ring, bold
  * label and underline. Shows a sequence, not a technical dependency.
  */
-export function PlatformRail({ className }: { className?: string }) {
+type PlatformRailProps = {
+  className?: string;
+  /** Defaults to the shared Connect → Optimize sequence. */
+  stages?: readonly PlatformStage[];
+};
+
+export function PlatformRail({
+  className,
+  stages = PLATFORM_STAGES,
+}: PlatformRailProps) {
   return (
     <Tabs
-      defaultValue={PLATFORM_STAGES[0].key}
+      defaultValue={stages[0]?.key}
       className={cn("grid gap-10", className)}
     >
       {/* Below md the rail scrolls sideways instead of crushing the labels. */}
@@ -32,7 +44,7 @@ export function PlatformRail({ className }: { className?: string }) {
             aria-label="Platform stages"
             className="relative grid h-auto w-full grid-cols-5 gap-0 rounded-none bg-transparent p-0"
           >
-            {PLATFORM_STAGES.map((stage, index) => (
+            {stages.map((stage, index) => (
               <TabsTrigger
                 key={stage.key}
                 value={stage.key}
@@ -64,7 +76,7 @@ export function PlatformRail({ className }: { className?: string }) {
         </div>
       </div>
 
-      {PLATFORM_STAGES.map((stage, index) => (
+      {stages.map((stage, index) => (
         <TabsContent
           key={stage.key}
           value={stage.key}
@@ -81,7 +93,7 @@ export function PlatformRail({ className }: { className?: string }) {
           </div>
           <div className="grid content-start gap-4 md:col-span-3">
             <ol aria-label="Sequence" className="grid gap-1.5">
-              {PLATFORM_STAGES.map((step, stepIndex) => (
+              {stages.map((step, stepIndex) => (
                 <li
                   key={step.key}
                   aria-current={step.key === stage.key ? "step" : undefined}
