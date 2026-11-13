@@ -10,13 +10,17 @@
 
 /*
  * "Connected Energies" — Telecel Global design system.
- * Spec: docs/02-architecture/design-system.md (Codex art direction, 2026-10-20).
+ * Spec: docs/02-architecture/design-system.md
  *
  * Red is the recognition anchor, ~3–5% of a viewport: identity, primary
  * action, selected stage, one motif route. ~85% white/light surfaces.
  * Large dark areas: footer and login aside. CMS sidebar follows light/dark.
+ *
+ * All style tokens live here. Prefer token utilities (bg-brand, text-success,
+ * shadow-sm, duration-fast, z-overlay) over raw hex / arbitrary values.
  */
 @theme inline {
+  /* ——— Brand (60–30–10: surface/ink dominant, brand ~3–5%) ——— */
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-foreground: var(--brand-foreground);
@@ -27,6 +31,7 @@
   --color-charcoal-foreground: var(--charcoal-foreground);
   --color-charcoal-muted: var(--charcoal-muted);
 
+  /* ——— Role colors (light + .dark overrides) ——— */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -45,6 +50,19 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* ——— Semantic status ——— */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-disabled: var(--disabled);
+  --color-disabled-foreground: var(--disabled-foreground);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -61,8 +79,48 @@
 
   /* Jost = display, IBM Plex Sans = body/UI, IBM Plex Mono = notation only. */
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-jost), var(--font-plex-sans), ui-sans-serif, sans-serif;
+  --font-heading:
+    var(--font-jost), var(--font-plex-sans), ui-sans-serif, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Typography scale */
+  --text-display: 2.5rem;
+  --text-display--line-height: 2.75rem;
+  --text-section: 2rem;
+  --text-section--line-height: 2.25rem;
+  --text-title: 1.75rem;
+  --text-title--line-height: 2.25rem;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Spacing (4px base) */
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0_5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1_5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2_5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
 
   /* Controls 4px, panels max 8px. Circles only for emblem + network nodes. */
   --radius-sm: 2px;
@@ -73,7 +131,75 @@
   --radius-3xl: 8px;
   --radius-4xl: 8px;
 
-  --animate-fade-in-up: fade-in-up 0.24s ease-out both;
+  /* Border */
+  --border-width: 1px;
+  --border-width-thick: 2px;
+  --border-style: solid;
+
+  /* Focus ring */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Shadow */
+  --shadow-xs: 0 1px 2px rgb(23 23 23 / 0.04);
+  --shadow-sm: 0 1px 3px rgb(23 23 23 / 0.06), 0 1px 2px rgb(23 23 23 / 0.04);
+  --shadow-md: 0 4px 12px rgb(23 23 23 / 0.08);
+  --shadow-lg: 0 12px 32px rgb(23 23 23 / 0.12);
+  --shadow-none: 0 0 #0000;
+
+  /* Control / icon / avatar sizes */
+  --size-control-xs: 1.5rem;
+  --size-control-sm: 1.75rem;
+  --size-control-md: 2rem;
+  --size-control-lg: 2.25rem;
+  --size-control-cta: 2.75rem;
+  --size-icon-xs: 0.75rem;
+  --size-icon-sm: 0.875rem;
+  --size-icon-md: 1rem;
+  --size-icon-lg: 1.25rem;
+  --size-avatar-sm: 1.5rem;
+  --size-avatar-md: 2rem;
+  --size-avatar-lg: 2.5rem;
+  --size-avatar-xl: 3rem;
+
+  /* Container / grid */
+  --container-site: 80rem;
+  --container-narrow: 42rem;
+  --container-prose: 65ch;
+  --grid-gutter: 1.5rem;
+  --header-height: 5.5rem;
+  --sidebar-width: 15.5rem;
+  --toolbar-height: 4rem;
+
+  /* Breakpoints (reference; use Tailwind sm/md/lg/xl) */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-nav: 75rem;
+
+  /* Z-index */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-dropdown: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-max: 9999;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-panel: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --animate-fade-in-up: fade-in-up var(--duration-panel) var(--ease-standard)
+    both;
+
+  /* Opacity */
+  --opacity-disabled: 0.5;
+  --opacity-hover: 0.08;
+  --opacity-overlay: 0.5;
 }
 
 :root {
@@ -109,6 +235,18 @@
   /* Essential control boundaries need 3:1 against white. */
   --input: #767676;
   --ring: #171717;
+
+  --success: #067647;
+  --success-foreground: #ffffff;
+  --warning: #b54708;
+  --warning-foreground: #ffffff;
+  --error: #b42318;
+  --error-foreground: #ffffff;
+  --info: #175cd3;
+  --info-foreground: #ffffff;
+  --disabled: #e8e8e4;
+  --disabled-foreground: #8a8a86;
+
   --chart-1: #e51b23;
   --chart-2: #171717;
   --chart-3: #626262;
@@ -153,6 +291,17 @@
   --input: #8a8a8a;
   --ring: #f2f2f0;
 
+  --success: #47cd89;
+  --success-foreground: #052e1c;
+  --warning: #fdb022;
+  --warning-foreground: #4e1d09;
+  --error: #f97066;
+  --error-foreground: #3b0a06;
+  --info: #84caff;
+  --info-foreground: #0b2e4a;
+  --disabled: #2a2a2a;
+  --disabled-foreground: #6b6b68;
+
   --sidebar: #0f0f0f;
   --sidebar-foreground: #f2f2f0;
   --sidebar-primary: var(--brand);
@@ -180,8 +329,8 @@
     @apply font-heading;
   }
   :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--ring);
+    outline-offset: var(--focus-ring-offset);
   }
 }
 
@@ -221,7 +370,7 @@
 
 @utility container-site {
   width: 100%;
-  max-width: 80rem;
+  max-width: var(--container-site);
   margin-inline: auto;
   padding-inline: 1.25rem;
   @media (width >= 48rem) {
