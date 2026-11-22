@@ -1,14 +1,11 @@
 import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
-import { requireBlueprint } from "@/constants/page-blueprints";
-import { ROUTES } from "@/constants/routes";
+  MarketingPageView,
+  marketingPageMetadata,
+} from "@/components/marketing/page-blueprint";
+import { COOKIES_BLUEPRINT } from "@/constants/page-blueprints";
 
-const config = requireBlueprint(ROUTES.cookies);
-
-export const metadata = blueprintMetadata(config);
+export const metadata = marketingPageMetadata(COOKIES_BLUEPRINT);
 
 export default function CookiesPage() {
-  return <BlueprintPage config={config} />;
+  return <MarketingPageView config={COOKIES_BLUEPRINT} />;
 }

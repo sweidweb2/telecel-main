@@ -2,30 +2,42 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
+  MarketingPageView,
+  marketingPageMetadata,
+} from "@/components/marketing/page-blueprint";
+import { marketingChildPath } from "@/constants/marketing-pages";
 import {
-  blueprintPathForSlug,
+  blueprintStaticParams,
   getBlueprintByPath,
 } from "@/constants/page-blueprints";
+import type { PageBlueprintConfig } from "@/types/marketing-blueprint";
 
-/** Metadata for a hub child blueprint (`/services/[slug]`, etc.). */
-export function blueprintSlugMetadata(hubPath: string, slug: string): Metadata {
-  const config = getBlueprintByPath(blueprintPathForSlug(hubPath, slug));
-  if (!config) return {};
-  return blueprintMetadata(config);
-}
+type HubParams = { params: Promise<{ slug: string }> };
 
-/** Resolve a hub child blueprint or 404. */
-export function BlueprintSlugPage({
-  hubPath,
-  slug,
-}: {
-  hubPath: string;
-  slug: string;
-}) {
-  const config = getBlueprintByPath(blueprintPathForSlug(hubPath, slug));
-  if (!config) notFound();
-  return <BlueprintPage config={config} />;
+/**
+ * Shared exports for hub child routes (`/services/[slug]`, etc.).
+ * Keeps the three nearly identical page files as thin wrappers.
+ */
+export function createBlueprintHubPage(
+  hubPath: string,
+  blueprints: readonly PageBlueprintConfig[],
+) {
+  return {
+    dynamicParams: false as const,
+    generateStaticParams() {
+      return blueprintStaticParams(blueprints, hubPath);
+    },
+    async generateMetadata({ params }: HubParams): Promise<Metadata> {
+      const { slug } = await params;
+      const config = getBlueprintByPath(marketingChildPath(hubPath, slug));
+      if (!config) return {};
+      return marketingPageMetadata(config);
+    },
+    async Page({ params }: HubParams) {
+      const { slug } = await params;
+      const config = getBlueprintByPath(marketingChildPath(hubPath, slug));
+      if (!config) notFound();
+      return <MarketingPageView config={config} />;
+    },
+  };
 }

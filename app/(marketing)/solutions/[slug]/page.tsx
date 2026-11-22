@@ -1,30 +1,10 @@
-import {
-  BlueprintSlugPage,
-  blueprintSlugMetadata,
-} from "@/components/marketing/blueprint-slug-route";
-import {
-  SOLUTION_BLUEPRINTS,
-  blueprintStaticParams,
-} from "@/constants/page-blueprints";
+import { createBlueprintHubPage } from "@/components/marketing/blueprint-slug-route";
+import { SOLUTION_BLUEPRINTS } from "@/constants/page-blueprints";
 import { ROUTES } from "@/constants/routes";
 
-/** Fixed audience set — unknown slugs 404 without an on-demand render. */
-export const dynamicParams = false;
+const hub = createBlueprintHubPage(ROUTES.solutions, SOLUTION_BLUEPRINTS);
 
-export function generateStaticParams() {
-  return blueprintStaticParams(SOLUTION_BLUEPRINTS, ROUTES.solutions);
-}
-
-export async function generateMetadata({
-  params,
-}: PageProps<"/solutions/[slug]">) {
-  const { slug } = await params;
-  return blueprintSlugMetadata(ROUTES.solutions, slug);
-}
-
-export default async function SolutionPage({
-  params,
-}: PageProps<"/solutions/[slug]">) {
-  const { slug } = await params;
-  return <BlueprintSlugPage hubPath={ROUTES.solutions} slug={slug} />;
-}
+export const dynamicParams = hub.dynamicParams;
+export const generateStaticParams = hub.generateStaticParams;
+export const generateMetadata = hub.generateMetadata;
+export default hub.Page;

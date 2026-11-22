@@ -86,7 +86,12 @@ export function SiteMobileNav({
                           href={child.href}
                           prefetch={false}
                           onClick={() => setOpen(false)}
-                          className="flex min-h-11 items-center text-sm text-muted-foreground hover:text-ink"
+                          aria-current={
+                            isNavActive(pathname, child.href)
+                              ? "page"
+                              : undefined
+                          }
+                          className="flex min-h-11 items-center text-sm text-muted-foreground hover:text-ink aria-[current=page]:font-medium aria-[current=page]:text-brand"
                         >
                           {child.label}
                         </Link>

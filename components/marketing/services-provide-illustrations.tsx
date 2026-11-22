@@ -137,7 +137,7 @@ function WholesaleIllustration({ className }: IllustrationProps) {
       </div>
 
       <Pill className="services-provide-float absolute right-3 top-3">
-        180+ Carriers
+        Global Carriers
       </Pill>
     </Stage>
   );

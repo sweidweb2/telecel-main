@@ -47,7 +47,7 @@ export default async function ContactPage({
             <SignalMotif className="mt-10 hidden max-w-xs text-brand/40 lg:block" />
           </div>
           <div className="lg:col-span-7">
-            <ContactForm defaultIntent={intent} />
+            <ContactForm key={intent} defaultIntent={intent} />
           </div>
         </Container>
       </section>

@@ -1,11 +1,11 @@
 import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
+  MarketingPageView,
+  marketingPageMetadata,
+} from "@/components/marketing/page-blueprint";
 import { WHY_TELECEL_BLUEPRINT } from "@/constants/page-blueprints";
 
-export const metadata = blueprintMetadata(WHY_TELECEL_BLUEPRINT);
+export const metadata = marketingPageMetadata(WHY_TELECEL_BLUEPRINT);
 
 export default function Page() {
-  return <BlueprintPage config={WHY_TELECEL_BLUEPRINT} />;
+  return <MarketingPageView config={WHY_TELECEL_BLUEPRINT} />;
 }

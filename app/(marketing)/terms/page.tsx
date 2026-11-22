@@ -1,14 +1,11 @@
 import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
-import { requireBlueprint } from "@/constants/page-blueprints";
-import { ROUTES } from "@/constants/routes";
+  MarketingPageView,
+  marketingPageMetadata,
+} from "@/components/marketing/page-blueprint";
+import { TERMS_BLUEPRINT } from "@/constants/page-blueprints";
 
-const config = requireBlueprint(ROUTES.terms);
-
-export const metadata = blueprintMetadata(config);
+export const metadata = marketingPageMetadata(TERMS_BLUEPRINT);
 
 export default function TermsPage() {
-  return <BlueprintPage config={config} />;
+  return <MarketingPageView config={TERMS_BLUEPRINT} />;
 }

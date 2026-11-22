@@ -5,47 +5,68 @@ import { Section } from "@/components/layout/section";
 import { Heading } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
+import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 import { cn } from "@/lib/utils";
-import type { BlueprintSectionConfig } from "@/types/marketing-blueprint";
+import type { PageBlueprintConfig } from "@/types/marketing-blueprint";
 
-export type { BlueprintSectionConfig };
+export type { BlueprintSectionConfig } from "@/types/marketing-blueprint";
 
-type PageBlueprintProps = {
+/** Metadata helper for marketing page configs. */
+export function marketingPageMetadata(config: PageBlueprintConfig) {
+  return buildMarketingMetadata({
+    path: config.path,
+    title: config.metaTitle,
+    description: config.metaDescription,
+  });
+}
+
+type MarketingPageHeaderProps = {
   eyebrow?: string;
   title: string;
   description?: string;
-  sections: readonly BlueprintSectionConfig[];
 };
 
-/**
- * Public-page wireframe: page title + named sections with skeleton blocks.
- * Replace section bodies with real modules during design/build.
- */
-export function PageBlueprint({
+/** Shared public-page title band. */
+export function MarketingPageHeader({
   eyebrow,
   title,
   description,
-  sections,
-}: PageBlueprintProps) {
+}: MarketingPageHeaderProps) {
+  return (
+    <header className="border-b bg-surface">
+      <Container className="py-12 sm:py-14 lg:py-20">
+        {eyebrow ? <Text variant="brand">{eyebrow}</Text> : null}
+        <Heading
+          level="display"
+          as="h1"
+          className={cn("max-w-[22ch]", eyebrow && "mt-4")}
+        >
+          {title}
+        </Heading>
+        {description ? (
+          <Text variant="lead" className="mt-5 max-w-[56ch]">
+            {description}
+          </Text>
+        ) : null}
+      </Container>
+    </header>
+  );
+}
+
+/**
+ * Renders a wireframe marketing page from its config.
+ * Live hubs (services, platform, home) compose designed sections in their routes.
+ */
+export function MarketingPageView({ config }: { config: PageBlueprintConfig }) {
+  const sections = config.sections ?? [];
+
   return (
     <main>
-      <header className="border-b bg-surface">
-        <Container className="py-12 sm:py-14 lg:py-20">
-          {eyebrow ? <Text variant="brand">{eyebrow}</Text> : null}
-          <Heading
-            level="display"
-            as="h1"
-            className={cn("max-w-[22ch]", eyebrow && "mt-4")}
-          >
-            {title}
-          </Heading>
-          {description ? (
-            <Text variant="lead" className="mt-5 max-w-[56ch]">
-              {description}
-            </Text>
-          ) : null}
-        </Container>
-      </header>
+      <MarketingPageHeader
+        eyebrow={config.eyebrow}
+        title={config.title}
+        description={config.description}
+      />
 
       {sections.map((section, index) => (
         <BlueprintSection

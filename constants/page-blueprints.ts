@@ -1,6 +1,5 @@
 import {
   CASE_STUDIES_PAGE,
-  INSIGHTS_PAGE,
   LEADERSHIP_PAGE,
   LEGAL_PAGES,
   PLATFORM_PAGE,
@@ -11,7 +10,6 @@ import {
   marketingChildPath,
 } from "@/constants/marketing-pages";
 import { HOME_HERO } from "@/constants/home-content";
-import { PLATFORM_STAGES } from "@/constants/platform-stages";
 import { ROUTES } from "@/constants/routes";
 import { SERVICES_HERO } from "@/constants/services-hero";
 import type {
@@ -22,8 +20,8 @@ import type {
 export type { BlueprintSectionConfig, PageBlueprintConfig };
 
 /**
- * Homepage modules from the approved TGS text pack (order locked).
- * Live `/` uses `HOME_HERO` + real modules; this registry stays aligned.
+ * Homepage wireframe — modules land when the approved home composition ships.
+ * Copy stays aligned with `HOME_HERO`.
  */
 export const HOME_BLUEPRINT: PageBlueprintConfig = {
   path: "/",
@@ -81,6 +79,7 @@ export const HOME_BLUEPRINT: PageBlueprintConfig = {
   ],
 };
 
+/** Meta + header copy for `/platform` — body is composed in the route. */
 export const PLATFORM_BLUEPRINT: PageBlueprintConfig = {
   path: PLATFORM_PAGE.path,
   eyebrow: "Platform",
@@ -89,26 +88,9 @@ export const PLATFORM_BLUEPRINT: PageBlueprintConfig = {
   metaTitle: "One Global B2B Platform | Telecel Global",
   metaDescription:
     "Bring international connectivity, digital infrastructure, customer engagement and value-added services together through one managed relationship.",
-  sections: [
-    {
-      id: "overview",
-      title: "Platform overview",
-      note: "Integrated service model across the five layers.",
-    },
-    {
-      id: "layers",
-      title: "Five platform layers",
-      note: "Global Wholesale Connectivity, Enterprise Messaging, Cloud & Hosting, IoT Connectivity, Cybersecurity.",
-    },
-    ...PLATFORM_STAGES.map((stage) => ({
-      id: stage.key,
-      title: `How we work — ${stage.title}`,
-      note: stage.blueprintNote,
-    })),
-  ],
 };
 
-/** Aligns with `SERVICES_HERO` / `ServicesHero` on the live services hub. */
+/** Meta for `/services` — body is composed in the route. */
 export const SERVICES_HUB_BLUEPRINT: PageBlueprintConfig = {
   path: ROUTES.services,
   eyebrow: "Services",
@@ -116,18 +98,6 @@ export const SERVICES_HUB_BLUEPRINT: PageBlueprintConfig = {
   description: SERVICES_HERO.subtext,
   metaTitle: "Services | Telecel Global",
   metaDescription: SERVICES_HERO.subtext,
-  sections: [
-    {
-      id: "pillars",
-      title: "Service pillar index",
-      note: "What We Provide — 3×2 illustrated cards linking into pillar landings.",
-    },
-    {
-      id: "cta",
-      title: "Talk to Sales",
-      note: "Route serious buyers into the inquiry flow.",
-    },
-  ],
 };
 
 const SERVICE_PILLAR_SECTIONS: readonly BlueprintSectionConfig[] = [
@@ -393,32 +363,6 @@ export const LEADERSHIP_BLUEPRINT: PageBlueprintConfig = {
   ],
 };
 
-export const INSIGHTS_BLUEPRINT: PageBlueprintConfig = {
-  path: INSIGHTS_PAGE.path,
-  eyebrow: "Insights",
-  title: INSIGHTS_PAGE.title,
-  description: "News, announcements and perspectives from Telecel Global.",
-  metaTitle: "Insights | Telecel Global",
-  metaDescription: "News, announcements and perspectives from Telecel Global.",
-  sections: [
-    {
-      id: "featured",
-      title: "Featured",
-      note: "Optional featured story slot.",
-    },
-    {
-      id: "news",
-      title: "News list",
-      note: "Published articles from the CMS.",
-    },
-    {
-      id: "case-studies",
-      title: CASE_STUDIES_PAGE.title,
-      note: "Hidden or empty until a case study is approved.",
-    },
-  ],
-};
-
 export const CASE_STUDIES_BLUEPRINT: PageBlueprintConfig = {
   path: CASE_STUDIES_PAGE.path,
   eyebrow: "Insights",
@@ -432,34 +376,6 @@ export const CASE_STUDIES_BLUEPRINT: PageBlueprintConfig = {
       id: "list",
       title: "Case study list",
       note: "Do not invent cases. Keep empty until approved content exists.",
-    },
-  ],
-};
-
-export const CONTACT_BLUEPRINT: PageBlueprintConfig = {
-  path: ROUTES.contact,
-  eyebrow: "Contact",
-  title: "Start with the outcome you need",
-  description:
-    "Tell us where you need to connect, grow, modernize or launch. We will route your request to the right Telecel Global team.",
-  metaTitle: "Contact | Telecel Global",
-  metaDescription:
-    "Talk to Telecel Global about sales or request a demo. We route every inquiry to the right specialist team.",
-  sections: [
-    {
-      id: "hero",
-      title: "Hero",
-      note: "Talk to Sales and Request a Demo CTAs.",
-    },
-    {
-      id: "form",
-      title: "Inquiry form",
-      note: "Name, company, role, email, country, area of interest, business need, contact method.",
-    },
-    {
-      id: "confirmation",
-      title: "Success state",
-      note: "Confirmation copy after secure, spam-protected submission.",
     },
   ],
 };
@@ -479,19 +395,40 @@ const LEGAL_COPY = {
   },
 } as const;
 
-export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = LEGAL_PAGES.map(
-  (page) => ({
+const LEGAL_SECTION: readonly BlueprintSectionConfig[] = [
+  { id: "content", title: "Policy content", note: "Legal copy pending." },
+];
+
+function legalBlueprint(
+  path: (typeof LEGAL_PAGES)[number]["path"],
+): PageBlueprintConfig {
+  const page = LEGAL_PAGES.find((entry) => entry.path === path);
+  if (!page) {
+    throw new Error(`Missing legal page for path: ${path}`);
+  }
+  return {
     path: page.path,
     eyebrow: "Legal",
     title: page.title,
     ...LEGAL_COPY[page.path],
-    sections: [
-      { id: "content", title: "Policy content", note: "Legal copy pending." },
-    ],
-  }),
-);
+    sections: LEGAL_SECTION,
+  };
+}
 
-/** Every public blueprint page — single registry for lookup and sitemap helpers. */
+export const PRIVACY_BLUEPRINT = legalBlueprint(ROUTES.privacy);
+export const COOKIES_BLUEPRINT = legalBlueprint(ROUTES.cookies);
+export const TERMS_BLUEPRINT = legalBlueprint(ROUTES.terms);
+
+export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = [
+  PRIVACY_BLUEPRINT,
+  COOKIES_BLUEPRINT,
+  TERMS_BLUEPRINT,
+];
+
+/**
+ * Registry for wireframe pages and hub meta.
+ * Contact and insights stay out — they own custom page implementations.
+ */
 export const ALL_PAGE_BLUEPRINTS: readonly PageBlueprintConfig[] = [
   HOME_BLUEPRINT,
   PLATFORM_BLUEPRINT,
@@ -503,9 +440,7 @@ export const ALL_PAGE_BLUEPRINTS: readonly PageBlueprintConfig[] = [
   ...USE_CASE_BLUEPRINTS,
   WHY_TELECEL_BLUEPRINT,
   LEADERSHIP_BLUEPRINT,
-  INSIGHTS_BLUEPRINT,
   CASE_STUDIES_BLUEPRINT,
-  CONTACT_BLUEPRINT,
   ...LEGAL_BLUEPRINTS,
 ];
 
@@ -518,20 +453,6 @@ export function getBlueprintByPath(
   path: string,
 ): PageBlueprintConfig | undefined {
   return BLUEPRINT_BY_PATH.get(path);
-}
-
-/** Same as `getBlueprintByPath`, but throws when the registry is missing an entry. */
-export function requireBlueprint(path: string): PageBlueprintConfig {
-  const blueprint = getBlueprintByPath(path);
-  if (!blueprint) {
-    throw new Error(`Missing page blueprint for path: ${path}`);
-  }
-  return blueprint;
-}
-
-/** Last path segment under a hub prefix (`/services` + `cybersecurity`). */
-export function blueprintPathForSlug(hubPath: string, slug: string): string {
-  return marketingChildPath(hubPath, slug);
 }
 
 /** Slug segment from a blueprint path under a hub (`/services/foo` → `foo`). */

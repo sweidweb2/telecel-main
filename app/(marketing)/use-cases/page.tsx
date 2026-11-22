@@ -1,11 +1,11 @@
 import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
+  MarketingPageView,
+  marketingPageMetadata,
+} from "@/components/marketing/page-blueprint";
 import { USE_CASES_HUB_BLUEPRINT } from "@/constants/page-blueprints";
 
-export const metadata = blueprintMetadata(USE_CASES_HUB_BLUEPRINT);
+export const metadata = marketingPageMetadata(USE_CASES_HUB_BLUEPRINT);
 
 export default function Page() {
-  return <BlueprintPage config={USE_CASES_HUB_BLUEPRINT} />;
+  return <MarketingPageView config={USE_CASES_HUB_BLUEPRINT} />;
 }

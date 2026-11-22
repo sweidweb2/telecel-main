@@ -63,7 +63,11 @@ export function SiteFooter() {
                     as="h2"
                     className="font-sans text-sm font-semibold text-white"
                   >
-                    <Link href={section.href} className="hover:underline">
+                    <Link
+                      href={section.href}
+                      prefetch={false}
+                      className="hover:underline"
+                    >
                       {section.label}
                     </Link>
                   </Heading>

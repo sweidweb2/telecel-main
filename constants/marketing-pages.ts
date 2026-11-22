@@ -83,7 +83,7 @@ export const LEADERSHIP_PAGE = {
 
 export const INSIGHTS_PAGE = {
   path: ROUTES.insights,
-  title: "News",
+  title: "Insights",
 } as const satisfies MarketingPathPage;
 
 export const CASE_STUDIES_PAGE = {
