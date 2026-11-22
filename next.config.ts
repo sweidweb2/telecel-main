@@ -10,7 +10,7 @@ import type { NextConfig } from "next";
  * the UI falls back to a neutral text lockup.
  */
 const hasBrandLogo = existsSync(
-  path.join(process.cwd(), "public", "brand", "telecel-wordmark.png")
+  path.join(process.cwd(), "public", "brand", "telecel-wordmark.png"),
 );
 
 const nextConfig: NextConfig = {
@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_HAS_BRAND_LOGO: hasBrandLogo ? "true" : "false",
   },
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
