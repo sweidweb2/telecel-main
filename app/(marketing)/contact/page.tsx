@@ -54,7 +54,11 @@ export default async function ContactPage({
             <SignalMotif className="mt-10 hidden max-w-xs text-brand/40 lg:block" />
           </div>
           <div className="rounded-xl border bg-background p-5 shadow-sm sm:p-8 lg:col-span-7">
-            <ContactForm defaultIntent={intent} defaultArea={area} />
+            <ContactForm
+              key={`${intent}-${area ?? ""}`}
+              defaultIntent={intent}
+              defaultArea={area}
+            />
           </div>
         </Container>
       </section>

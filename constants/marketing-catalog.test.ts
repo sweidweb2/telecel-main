@@ -6,6 +6,7 @@ import {
   PLATFORM_FLOW_LINKS,
   SERVICE_PILLAR_PAGES,
   SOLUTION_PAGES,
+  USE_CASE_PAGES,
   marketingChildPath,
 } from "@/constants/marketing-pages";
 import {
@@ -81,15 +82,24 @@ describe("marketing catalog sync", () => {
         .filter((child) => child.live)
         .map((child) => child.href),
     ]);
+    const children = (hub: string, pages: readonly { slug: string }[]) =>
+      pages.map((page) => marketingChildPath(hub, page.slug));
+    // Built pages are live; leadership/case studies stay out until content ships.
     expect(liveHrefs).toEqual([
       ROUTES.home,
       ROUTES.platform,
       ROUTES.platform,
       ROUTES.services,
+      ...children(ROUTES.services, SERVICE_PILLAR_PAGES),
+      ROUTES.solutions,
+      ...children(ROUTES.solutions, SOLUTION_PAGES),
+      ROUTES.useCases,
+      ...children(ROUTES.useCases, USE_CASE_PAGES),
+      ROUTES.whyTelecelGlobal,
       ROUTES.insights,
       ROUTES.insights,
     ]);
     expect(liveHrefs).not.toContain(ROUTES.caseStudies);
-    expect(liveHrefs).not.toContain(ROUTES.solutions);
+    expect(liveHrefs).not.toContain(ROUTES.leadership);
   });
 });
