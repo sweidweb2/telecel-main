@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRightIcon, MenuIcon } from "lucide-react";
 
+import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import {
@@ -53,7 +54,15 @@ export function SiteMobileNav({
           Menu
         </SheetTrigger>
         <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <SheetHeader className="h-[72px] justify-center border-b px-5">
+          <SheetHeader className="h-[72px] flex-row items-center justify-between gap-3 border-b px-5 pr-14">
+            <Link
+              href={ROUTES.home}
+              aria-label="Telecel Global Services home"
+              onClick={() => setOpen(false)}
+              className="inline-flex shrink-0 items-center"
+            >
+              <Logo size="sm" />
+            </Link>
             <SheetTitle className="type-notation text-muted-foreground">
               Menu
             </SheetTitle>

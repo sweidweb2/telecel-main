@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { recordAppError } from "@/actions/observability";
+import { recordActivity, recordAppError } from "@/actions/observability";
 import { loginPath } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -19,15 +19,36 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const userId = data.user?.id ?? null;
       if (!(await allowSessionDuringMaintenance())) {
+        await recordActivity({
+          actorId: userId,
+          action: "sign_in_blocked",
+          entityType: "auth",
+          entityId: userId,
+          summary: { method: "oauth", reason: "maintenance" },
+        });
         return NextResponse.redirect(
           new URL(loginPath({ reason: "no-access" }), request.url),
         );
       }
+      await recordActivity({
+        actorId: userId,
+        action: "sign_in",
+        entityType: "auth",
+        entityId: userId,
+        summary: { method: "oauth" },
+      });
       return NextResponse.redirect(new URL(next, request.url));
     }
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_failed",
+      entityType: "auth",
+      summary: { method: "oauth", code: error.code ?? null },
+    });
     console.error(
       "[auth] OAuth code exchange failed",
       error.code ?? error.message,
@@ -47,6 +68,15 @@ export async function GET(request: NextRequest) {
       "[auth] OAuth provider error",
       searchParams.get("error_code"),
     );
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_failed",
+      entityType: "auth",
+      summary: {
+        method: "oauth",
+        code: searchParams.get("error_code") ?? searchParams.get("error"),
+      },
+    });
     await recordAppError({
       severity: "error",
       source: "auth.callback.provider",

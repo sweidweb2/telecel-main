@@ -198,3 +198,13 @@ export async function unexpectedActionError(input: {
   }
   return { status: "error", message: input.userMessage };
 }
+
+/**
+ * Awaited variant of `recordAppError` for contexts without a request scope
+ * for `after()` (e.g. `instrumentation.ts` `onRequestError`). Never throws.
+ */
+export async function recordAppErrorNow(
+  input: RecordAppErrorInput,
+): Promise<void> {
+  await persistAppError(input);
+}

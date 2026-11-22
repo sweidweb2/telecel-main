@@ -1,7 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { recordAppError } from "@/actions/observability";
+import { recordActivity, recordAppError } from "@/actions/observability";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -33,19 +33,40 @@ export async function GET(request: NextRequest) {
     const next = safeRedirectPath(searchParams.get("next"), fallback);
 
     const supabase = await createClient();
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type,
       token_hash: tokenHash,
     });
     // Redirect to a clean URL so the one-time token never lingers in history.
     if (!error) {
+      const userId = data.user?.id ?? null;
       if (!(await allowSessionDuringMaintenance())) {
+        await recordActivity({
+          actorId: userId,
+          action: "sign_in_blocked",
+          entityType: "auth",
+          entityId: userId,
+          summary: { method: "email_link", type, reason: "maintenance" },
+        });
         return NextResponse.redirect(
           new URL(loginPath({ reason: "no-access" }), request.url),
         );
       }
+      await recordActivity({
+        actorId: userId,
+        action: "email_link_verified",
+        entityType: "auth",
+        entityId: userId,
+        summary: { method: "email_link", type },
+      });
       return NextResponse.redirect(new URL(next, request.url));
     }
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_failed",
+      entityType: "auth",
+      summary: { method: "email_link", type, code: error.code ?? null },
+    });
     console.error("[auth] verifyOtp failed", error.code ?? error.message);
     await recordAppError({
       severity: "error",

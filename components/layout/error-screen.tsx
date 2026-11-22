@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
+import Link from "next/link";
+
+import { Logo } from "@/components/brand/logo";
 import { SignalMotif } from "@/components/brand/signal-motif";
 import { Container } from "@/components/layout/container";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 type ErrorScreenProps = {
@@ -32,6 +36,13 @@ export function ErrorScreen({
     >
       <SignalMotif rows={8} className="hidden h-64 w-auto md:block" />
       <div className="max-w-xl">
+        <Link
+          href={ROUTES.home}
+          aria-label="Telecel Global Services home"
+          className="mb-10 inline-flex"
+        >
+          <Logo size="sm" />
+        </Link>
         <p
           className={cn(
             "flex items-center gap-2 type-notation",

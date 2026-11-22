@@ -6,6 +6,7 @@ import {
   getMaintenanceModeForProxy,
   isAdminClaim,
   isMaintenanceActive,
+  MAINTENANCE_REWRITE_HEADER,
 } from "@/lib/maintenance";
 
 /**
@@ -15,9 +16,10 @@ import {
  * the 24h absolute session lifetime are enforced server-side (data/auth.ts)
  * and in RLS.
  *
- * Maintenance policy (full mode): rewrite public traffic to /maintenance;
- * keep auth surfaces + sign-out reachable; signed-in staff keep /dashboard/*
- * so they can turn maintenance off. Admin exceptions for *new* sessions are
+ * Maintenance policy (full mode): rewrite public traffic to /maintenance
+ * (503 + Retry-After); keep auth surfaces + sign-out reachable; anonymous
+ * /dashboard visitors go to /login; only JWT-admins keep /dashboard/* so they
+ * can turn maintenance off (DB role re-checked in requireStaff). Admin exceptions for *new* sessions are
  * enforced in actions/auth and auth route handlers (DB role), not via
  * JWT-admin public browse.
  */
@@ -66,8 +68,29 @@ function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
   return redirect;
 }
 
-function rewriteWithCookies(url: URL, from: NextResponse): NextResponse {
-  const rewrite = NextResponse.rewrite(url);
+/** Seconds clients should wait before retrying during maintenance. */
+const MAINTENANCE_RETRY_AFTER_SECONDS = 300;
+
+function maintenanceRewrite(request: NextRequest): NextResponse {
+  // Marks proxy-originated rewrites so /maintenance does not bounce home
+  // while the proxy and page caches briefly disagree.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(MAINTENANCE_REWRITE_HEADER, "1");
+  return NextResponse.rewrite(new URL(ROUTES.maintenance, request.url), {
+    request: { headers: requestHeaders },
+    status: 503,
+    headers: {
+      "Retry-After": String(MAINTENANCE_RETRY_AFTER_SECONDS),
+      "Cache-Control": "private, no-cache, no-store, must-revalidate",
+    },
+  });
+}
+
+function maintenanceRewriteWithCookies(
+  request: NextRequest,
+  from: NextResponse,
+): NextResponse {
+  const rewrite = maintenanceRewrite(request);
   for (const cookie of from.cookies.getAll()) {
     rewrite.cookies.set(cookie);
   }
@@ -80,6 +103,10 @@ export async function proxy(request: NextRequest) {
   if (!url || !anonKey) return NextResponse.next({ request });
 
   const { pathname, search } = request.nextUrl;
+
+  // Scheduled jobs (e.g. backups) must run during maintenance; the route
+  // enforces its own CRON_SECRET bearer auth and needs no session refresh.
+  if (pathname.startsWith("/api/cron/")) return NextResponse.next({ request });
 
   if (pathname === LEGACY_FORGOT_PASSWORD) {
     const target = new URL(ROUTES.contact, request.url);
@@ -95,11 +122,13 @@ export async function proxy(request: NextRequest) {
     const maintenanceOn = isMaintenanceActive(await maintenancePromise);
 
     if (maintenanceOn) {
+      // Anonymous /dashboard falls through to the login redirect below so
+      // admins can still authenticate.
       const allow =
-        MAINTENANCE_PASSTHROUGH.has(pathname) || isAuthSurfacePath(pathname);
-      if (!allow) {
-        return NextResponse.rewrite(new URL(ROUTES.maintenance, request.url));
-      }
+        MAINTENANCE_PASSTHROUGH.has(pathname) ||
+        isAuthSurfacePath(pathname) ||
+        isProtectedPath(pathname);
+      if (!allow) return maintenanceRewrite(request);
     }
 
     if (isProtectedPath(pathname)) {
@@ -145,13 +174,9 @@ export async function proxy(request: NextRequest) {
     const allow =
       MAINTENANCE_PASSTHROUGH.has(pathname) ||
       isAuthSurfacePath(pathname) ||
-      (signedIn && isProtectedPath(pathname));
-    if (!allow) {
-      return rewriteWithCookies(
-        new URL(ROUTES.maintenance, request.url),
-        response,
-      );
-    }
+      // Anonymous → login redirect below; signed-in → admins only.
+      (isProtectedPath(pathname) && (!signedIn || isAdminClaim(claims)));
+    if (!allow) return maintenanceRewriteWithCookies(request, response);
   }
 
   if (isProtectedPath(pathname) && !signedIn) {

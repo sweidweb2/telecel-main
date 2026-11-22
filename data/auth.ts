@@ -67,8 +67,32 @@ export async function requireStaff(nextPath?: string): Promise<StaffSession> {
   if (!context) redirect(loginPath({ next: nextPath }));
   if (!context.sessionFresh) endSession("session-expired");
   if (!context.isActive || !context.role) endSession("no-access");
+  // Proxy gate is JWT-optimistic; the DB role decides during maintenance.
+  if (context.role !== "admin" && (await isMaintenanceOn())) {
+    redirect(ROUTES.maintenance);
+  }
 
   return { ...context, role: context.role, supabase: await createClient() };
+}
+
+async function isMaintenanceOn(): Promise<boolean> {
+  return isMaintenanceActive(await getMaintenanceMode());
+}
+
+export const MAINTENANCE_ACTION_BLOCKED =
+  "The site is under maintenance. Try again later.";
+
+/**
+ * Server-side maintenance gate for actions (action IDs are global, so the
+ * proxy cannot be relied on). True when the caller may proceed: maintenance
+ * off, or the caller is an active admin.
+ */
+export async function isActionAllowedDuringMaintenance(): Promise<boolean> {
+  if (!(await isMaintenanceOn())) return true;
+  const context = await getSessionContext();
+  return Boolean(
+    context?.role === "admin" && context.isActive && context.sessionFresh,
+  );
 }
 
 /**
@@ -116,6 +140,9 @@ export async function authorizeAction(
       status: "error",
       message: "Only administrators can do this.",
     };
+  }
+  if (context.role !== "admin" && (await isMaintenanceOn())) {
+    return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
   }
 
   return {

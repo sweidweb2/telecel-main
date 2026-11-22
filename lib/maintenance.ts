@@ -13,6 +13,35 @@ type CacheEntry = {
 
 let cache: CacheEntry | null = null;
 
+/** Request header the proxy sets on its /maintenance rewrites. */
+export const MAINTENANCE_REWRITE_HEADER = "x-maintenance-rewrite";
+
+const FETCH_FAILURE_LOG_INTERVAL_MS = 5 * 60 * 1000;
+let lastFetchFailureLogAt = 0;
+
+/**
+ * Records a maintenance-read failure to app_errors at most once per interval
+ * (fail-open still applies). Lazy import keeps this module free of
+ * server-only deps for the proxy/tests; never throws.
+ */
+export function reportMaintenanceFetchFailure(
+  reason: string,
+  now = Date.now(),
+): boolean {
+  if (now - lastFetchFailureLogAt < FETCH_FAILURE_LOG_INTERVAL_MS) return false;
+  lastFetchFailureLogAt = now;
+  void import("@/actions/observability")
+    .then(({ recordAppError }) =>
+      recordAppError({
+        severity: "warning",
+        source: "lib.maintenance.fetch",
+        message: `Maintenance mode read failed (failing open): ${reason}`,
+      }),
+    )
+    .catch(() => undefined);
+  return true;
+}
+
 /**
  * Break-glass contract (single ops valve):
  * - `MAINTENANCE_FORCE_OFF` ignores the DB and treats maintenance as off.
@@ -70,11 +99,17 @@ export async function fetchMaintenanceModeFromRest(): Promise<MaintenanceMode> {
       cache: "no-store",
     });
 
-    if (!response.ok) return DEFAULT_MAINTENANCE_MODE;
+    if (!response.ok) {
+      reportMaintenanceFetchFailure(`HTTP ${response.status}`);
+      return DEFAULT_MAINTENANCE_MODE;
+    }
 
     const rows = (await response.json()) as Array<{ value: unknown }>;
     return parseMaintenanceMode(rows[0]?.value);
-  } catch {
+  } catch (error) {
+    reportMaintenanceFetchFailure(
+      error instanceof Error ? error.message : "unknown error",
+    );
     return DEFAULT_MAINTENANCE_MODE;
   }
 }
@@ -98,4 +133,5 @@ export async function getMaintenanceModeForProxy(): Promise<MaintenanceMode> {
 /** Clears the proxy TTL cache after settings writes (and in tests). */
 export function clearMaintenanceProxyCache(): void {
   cache = null;
+  lastFetchFailureLogAt = 0;
 }
