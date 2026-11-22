@@ -5,13 +5,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = ["Overview", "Traffic", "Messaging", "IoT", "Security"] as const;
 
-const TRAFFIC_BARS = [
-  { region: "EMEA", voice: 72, data: 88 },
-  { region: "APAC", voice: 54, data: 76 },
-  { region: "AMER", voice: 61, data: 69 },
-  { region: "ME", voice: 80, data: 92 },
-  { region: "AF", voice: 48, data: 64 },
-] as const;
+const TRAFFIC_REGIONS = ["EMEA", "APAC", "AMER", "ME", "AF"] as const;
 
 const HUBS = [
   { id: "dubai", label: "Dubai", x: 58, y: 42 },
@@ -27,14 +21,14 @@ const ARCS: ReadonlyArray<readonly [string, string]> = [
   ["london", "lagos"],
 ];
 
-const SHIELD_SEGMENTS = [
-  { label: "Firewall", value: 98 },
-  { label: "A2P Filter", value: 96 },
-  { label: "Threat Intel", value: 99 },
-  { label: "Zero Trust", value: 94 },
+const SHIELD_LAYERS = [
+  "Firewall",
+  "A2P Filter",
+  "Threat Intel",
+  "Zero Trust",
 ] as const;
 
-/** Decorative product mock — network ops dashboard rising from the clouds. */
+/** Decorative product mock — illustrative only, no live or claimed metrics. */
 export function ServicesHeroDashboard({ className }: { className?: string }) {
   return (
     <div
@@ -99,27 +93,24 @@ function DashboardGreeting() {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p className="font-heading text-lg font-medium tracking-tight text-ink sm:text-xl">
-          Good Morning, Network Ops
+          Network operations
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Live wholesale & messaging overview
+          Illustrative wholesale & messaging overview
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <Kpi label="184 Carrier Partners" delta="+6%" />
-        <Kpi label="2.4B Messages / mo" delta="+12%" />
+        <Chip label="Carrier partners" />
+        <Chip label="Messaging & voice" />
       </div>
     </div>
   );
 }
 
-function Kpi({ label, delta }: { label: string; delta: string }) {
+function Chip({ label }: { label: string }) {
   return (
     <div className="rounded-2xl border border-hairline bg-surface/60 px-3.5 py-2.5">
       <p className="text-sm font-medium text-ink">{label}</p>
-      <span className="mt-1 inline-flex rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-medium text-brand">
-        {delta}
-      </span>
     </div>
   );
 }
@@ -128,32 +119,34 @@ function TrafficCard() {
   return (
     <div className="flex min-h-[220px] flex-col rounded-2xl border border-hairline bg-white p-4 shadow-xs">
       <div className="mb-4 flex items-center justify-between">
-        <p className="text-sm font-medium text-ink">Global Traffic</p>
-        <span className="text-[11px] text-muted-foreground">
-          Gbps · voice & data
-        </span>
+        <p className="text-sm font-medium text-ink">Global reach</p>
+        <span className="text-[11px] text-muted-foreground">Regions</span>
       </div>
       <div className="flex flex-1 items-end justify-between gap-2 px-1 pb-1">
-        {TRAFFIC_BARS.map((bar) => (
-          <div
-            key={bar.region}
-            className="flex flex-1 flex-col items-center gap-2"
-          >
-            <div className="flex h-28 w-full items-end justify-center gap-0.5">
-              <span
-                className="w-[42%] rounded-t-md bg-linear-to-t from-info to-info/40"
-                style={{ height: `${bar.voice}%` }}
-              />
-              <span
-                className="w-[42%] rounded-t-md bg-linear-to-t from-brand to-brand/35"
-                style={{ height: `${bar.data}%` }}
-              />
+        {TRAFFIC_REGIONS.map((region, index) => {
+          const voice = 45 + ((index * 11) % 40);
+          const data = 55 + ((index * 13) % 35);
+          return (
+            <div
+              key={region}
+              className="flex flex-1 flex-col items-center gap-2"
+            >
+              <div className="flex h-28 w-full items-end justify-center gap-0.5">
+                <span
+                  className="w-[42%] rounded-t-md bg-linear-to-t from-info to-info/40"
+                  style={{ height: `${voice}%` }}
+                />
+                <span
+                  className="w-[42%] rounded-t-md bg-linear-to-t from-brand to-brand/35"
+                  style={{ height: `${data}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {region}
+              </span>
             </div>
-            <span className="text-[10px] font-medium text-muted-foreground">
-              {bar.region}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -165,10 +158,9 @@ function MapCard() {
   return (
     <div className="flex min-h-[220px] flex-col rounded-2xl border border-hairline bg-surface/80 p-4 shadow-xs">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-medium text-ink">Live Network Map</p>
+        <p className="text-sm font-medium text-ink">Network map</p>
         <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span className="size-1.5 animate-pulse rounded-full bg-info" />
-          Live
+          Hubs
         </span>
       </div>
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-[radial-gradient(circle_at_30%_40%,color-mix(in_oklch,var(--info)_12%,var(--surface)),transparent_55%),radial-gradient(circle_at_70%_60%,color-mix(in_oklch,var(--brand)_10%,var(--surface)),transparent_50%),var(--surface)]">
@@ -245,34 +237,34 @@ function SecurityCard() {
   return (
     <div className="flex min-h-[220px] flex-col rounded-2xl bg-charcoal p-4 text-charcoal-foreground shadow-md">
       <div className="mb-1 flex items-center justify-between">
-        <p className="text-sm font-medium">Security Shield</p>
+        <p className="text-sm font-medium">Security layers</p>
         <span className="rounded-full bg-charcoal-foreground/10 px-2 py-0.5 text-[10px] text-charcoal-muted">
-          Onboarding
+          Illustrative
         </span>
       </div>
       <p className="font-heading text-2xl font-medium tracking-tight">
-        Threats Blocked <span className="text-info">99.8%</span>
+        Messaging & edge protection
       </p>
       <p className="mt-1 text-xs text-charcoal-muted">
-        Last 24h across messaging & edge
+        Controls across the wholesale path
       </p>
       <div className="mt-5 flex flex-1 flex-col justify-end gap-3">
-        {SHIELD_SEGMENTS.map((segment) => (
-          <div key={segment.label}>
-            <div className="mb-1 flex justify-between text-[11px]">
-              <span className="text-charcoal-muted">{segment.label}</span>
-              <span className="text-charcoal-foreground/90">
-                {segment.value}%
-              </span>
+        {SHIELD_LAYERS.map((label, index) => {
+          const width = 70 + index * 6;
+          return (
+            <div key={label}>
+              <div className="mb-1 flex justify-between text-[11px]">
+                <span className="text-charcoal-muted">{label}</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-charcoal-foreground/10">
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-info via-brand to-brand-hover"
+                  style={{ width: `${width}%` }}
+                />
+              </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-charcoal-foreground/10">
-              <div
-                className="h-full rounded-full bg-linear-to-r from-info via-brand to-brand-hover"
-                style={{ width: `${segment.value}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

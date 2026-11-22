@@ -9,7 +9,6 @@ import {
 } from "@/constants/marketing-pages";
 import {
   SOLUTION_BLUEPRINTS,
-  blueprintPathForSlug,
   blueprintStaticParams,
   getBlueprintByPath,
 } from "@/constants/page-blueprints";
@@ -30,9 +29,7 @@ export async function generateMetadata({
 
 export default async function Page({ params }: PageProps<"/solutions/[slug]">) {
   const { slug } = await params;
-  const config = getBlueprintByPath(
-    blueprintPathForSlug(ROUTES.solutions, slug),
-  );
+  const config = getBlueprintByPath(marketingChildPath(ROUTES.solutions, slug));
   const journey = Object.hasOwn(SOLUTION_JOURNEYS, slug)
     ? SOLUTION_JOURNEYS[slug as keyof typeof SOLUTION_JOURNEYS]
     : undefined;

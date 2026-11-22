@@ -1,19 +1,18 @@
 "use server";
 
-import { recordActivity } from "@/actions/observability";
+import { recordActivity, recordAppError } from "@/actions/observability";
 import {
   authorizeStaff,
   blogUnexpectedError,
   BLOG_MESSAGES,
   refreshBlogPaths,
   type BlogActionResult,
-  type StaffClient,
 } from "@/actions/blog-shared";
 import { estimateReadingTimeMinutes } from "@/lib/blog-utils";
 import {
   AUTHOR_BUCKET,
   COVER_BUCKET,
-  removeStorageUrlIfOwned,
+  removeStoragePrefix,
 } from "@/lib/blog-storage";
 import { sanitizeBlogHtml } from "@/lib/sanitize-html";
 import {
@@ -26,6 +25,13 @@ import {
 } from "@/validations/blog";
 
 export type { BlogActionResult };
+
+type SaveBlogRow = {
+  id: string;
+  slug: string;
+  previous_slug: string | null;
+  previous_status: "draft" | "published" | null;
+};
 
 function uniqueConstraintMessage(error: {
   code?: string;
@@ -41,33 +47,37 @@ function uniqueConstraintMessage(error: {
   return BLOG_MESSAGES.slugTaken;
 }
 
-async function clearOtherFeatured(supabase: StaffClient, exceptId?: string) {
-  let request = supabase
-    .from("blogs")
-    .update({ is_featured: false })
-    .eq("is_featured", true);
-  if (exceptId) {
-    request = request.neq("id", exceptId);
-  }
-  const { error } = await request;
-  if (error) throw error;
-}
-
-function toRowFields(input: CreateBlogInput) {
+function toRpcFields(input: CreateBlogInput) {
   const bodyHtml = sanitizeBlogHtml(input.bodyHtml);
   const status = input.status;
+  // Drafts cannot be featured — also enforced in save_blog + DB check.
+  const isFeatured = status === "draft" ? false : input.isFeatured;
   return {
-    title: input.title,
-    slug: input.slug,
-    summary: input.summary,
-    body_html: bodyHtml,
-    categories: input.categories,
-    author_name: input.authorName,
-    status,
-    is_featured: input.isFeatured,
-    reading_time_minutes: estimateReadingTimeMinutes(bodyHtml),
-    published_at: status === "published" ? new Date().toISOString() : null,
+    p_title: input.title,
+    p_slug: input.slug,
+    p_summary: input.summary,
+    p_body_html: bodyHtml,
+    p_categories: input.categories,
+    p_author_name: input.authorName,
+    p_status: status,
+    p_is_featured: isFeatured,
+    p_reading_time_minutes: estimateReadingTimeMinutes(bodyHtml),
   };
+}
+
+async function logStorageCleanupFailure(
+  source: string,
+  actorId: string,
+  context: Record<string, unknown>,
+  errorMessage?: string,
+) {
+  await recordAppError({
+    severity: "warning",
+    source,
+    actorId,
+    message: errorMessage ?? "Storage cleanup failed",
+    context,
+  });
 }
 
 export async function createBlog(
@@ -84,16 +94,8 @@ export async function createBlog(
   const session = await authorizeStaff();
   if (session.status === "error") return session;
 
-  const fields = toRowFields(parsed.data);
-  if (fields.is_featured) {
-    await clearOtherFeatured(session.supabase);
-  }
-
-  const { data, error } = await session.supabase
-    .from("blogs")
-    .insert(fields)
-    .select("id, slug")
-    .single();
+  const fields = toRpcFields(parsed.data);
+  const { data, error } = await session.supabase.rpc("save_blog", fields);
 
   if (error) {
     const uniqueMessage = uniqueConstraintMessage(error);
@@ -107,19 +109,28 @@ export async function createBlog(
     );
   }
 
+  const row = (Array.isArray(data) ? data[0] : data) as SaveBlogRow | null;
+  if (!row?.id) {
+    return blogUnexpectedError(
+      "actions.blogs.createBlog",
+      session.session.userId,
+      { message: "save_blog returned no row" },
+    );
+  }
+
   await recordActivity({
     actorId: session.session.userId,
-    action: fields.status === "published" ? "publish" : "create",
+    action: fields.p_status === "published" ? "publish" : "create",
     entityType: "blog",
-    entityId: data.id,
-    summary: { slug: data.slug, status: fields.status },
+    entityId: row.id,
+    summary: { slug: row.slug, status: fields.p_status },
   });
 
-  refreshBlogPaths(data.slug);
+  refreshBlogPaths(row.slug);
   return {
     status: "success",
     message: BLOG_MESSAGES.createSuccess,
-    id: data.id,
+    id: row.id,
   };
 }
 
@@ -138,50 +149,18 @@ export async function updateBlog(
   if (session.status === "error") return session;
 
   const { id, ...rest } = parsed.data;
-  const fields = toRowFields(rest);
+  const fields = toRpcFields(rest);
 
-  // Drafts cannot be featured; clear hero flag on unpublish.
-  if (fields.status === "draft") {
-    fields.is_featured = false;
-  }
-
-  const { data: existing, error: existingError } = await session.supabase
-    .from("blogs")
-    .select("id, slug, published_at, status")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (existingError) {
-    return blogUnexpectedError(
-      "actions.blogs.updateBlog",
-      session.session.userId,
-      existingError,
-    );
-  }
-  if (!existing) {
-    return { status: "error", message: BLOG_MESSAGES.notFound };
-  }
-
-  if (fields.is_featured) {
-    await clearOtherFeatured(session.supabase, id);
-  }
-
-  const publishedAt =
-    fields.status === "published"
-      ? (existing.published_at ?? new Date().toISOString())
-      : existing.published_at;
-
-  const { data, error } = await session.supabase
-    .from("blogs")
-    .update({
-      ...fields,
-      published_at: publishedAt,
-    })
-    .eq("id", id)
-    .select("id, slug")
-    .maybeSingle();
+  const { data, error } = await session.supabase.rpc("save_blog", {
+    ...fields,
+    p_id: id,
+  });
 
   if (error) {
+    const message = (error.message ?? "").toLowerCase();
+    if (error.code === "P0002" || message.includes("blog not found")) {
+      return { status: "error", message: BLOG_MESSAGES.notFound };
+    }
     const uniqueMessage = uniqueConstraintMessage(error);
     if (uniqueMessage) {
       return { status: "error", message: uniqueMessage };
@@ -192,14 +171,17 @@ export async function updateBlog(
       error,
     );
   }
-  if (!data) {
+
+  const row = (Array.isArray(data) ? data[0] : data) as SaveBlogRow | null;
+  if (!row?.id) {
     return { status: "error", message: BLOG_MESSAGES.notFound };
   }
 
+  const previousStatus = row.previous_status;
   const action =
-    existing.status !== "published" && fields.status === "published"
+    previousStatus !== "published" && fields.p_status === "published"
       ? "publish"
-      : existing.status === "published" && fields.status === "draft"
+      : previousStatus === "published" && fields.p_status === "draft"
         ? "unpublish"
         : "update";
 
@@ -207,15 +189,15 @@ export async function updateBlog(
     actorId: session.session.userId,
     action,
     entityType: "blog",
-    entityId: data.id,
-    summary: { slug: data.slug, status: fields.status },
+    entityId: row.id,
+    summary: { slug: row.slug, status: fields.p_status },
   });
 
-  refreshBlogPaths(existing.slug, data.slug);
+  refreshBlogPaths(row.previous_slug, row.slug);
   return {
     status: "success",
     message: BLOG_MESSAGES.updateSuccess,
-    id: data.id,
+    id: row.id,
   };
 }
 
@@ -233,31 +215,14 @@ export async function deleteBlog(
   const session = await authorizeStaff();
   if (session.status === "error") return session;
 
-  const { data: existing } = await session.supabase
-    .from("blogs")
-    .select("id, slug, thumbnail_url, author_avatar_url")
-    .eq("id", parsed.data.id)
-    .maybeSingle();
-
-  if (!existing) {
-    return { status: "error", message: BLOG_MESSAGES.notFound };
-  }
-
-  await removeStorageUrlIfOwned(
-    session.supabase,
-    existing.thumbnail_url,
-    COVER_BUCKET,
-  );
-  await removeStorageUrlIfOwned(
-    session.supabase,
-    existing.author_avatar_url,
-    AUTHOR_BUCKET,
-  );
-
-  const { error } = await session.supabase
+  // Returning columns from DELETE drops the pre-select round trip.
+  // Uploads always live under `{blogId}/…`, so prefix sweep is enough.
+  const { data: existing, error } = await session.supabase
     .from("blogs")
     .delete()
-    .eq("id", parsed.data.id);
+    .eq("id", parsed.data.id)
+    .select("id, slug")
+    .maybeSingle();
 
   if (error) {
     return blogUnexpectedError(
@@ -266,6 +231,33 @@ export async function deleteBlog(
       error,
     );
   }
+  if (!existing) {
+    return { status: "error", message: BLOG_MESSAGES.notFound };
+  }
+
+  const [coverCleanup, authorCleanup] = await Promise.all([
+    removeStoragePrefix(session.supabase, COVER_BUCKET, existing.id),
+    removeStoragePrefix(session.supabase, AUTHOR_BUCKET, existing.id),
+  ]);
+
+  await Promise.all([
+    coverCleanup.ok
+      ? Promise.resolve()
+      : logStorageCleanupFailure(
+          "actions.blogs.deleteBlog",
+          session.session.userId,
+          { blogId: existing.id, bucket: COVER_BUCKET },
+          coverCleanup.errorMessage,
+        ),
+    authorCleanup.ok
+      ? Promise.resolve()
+      : logStorageCleanupFailure(
+          "actions.blogs.deleteBlog",
+          session.session.userId,
+          { blogId: existing.id, bucket: AUTHOR_BUCKET },
+          authorCleanup.errorMessage,
+        ),
+  ]);
 
   await recordActivity({
     actorId: session.session.userId,

@@ -446,24 +446,34 @@
 }
 
 @utility services-cloud-drift {
-  animation: services-cloud-drift 28s var(--ease-standard) infinite alternate;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: services-cloud-drift 28s var(--ease-standard) infinite alternate;
+  }
 }
 
 @utility services-cloud-drift-slow {
-  animation: services-cloud-drift 42s var(--ease-standard) infinite
-    alternate-reverse;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: services-cloud-drift 42s var(--ease-standard) infinite
+      alternate-reverse;
+  }
 }
 
 @utility services-cloud-bank {
-  animation: services-cloud-bank 16s var(--ease-standard) infinite;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: services-cloud-bank 16s var(--ease-standard) infinite;
+  }
 }
 
 @utility services-cloud-bank-alt {
-  animation: services-cloud-bank 22s var(--ease-standard) infinite reverse;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: services-cloud-bank 22s var(--ease-standard) infinite reverse;
+  }
 }
 
 @utility services-hero-fade-up {
-  animation: fade-in-up 700ms var(--ease-standard) both;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: fade-in-up 700ms var(--ease-standard) both;
+  }
 }
 
 @utility services-hero-fade-up-delay {
@@ -475,7 +485,10 @@
 }
 
 @utility services-hero-dashboard-rise {
-  animation: services-hero-dashboard-rise 900ms var(--ease-standard) 280ms both;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: services-hero-dashboard-rise 900ms var(--ease-standard) 280ms
+      both;
+  }
 }
 
 /* Services “What We Provide” — gentle hover motion on abstract UI scenes. */

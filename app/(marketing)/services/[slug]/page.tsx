@@ -4,10 +4,10 @@ import { blueprintSlugMetadata } from "@/components/marketing/blueprint-slug-rou
 import { ServicePillarPage } from "@/components/marketing/service-pillar-page";
 import {
   SERVICE_PILLAR_BLUEPRINTS,
-  blueprintPathForSlug,
   blueprintStaticParams,
   getBlueprintByPath,
 } from "@/constants/page-blueprints";
+import { marketingChildPath } from "@/constants/marketing-pages";
 import { ROUTES } from "@/constants/routes";
 import { getServicePillar } from "@/constants/service-pillars";
 
@@ -30,9 +30,7 @@ export default async function ServicePillarRoute({
 }: PageProps<"/services/[slug]">) {
   const { slug } = await params;
   const pillar = getServicePillar(slug);
-  const config = getBlueprintByPath(
-    blueprintPathForSlug(ROUTES.services, slug),
-  );
+  const config = getBlueprintByPath(marketingChildPath(ROUTES.services, slug));
   if (!pillar || !config) notFound();
   return (
     <ServicePillarPage

@@ -8,4 +8,10 @@ describe("isNavActive", () => {
     expect(isNavActive("/services/cybersecurity", "/services")).toBe(true);
     expect(isNavActive("/solutions", "/services")).toBe(false);
   });
+
+  it("treats home as exact-only so it does not match every path", () => {
+    expect(isNavActive("/", "/")).toBe(true);
+    expect(isNavActive("/services", "/")).toBe(false);
+    expect(isNavActive("/insights/news", "/")).toBe(false);
+  });
 });

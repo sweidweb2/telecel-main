@@ -9,11 +9,8 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { approvedClaims } from "@/constants/evidence";
 import { DIFFERENTIATORS } from "@/constants/why-telecel";
-import {
-  BUYER_ROUTES,
-  HOME_HERO,
-  PLATFORM_STAGES,
-} from "@/constants/home-content";
+import { BUYER_ROUTES, HOME_HERO } from "@/constants/home-content";
+import { PLATFORM_STAGES } from "@/constants/platform-stages";
 import {
   SERVICE_PILLAR_PAGES,
   marketingChildPath,
@@ -254,7 +251,7 @@ export function HomePage() {
                 </span>
                 <h3 className="mt-3 text-xl font-medium">{stage.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-white/80">
-                  {stage.blueprintNote}
+                  {stage.summary}
                 </p>
               </li>
             ))}

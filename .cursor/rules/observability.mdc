@@ -10,10 +10,11 @@ Helpers live in `actions/observability.ts`. Reads live in `data/audit-log.ts` an
 
 ## `recordActivity` — successful CMS/admin mutations
 
-Call **after** a successful write (blogs, users, future content):
+Call **after** a successful write (blogs, users, inquiries, future content):
 
 - Actions like `create` | `update` | `publish` | `unpublish` | `delete` | `invite` | `role_change` | `suspend` | `reactivate`
 - Include `actorId`, `entityType`, `entityId`, and a small safe `summary` (slugs, roles, status — never secrets)
+- Public inquiry create uses `actorId: null` (no signed-in actor)
 
 Do **not** record logins/logouts or expected user mistakes.
 
@@ -24,12 +25,14 @@ Call when a Supabase / Auth Admin / provider call fails in an unexpected way:
 - Always still return `{ status: "error", message }` to the UI — logging does not replace that
 - Prefer `source` like `actions.blogs.updateBlog`
 - Safe `message` / `code` / `context` only
+- Also: OAuth callback / email confirm failures, Turnstile misconfig/provider outages (not challenge rejects)
 
 Do **not** log:
 
 - Zod / form validation failures
 - `authorizeAction` denials (“Only administrators…”)
 - Expected auth denials (wrong password, rate limit)
+- Turnstile challenge rejects (bots / expired tokens)
 - Passwords, tokens, recovery links, service-role keys, full request bodies
 
 ## Hard rules

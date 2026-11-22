@@ -1,10 +1,9 @@
-import { blueprintMetadata } from "@/components/marketing/blueprint-page";
+import { marketingPageMetadata } from "@/components/marketing/page-blueprint";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { TERMS_OF_USE } from "@/constants/legal-content";
-import { requireBlueprint } from "@/constants/page-blueprints";
-import { ROUTES } from "@/constants/routes";
+import { TERMS_BLUEPRINT } from "@/constants/page-blueprints";
 
-export const metadata = blueprintMetadata(requireBlueprint(ROUTES.terms));
+export const metadata = marketingPageMetadata(TERMS_BLUEPRINT);
 
 export default function TermsPage() {
   return <LegalPage doc={TERMS_OF_USE} />;

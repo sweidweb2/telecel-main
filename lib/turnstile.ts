@@ -14,6 +14,15 @@ type TurnstileSiteverifyResponse = {
   "error-codes"?: string[];
 };
 
+/** Outcome of a Turnstile siteverify attempt. */
+export type TurnstileVerifyResult =
+  | { ok: true }
+  | {
+      ok: false;
+      /** Challenge failed vs Cloudflare/config outage — only log the latter. */
+      reason: "rejected" | "provider_error" | "misconfigured";
+    };
+
 function expectedHostnames(): Set<string> {
   return new Set(
     (process.env.TURNSTILE_HOSTNAMES ?? "")
@@ -31,7 +40,7 @@ export async function verifyTurnstileToken(options: {
   token: string;
   expectedAction: string;
   remoteip?: string;
-}): Promise<boolean> {
+}): Promise<TurnstileVerifyResult> {
   const { token, expectedAction, remoteip } = options;
   const hostnames = expectedHostnames();
   const secret = process.env.TURNSTILE_SECRET;
@@ -43,7 +52,10 @@ export async function verifyTurnstileToken(options: {
     hostnames.size === 0 ||
     !secret
   ) {
-    return false;
+    return {
+      ok: false,
+      reason: hostnames.size === 0 || !secret ? "misconfigured" : "rejected",
+    };
   }
 
   let result: TurnstileSiteverifyResponse;
@@ -64,18 +76,19 @@ export async function verifyTurnstileToken(options: {
     });
 
     if (!response.ok) {
-      return false;
+      return { ok: false, reason: "provider_error" };
     }
 
     result = (await response.json()) as TurnstileSiteverifyResponse;
   } catch {
-    return false;
+    return { ok: false, reason: "provider_error" };
   }
 
-  return (
+  const accepted =
     result.success === true &&
     result.action === expectedAction &&
     typeof result.hostname === "string" &&
-    hostnames.has(result.hostname)
-  );
+    hostnames.has(result.hostname);
+
+  return accepted ? { ok: true } : { ok: false, reason: "rejected" };
 }

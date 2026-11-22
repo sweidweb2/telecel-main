@@ -10,16 +10,20 @@ import {
 import {
   ALL_PAGE_BLUEPRINTS,
   LEGAL_BLUEPRINTS,
+  PLATFORM_BLUEPRINT,
   SERVICE_PILLAR_BLUEPRINTS,
+  SERVICES_HUB_BLUEPRINT,
   SOLUTION_BLUEPRINTS,
   USE_CASE_BLUEPRINTS,
-  blueprintPathForSlug,
   blueprintSlug,
   blueprintStaticParams,
   getBlueprintByPath,
-  requireBlueprint,
+  PRIVACY_BLUEPRINT,
 } from "@/constants/page-blueprints";
+import { PLATFORM_LAYERS } from "@/constants/platform-layers";
 import { ROUTES } from "@/constants/routes";
+import { SERVICE_OFFERS } from "@/constants/service-offers";
+import { SERVICES_PROVIDE_CARDS } from "@/constants/services-provide";
 
 describe("page blueprint registry", () => {
   it("indexes every blueprint by unique path", () => {
@@ -32,7 +36,7 @@ describe("page blueprint registry", () => {
   });
 
   it("builds hub child paths and static params", () => {
-    expect(blueprintPathForSlug(ROUTES.services, "cybersecurity")).toBe(
+    expect(marketingChildPath(ROUTES.services, "cybersecurity")).toBe(
       "/services/cybersecurity",
     );
     expect(blueprintSlug("/services/cybersecurity", ROUTES.services)).toBe(
@@ -95,11 +99,25 @@ describe("page blueprint registry", () => {
         title: page.title,
       })),
     );
+    expect(PRIVACY_BLUEPRINT.path).toBe(ROUTES.privacy);
   });
 
-  it("requireBlueprint throws for unknown paths", () => {
-    expect(() => requireBlueprint("/not-a-real-page")).toThrow(
-      /Missing page blueprint/,
+  it("keeps live hubs meta-only so routes own designed composition", () => {
+    expect(PLATFORM_BLUEPRINT.sections).toBeUndefined();
+    expect(SERVICES_HUB_BLUEPRINT.sections).toBeUndefined();
+  });
+});
+
+describe("shared service offers", () => {
+  it("keeps platform layers and provide cards on one catalog", () => {
+    expect(PLATFORM_LAYERS.map((layer) => layer.title)).toEqual(
+      SERVICE_OFFERS.map((offer) => offer.title),
     );
+    expect(
+      SERVICES_PROVIDE_CARDS.slice(0, SERVICE_OFFERS.length).map(
+        (card) => card.title,
+      ),
+    ).toEqual(SERVICE_OFFERS.map((offer) => offer.title));
+    expect(SERVICES_PROVIDE_CARDS).toHaveLength(SERVICE_OFFERS.length + 1);
   });
 });

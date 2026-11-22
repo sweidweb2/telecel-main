@@ -3,6 +3,12 @@ import { format, formatDistanceToNowStrict, isValid, parseISO } from "date-fns";
 const DEFAULT_LOCALE = "en-GB";
 
 function toDate(value: Date | string | number): Date | null {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    // Date-only ISO is calendar-local — avoid UTC midnight shifting the day.
+    const [year, month, day] = value.split("-").map(Number);
+    const local = new Date(year, month - 1, day);
+    return isValid(local) ? local : null;
+  }
   const date = typeof value === "string" ? parseISO(value) : new Date(value);
   return isValid(date) ? date : null;
 }
@@ -44,7 +50,7 @@ export function formatCurrency(
   }).format(amount);
 }
 
-/** Compact number: `1.2K`. */
+/** Locale number grouping: `1,200` (en-GB). */
 export function formatNumber(value: number, locale = DEFAULT_LOCALE): string {
   return new Intl.NumberFormat(locale).format(value);
 }

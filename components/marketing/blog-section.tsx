@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
-import { BlogArticleFilters } from "@/components/marketing/blog-article-filters";
+import { BlogArticlesPanel } from "@/components/marketing/blog-articles-panel";
 import { BlogCard } from "@/components/marketing/blog-card";
 import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +23,7 @@ function authorInitials(name: string) {
 
 type BlogSectionProps = {
   labels: BlogLabels;
+  /** Full published list — category filtering happens in the client panel. */
   articles: ArticleListItem[];
   featured?: ArticleListItem;
 };
@@ -130,8 +131,9 @@ function FeaturedPost({
 }
 
 /**
- * Insights listing shell (Server Component). Header + featured stay on the
- * server; tab filtering is a client island.
+ * Insights listing shell. Header + featured stay on the server; tabs and the
+ * filtered grid are a client island so `?category=` does not force a dynamic
+ * Server Component render.
  */
 export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
   return (
@@ -155,9 +157,10 @@ export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
       <Container className="flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
         {featured ? <FeaturedPost labels={labels} article={featured} /> : null}
 
-        <BlogArticleFilters
-          labels={{ tabs: labels.tabs, emptyState: labels.emptyState }}
+        <BlogArticlesPanel
+          labels={labels}
           articles={articles}
+          featuredId={featured?.id}
         />
       </Container>
     </main>

@@ -1,14 +1,13 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { recordActivity, recordAppError } from "@/actions/observability";
-import {
-  CONTACT_CONSENT_VERSION,
-} from "@/constants/inquiries";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
+import { CONTACT_CONSENT_VERSION } from "@/constants/inquiries";
 import { ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
+import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -29,26 +28,18 @@ export type InquiryActionResult =
 const ONE_HOUR = 60 * 60 * 1000;
 const RATE_LIMITED =
   "Too many inquiries from this network. Please try again later.";
-const GENERIC_ERROR = "Something went wrong. Please try again.";
-
-async function clientIp(): Promise<string> {
-  const headerStore = await headers();
-  return (
-    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headerStore.get("x-real-ip") ||
-    "unknown"
-  );
-}
+const GENERIC_ERROR = ACTION_GENERIC_ERROR;
 
 /** Public contact form — Turnstile + rate limit + service-role insert. */
 export async function submitInquiry(
-  input: SubmitInquiryInput
+  input: SubmitInquiryInput,
 ): Promise<InquiryActionResult> {
   const parsed = submitInquirySchema.safeParse(input);
   if (!parsed.success) {
     return {
       status: "error",
-      message: parsed.error.issues[0]?.message ?? "Check the form and try again.",
+      message:
+        parsed.error.issues[0]?.message ?? "Check the form and try again.",
     };
   }
 
@@ -60,12 +51,24 @@ export async function submitInquiry(
     return { status: "error", message: RATE_LIMITED };
   }
 
-  const turnstileOk = await verifyTurnstileToken({
+  const turnstile = await verifyTurnstileToken({
     token: parsed.data.turnstileToken,
     expectedAction: TURNSTILE_CONTACT_ACTION,
     remoteip: ip,
   });
-  if (!turnstileOk) {
+  if (!turnstile.ok) {
+    // Bot/challenge rejects stay quiet; misconfig and Cloudflare outages log.
+    if (turnstile.reason !== "rejected") {
+      await recordAppError({
+        severity: turnstile.reason === "misconfigured" ? "error" : "warning",
+        source: "actions.inquiries.submitInquiry.turnstile",
+        message:
+          turnstile.reason === "misconfigured"
+            ? "Turnstile is misconfigured (secret or hostnames)."
+            : "Turnstile siteverify failed (provider or network).",
+        context: { reason: turnstile.reason },
+      });
+    }
     return {
       status: "error",
       message: "Security check failed. Refresh the page and try again.",
@@ -73,20 +76,24 @@ export async function submitInquiry(
   }
 
   const admin = createAdminClient();
-  const { error } = await admin.from("inquiries").insert({
-    intent: parsed.data.intent,
-    full_name: parsed.data.fullName,
-    company: parsed.data.company,
-    job_role: parsed.data.jobRole,
-    email: parsed.data.email,
-    country_code: parsed.data.countryCode,
-    area_of_interest: parsed.data.areaOfInterest,
-    business_need: parsed.data.businessNeed,
-    preferred_contact_method: parsed.data.preferredContactMethod,
-    consent: true,
-    consent_text_version: CONTACT_CONSENT_VERSION,
-    source_path: parsed.data.sourcePath ?? ROUTES.contact,
-  });
+  const { data, error } = await admin
+    .from("inquiries")
+    .insert({
+      intent: parsed.data.intent,
+      full_name: parsed.data.fullName,
+      company: parsed.data.company,
+      job_role: parsed.data.jobRole,
+      email: parsed.data.email,
+      country_code: parsed.data.countryCode,
+      area_of_interest: parsed.data.areaOfInterest,
+      business_need: parsed.data.businessNeed,
+      preferred_contact_method: parsed.data.preferredContactMethod,
+      consent: true,
+      consent_text_version: CONTACT_CONSENT_VERSION,
+      source_path: parsed.data.sourcePath ?? ROUTES.contact,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     console.error("[inquiries] insert failed", error.code ?? error.message);
@@ -99,6 +106,17 @@ export async function submitInquiry(
     return { status: "error", message: GENERIC_ERROR };
   }
 
+  await recordActivity({
+    actorId: null,
+    action: "create",
+    entityType: "inquiry",
+    entityId: data.id,
+    summary: {
+      intent: parsed.data.intent,
+      sourcePath: parsed.data.sourcePath ?? ROUTES.contact,
+    },
+  });
+
   revalidatePath(ROUTES.inquiries);
   return {
     status: "success",
@@ -108,7 +126,7 @@ export async function submitInquiry(
 
 /** Staff status update from the Inquiries portal. */
 export async function updateInquiryStatus(
-  input: UpdateInquiryStatusInput
+  input: UpdateInquiryStatusInput,
 ): Promise<InquiryActionResult> {
   const parsed = updateInquiryStatusSchema.safeParse(input);
   if (!parsed.success) {

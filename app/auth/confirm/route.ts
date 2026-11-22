@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { recordAppError } from "@/actions/observability";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -46,6 +47,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(next, request.url));
     }
     console.error("[auth] verifyOtp failed", error.code ?? error.message);
+    await recordAppError({
+      severity: "error",
+      source: "auth.confirm.verifyOtp",
+      code: error.code ?? null,
+      message: error.message,
+      context: { type },
+    });
   }
 
   return NextResponse.redirect(

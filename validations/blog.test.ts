@@ -33,6 +33,14 @@ describe("blog validations", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects reserved insight route slugs", () => {
+    const result = createBlogSchema.safeParse({
+      ...valid,
+      slug: "case-studies",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects featuring a draft", () => {
     const result = createBlogSchema.safeParse({
       ...valid,

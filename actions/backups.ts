@@ -2,10 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
-  recordActivity,
-  unexpectedActionError,
-} from "@/actions/observability";
+import { recordActivity, unexpectedActionError } from "@/actions/observability";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import {
   BACKUP_EXPORT_TABLES,
   type BackupExportTable,
@@ -32,8 +30,7 @@ import {
 } from "@/validations/backups";
 
 export type BackupActionResult =
-  | { status: "success"; message: string }
-  | { status: "error"; message: string };
+  { status: "success"; message: string } | { status: "error"; message: string };
 
 export type BackupExportResult =
   | { status: "success"; message: string; files: BackupExportFile[] }
@@ -59,7 +56,7 @@ async function backupUnexpectedError(
     actorId,
     error,
     isExpected: false,
-    userMessage: error.message || "The backup operation failed.",
+    userMessage: ACTION_GENERIC_ERROR,
   });
 }
 
@@ -68,22 +65,31 @@ async function fetchTableRows(
 ): Promise<BackupRow[]> {
   const admin = createAdminClient();
   const rows: BackupRow[] = [];
-  let from = 0;
+  let lastId: string | number | null = null;
 
   for (;;) {
-    const to = from + PAGE_SIZE - 1;
+    // Keyset pagination — avoids deep offset scans on large log tables.
     // Full-row dump: select all columns intentionally for admin backups.
-    const { data, error } = await admin
+    let request = admin
       .from(tableName)
       .select("*")
-      .range(from, to);
+      .order("id", { ascending: true })
+      .limit(PAGE_SIZE);
 
+    if (lastId !== null) {
+      request = request.gt("id", lastId);
+    }
+
+    const { data, error } = await request;
     if (error) throw error;
 
     const batch = (data ?? []) as BackupRow[];
     rows.push(...batch);
     if (batch.length < PAGE_SIZE) break;
-    from += PAGE_SIZE;
+
+    const nextId = batch[batch.length - 1]?.id;
+    if (nextId === undefined || nextId === null) break;
+    lastId = nextId as string | number;
   }
 
   return rows;

@@ -1,0 +1,59 @@
+# Supabase functions, RPCs, and triggers
+
+Companion to `schema.dbml` and `supabase/migrations/`. Update this file whenever a migration adds or changes a function, RPC, procedure, or trigger.
+
+The observability migration (`20261027120000_audit_and_app_errors`) adds **tables and RLS only** — it reuses existing `is_admin()` and introduces **no new RPCs**.
+
+The inquiries migration (`20261027210000_inquiries`) adds enums + `inquiries` + RLS (`is_staff` select/update). Inserts use the service-role client in `actions/inquiries.ts`. It reuses `set_updated_at()` and introduces **no new RPCs**.
+
+The site settings migration (`20261027220000_site_settings`) adds `site_settings` + RLS (public SELECT for whitelisted keys; admin INSERT/UPDATE via `is_admin()`). Seeds `maintenance` (originally `{ level1, level2 }`). **No new RPCs.**
+
+The maintenance mode migration (`20261027240000_maintenance_mode`) rewrites the `maintenance` jsonb value to `{ mode: "off" | "full" }` (legacy `level2` ⇒ `full`). Keeps the KV table for upcoming settings keys. **No new RPCs.**
+
+The backup export settings migration (`20261027230000_backup_export_settings`) adds `backup_export_settings` + admin RLS (`is_admin()` SELECT/INSERT/UPDATE/DELETE) and reuses `set_updated_at()`. Export dumps themselves are not stored; the Next action reads allowlisted tables with the service-role client after `authorizeAction("admin")`. **No new RPCs.**
+
+The admin list search indexes migration (`20261027250000_admin_list_search_indexes`) adds **indexes only** (pg_trgm GIN on searchable text columns for blogs / inquiries / audit_log / app_errors, plus `app_errors(severity, created_at)`). **No new RPCs.**
+
+The integrity migration (`20261122060000_blog_save_rpc_and_integrity`) adds blog CHECK constraints, `save_blog()` RPC, last-admin guards on `profiles`, and `service_role` INSERT on `profiles`.
+
+The list filter indexes migration (`20261122070000_list_filter_indexes`) adds **indexes only** — `blogs(status, created_at, id)`, `inquiries(intent, status, created_at)`, and `app_errors(actor_id, created_at)`. **No new RPCs.**
+
+## Role / session helpers
+
+| Name | Role | Details |
+| --- | --- | --- |
+| `current_session_is_fresh()` | `security definer` SQL | True when the Auth session is within the 24h window (`auth.sessions.created_at`). |
+| `current_app_role()` | `security definer` SQL | Active profile role for `auth.uid()` only if the session is fresh; else null. |
+| `is_admin()` | `security definer` SQL | `current_app_role() = 'admin'`. Used by admin-only RLS (profiles admin policies, `audit_log`, `app_errors`, `backup_export_settings`). |
+| `is_staff()` | `security definer` SQL | Any non-null `current_app_role()` (admin or editor). Used by CMS/blog staff policies. |
+| `get_session_context()` | `security definer` SQL | One round trip for `data/auth.ts`: `user_id`, `role`, `is_active`, `session_fresh`. |
+
+Granted to `authenticated` only (revoked from `public` / `anon`).
+
+## Profile lifecycle
+
+| Name | Role | Details |
+| --- | --- | --- |
+| `handle_new_user()` | trigger on `auth.users` INSERT | Creates `profiles` row; role from `app_metadata.app_role` (`admin`/`editor`), else NULL (no CMS access). |
+| `protect_profile_access_fields()` | BEFORE UPDATE on `profiles` | Non-admins (and non-service-role) cannot change `role` / `is_active`; email changes blocked except service role. Also calls `assert_not_last_active_admin` when demoting/suspending an active admin. |
+| `assert_not_last_active_admin(target_id)` | `security definer` helper | Raises if `target_id` is the only active admin. Execute granted to `service_role` (trigger use). Keep ≥2 admins in hosted envs before demoting/deleting. |
+| `prevent_last_admin_profile_delete()` | BEFORE DELETE on `profiles` | Blocks deleting the last active admin (covers Auth Admin `deleteUser` cascade). Local seed inserts into an empty DB, so `db:reset` is unaffected. |
+
+## Blogs
+
+| Name | Role | Details |
+| --- | --- | --- |
+| `save_blog(...)` | `security invoker` plpgsql RPC | Staff-only create/update. Clears other `is_featured` rows then inserts/updates in **one transaction**. Forces featured off for drafts; sets/keeps `published_at` for published rows. Returns `id`, `slug`, `previous_slug`, `previous_status`. Execute granted to `authenticated` + `service_role`. Called from `actions/blogs.ts`. |
+
+## Stats / utilities
+
+| Name | Role | Details |
+| --- | --- | --- |
+| `get_user_stats()` | `security invoker` SQL RPC | Aggregates for the users portal (totals, roles, new this week/month). Execute granted to `authenticated`; RLS still applies. |
+| `set_updated_at()` | trigger helper | Sets `blogs.updated_at = now()` on UPDATE. |
+
+## How it works (access path)
+
+1. Client/session hits PostgREST or a Server Component via the user-scoped Supabase client.
+2. RLS policies call `(select public.is_admin())` or `(select public.is_staff())` so role + 24h freshness are enforced in the database, not only in Next middleware.
+3. Service-role inserts (e.g. `actions/observability.ts`) bypass RLS by design; never expose that client to the browser.

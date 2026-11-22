@@ -15,6 +15,10 @@ describe("format", () => {
     expect(formatNumber(1200)).toBe("1,200");
   });
 
+  it("keeps date-only ISO strings on the calendar day", () => {
+    expect(formatDate("2026-11-13")).toBe("13 Nov 2026");
+  });
+
   it("returns em dash for invalid dates", () => {
     expect(formatDate("not-a-date")).toBe("—");
   });

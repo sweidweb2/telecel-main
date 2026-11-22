@@ -4,11 +4,6 @@ import {
 } from "@/constants/marketing-pages";
 import { ROUTES } from "@/constants/routes";
 
-export {
-  PLATFORM_STAGES,
-  type PlatformStage,
-} from "@/constants/platform-stages";
-
 /**
  * PROVISIONAL home copy — structure from the RFQ §3 sitemap; every sentence
  * must be replaced by the approved Telecel Global Text Pack before launch

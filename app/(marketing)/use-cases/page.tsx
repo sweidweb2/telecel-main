@@ -1,4 +1,4 @@
-import { blueprintMetadata } from "@/components/marketing/blueprint-page";
+import { marketingPageMetadata } from "@/components/marketing/page-blueprint";
 import { JourneyIndex } from "@/components/marketing/journey-page";
 import {
   USE_CASE_PAGES,
@@ -10,7 +10,7 @@ import {
 } from "@/constants/page-blueprints";
 import { ROUTES } from "@/constants/routes";
 
-export const metadata = blueprintMetadata(USE_CASES_HUB_BLUEPRINT);
+export const metadata = marketingPageMetadata(USE_CASES_HUB_BLUEPRINT);
 
 const items = USE_CASE_PAGES.map((page) => {
   const href = marketingChildPath(ROUTES.useCases, page.slug);

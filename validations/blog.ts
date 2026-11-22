@@ -12,6 +12,9 @@ export const BLOG_BODY_MAX = 200_000;
 export const BLOG_STATUSES = ["draft", "published"] as const;
 export type BlogStatusInput = (typeof BLOG_STATUSES)[number];
 
+/** Slugs claimed by static `/insights/*` routes — cannot be blog posts. */
+export const RESERVED_BLOG_SLUGS = ["case-studies"] as const;
+
 const slugSchema = z
   .string()
   .trim()
@@ -20,13 +23,25 @@ const slugSchema = z
   .regex(
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
     "Slug must be lowercase letters, numbers, and hyphens",
+  )
+  .refine(
+    (slug) =>
+      !RESERVED_BLOG_SLUGS.includes(
+        slug as (typeof RESERVED_BLOG_SLUGS)[number],
+      ),
+    {
+      message: "This slug is reserved for a fixed Insights route.",
+    },
   );
 
 const categorySchema = z
   .string()
   .trim()
   .min(1, "Category cannot be empty")
-  .max(BLOG_CATEGORY_MAX, `Category must be at most ${BLOG_CATEGORY_MAX} characters`);
+  .max(
+    BLOG_CATEGORY_MAX,
+    `Category must be at most ${BLOG_CATEGORY_MAX} characters`,
+  );
 
 export const blogFieldsSchema = z
   .object({
@@ -34,7 +49,10 @@ export const blogFieldsSchema = z
       .string()
       .trim()
       .min(2, "Title must be at least 2 characters")
-      .max(BLOG_TITLE_MAX, `Title must be at most ${BLOG_TITLE_MAX} characters`),
+      .max(
+        BLOG_TITLE_MAX,
+        `Title must be at most ${BLOG_TITLE_MAX} characters`,
+      ),
     slug: slugSchema,
     summary: z
       .string()

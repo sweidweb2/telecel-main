@@ -18,7 +18,8 @@ import { ROUTES } from "@/constants/routes";
 /**
  * Public sitemap from the approved TGS text pack & developer brief.
  * Navbar, footer and sitemap.xml read from here. `live: true` includes the
- * URL in sitemap.xml (anchors are never listed).
+ * URL in sitemap.xml (anchors are never listed). Only mark pages live when
+ * they have real indexable content — wireframes and stub legal copy stay off.
  *
  * Imports only the slim `marketing-pages` catalog — never `page-blueprints` —
  * so client chrome does not ship blueprint meta/section notes.
@@ -36,19 +37,23 @@ export type SiteNavSection = SiteNavLink & {
 function navLinksFromChildren(
   hubPath: string,
   pages: readonly MarketingChildPage[],
+  live = false,
 ): SiteNavLink[] {
   return pages.map((page) => ({
     label: page.title,
     href: marketingChildPath(hubPath, page.slug),
-    live: true,
+    ...(live ? { live: true as const } : {}),
   }));
 }
 
-function navLinksFromPaths(pages: readonly MarketingPathPage[]): SiteNavLink[] {
+function navLinksFromPaths(
+  pages: readonly MarketingPathPage[],
+  live = false,
+): SiteNavLink[] {
   return pages.map((page) => ({
     label: page.title,
     href: page.path,
-    live: true,
+    ...(live ? { live: true as const } : {}),
   }));
 }
 
@@ -78,24 +83,22 @@ export const SITE_NAV: readonly SiteNavSection[] = [
     label: "Services",
     href: ROUTES.services,
     live: true,
+    // Pillar pages are still blueprint skeletons — keep out of sitemap.
     children: navLinksFromChildren(ROUTES.services, SERVICE_PILLAR_PAGES),
   },
   {
     label: "Solutions",
     href: ROUTES.solutions,
-    live: true,
     children: navLinksFromChildren(ROUTES.solutions, SOLUTION_PAGES),
   },
   {
     label: "Use Cases",
     href: ROUTES.useCases,
-    live: true,
     children: navLinksFromChildren(ROUTES.useCases, USE_CASE_PAGES),
   },
   {
     label: WHY_TELECEL_PAGE.title,
     href: WHY_TELECEL_PAGE.path,
-    live: true,
     children: [
       {
         label: "Our Approach",
@@ -104,7 +107,6 @@ export const SITE_NAV: readonly SiteNavSection[] = [
       {
         label: LEADERSHIP_PAGE.title,
         href: LEADERSHIP_PAGE.path,
-        live: true,
       },
       {
         label: "Global Reach",
@@ -122,7 +124,7 @@ export const SITE_NAV: readonly SiteNavSection[] = [
       {
         label: CASE_STUDIES_PAGE.title,
         href: CASE_STUDIES_PAGE.path,
-        live: true,
+        // Empty until approved cases exist — do not index.
       },
     ],
   },
@@ -140,5 +142,6 @@ export const SITE_CTAS = {
   },
 } as const;
 
+/** Legal stubs until approved copy ships — linked in footer, not in sitemap. */
 export const SITE_LEGAL_LINKS: readonly SiteNavLink[] =
   navLinksFromPaths(LEGAL_PAGES);

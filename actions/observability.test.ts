@@ -2,6 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+const afterTasks: Array<() => void | Promise<void>> = [];
+
+vi.mock("next/server", () => ({
+  after: (task: () => void | Promise<void>) => {
+    afterTasks.push(task);
+  },
+}));
+
 const insertMock = vi.fn();
 const fromMock = vi.fn(() => ({ insert: insertMock }));
 
@@ -16,6 +24,13 @@ import {
   truncateMessage,
   unexpectedActionError,
 } from "@/actions/observability";
+
+async function flushAfter(): Promise<void> {
+  const tasks = afterTasks.splice(0, afterTasks.length);
+  for (const task of tasks) {
+    await task();
+  }
+}
 
 describe("truncateMessage", () => {
   it("keeps short messages", () => {
@@ -50,6 +65,7 @@ describe("scrubContext", () => {
 
 describe("recordActivity / recordAppError", () => {
   beforeEach(() => {
+    afterTasks.length = 0;
     insertMock.mockReset();
     fromMock.mockClear();
     insertMock.mockResolvedValue({ error: null });
@@ -65,6 +81,9 @@ describe("recordActivity / recordAppError", () => {
         summary: { slug: "hello", password: "nope" },
       }),
     ).resolves.toBeUndefined();
+
+    expect(fromMock).not.toHaveBeenCalled();
+    await flushAfter();
 
     expect(fromMock).toHaveBeenCalledWith("audit_log");
     expect(insertMock).toHaveBeenCalledWith(
@@ -87,6 +106,7 @@ describe("recordActivity / recordAppError", () => {
         entityType: "user",
       }),
     ).resolves.toBeUndefined();
+    await flushAfter();
 
     spy.mockRestore();
   });
@@ -102,6 +122,7 @@ describe("recordActivity / recordAppError", () => {
         message: "failed",
       }),
     ).resolves.toBeUndefined();
+    await flushAfter();
 
     spy.mockRestore();
   });
@@ -109,6 +130,7 @@ describe("recordActivity / recordAppError", () => {
 
 describe("unexpectedActionError", () => {
   beforeEach(() => {
+    afterTasks.length = 0;
     insertMock.mockReset();
     fromMock.mockClear();
     insertMock.mockResolvedValue({ error: null });
@@ -121,6 +143,7 @@ describe("unexpectedActionError", () => {
       error: { code: "42P01", message: "relation missing" },
       userMessage: "Something went wrong. Please try again.",
     });
+    await flushAfter();
 
     expect(result).toEqual({
       status: "error",
@@ -137,6 +160,7 @@ describe("unexpectedActionError", () => {
       isExpected: true,
       userMessage: "A user with this email already exists.",
     });
+    await flushAfter();
 
     expect(result.status).toBe("error");
     expect(fromMock).not.toHaveBeenCalled();

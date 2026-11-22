@@ -2,14 +2,14 @@ import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
-import { blueprintMetadata } from "@/components/marketing/blueprint-page";
+import { marketingPageMetadata } from "@/components/marketing/page-blueprint";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { CASE_STUDIES_BLUEPRINT } from "@/constants/page-blueprints";
 import { ROUTES } from "@/constants/routes";
 
-export const metadata = blueprintMetadata(CASE_STUDIES_BLUEPRINT);
+export const metadata = marketingPageMetadata(CASE_STUDIES_BLUEPRINT);
 
 /** Case studies publish only once a customer clears them (RFQ §4.3). */
 export default function Page() {

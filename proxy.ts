@@ -50,6 +50,13 @@ function isAuthSurfacePath(pathname: string): boolean {
   );
 }
 
+/** Supabase SSR auth cookies look like `sb-<ref>-auth-token`. */
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.includes("-auth-token"));
+}
+
 /** Carries refreshed session cookies (with their options) onto a redirect. */
 function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
   const redirect = NextResponse.redirect(url);
@@ -72,6 +79,38 @@ export async function proxy(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return NextResponse.next({ request });
 
+  const { pathname, search } = request.nextUrl;
+
+  if (pathname === LEGACY_FORGOT_PASSWORD) {
+    const target = new URL(ROUTES.contact, request.url);
+    target.searchParams.set("intent", "general");
+    return NextResponse.redirect(target);
+  }
+
+  const maintenancePromise = getMaintenanceModeForProxy();
+  const needsSession = hasSupabaseAuthCookie(request);
+
+  // Anonymous marketing hits: maintenance only — skip Supabase client + getClaims.
+  if (!needsSession) {
+    const maintenanceOn = isMaintenanceActive(await maintenancePromise);
+
+    if (maintenanceOn) {
+      const allow =
+        MAINTENANCE_PASSTHROUGH.has(pathname) || isAuthSurfacePath(pathname);
+      if (!allow) {
+        return NextResponse.rewrite(new URL(ROUTES.maintenance, request.url));
+      }
+    }
+
+    if (isProtectedPath(pathname)) {
+      return NextResponse.redirect(
+        new URL(loginPath({ next: `${pathname}${search}` }), request.url),
+      );
+    }
+
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(url, anonKey, {
@@ -93,18 +132,14 @@ export async function proxy(request: NextRequest) {
 
   // Do not run code between createServerClient and getClaims(): it refreshes
   // an expired access token and writes the new cookies through setAll above.
-  const { data } = await supabase.auth.getClaims();
+  // Maintenance fetch runs in parallel — it does not touch auth cookies.
+  const [{ data }, maintenanceMode] = await Promise.all([
+    supabase.auth.getClaims(),
+    maintenancePromise,
+  ]);
   const claims = data?.claims;
   const signedIn = Boolean(claims?.sub);
-  const { pathname, search } = request.nextUrl;
-
-  if (pathname === LEGACY_FORGOT_PASSWORD) {
-    const target = new URL(ROUTES.contact, request.url);
-    target.searchParams.set("intent", "general");
-    return redirectWithCookies(target, response);
-  }
-
-  const maintenanceOn = isMaintenanceActive(await getMaintenanceModeForProxy());
+  const maintenanceOn = isMaintenanceActive(maintenanceMode);
 
   if (maintenanceOn) {
     const allow =

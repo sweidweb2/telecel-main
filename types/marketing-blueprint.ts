@@ -6,7 +6,7 @@ export type BlueprintSectionConfig = {
   note?: string;
 };
 
-/** Full blueprint page config (meta + section shells). */
+/** Wireframe marketing page config (meta + header + skeleton sections). */
 export type PageBlueprintConfig = {
   path: string;
   eyebrow?: string;
@@ -14,5 +14,6 @@ export type PageBlueprintConfig = {
   description?: string;
   metaTitle: string;
   metaDescription: string;
-  sections: readonly BlueprintSectionConfig[];
+  /** Omit or leave empty when the route composes real sections itself. */
+  sections?: readonly BlueprintSectionConfig[];
 };

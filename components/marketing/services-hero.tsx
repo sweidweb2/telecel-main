@@ -10,6 +10,9 @@ import { cn } from "@/lib/utils";
 /**
  * Services hub hero — full-bleed sky, centered headline, and a product
  * dashboard rising out of a cloud bank. Site chrome stays in `SiteNavbar`.
+ *
+ * Decorative layers use CSS blur only (no SVG feGaussianBlur) and
+ * `contain-paint` so continuous cloud motion stays cheap on mobile GPUs.
  */
 export function ServicesHero() {
   const [lineOne, lineTwo] = SERVICES_HERO.headline.split("\n");
@@ -90,52 +93,16 @@ function SkyBackdrop() {
   );
 }
 
-/** Soft painterly wisps behind the headline. */
+/** Soft painterly wisps behind the headline — CSS-only, paint-contained. */
 function MidClouds() {
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 top-[18%] z-[1] h-[42%] overflow-hidden"
+      className="pointer-events-none absolute inset-x-0 top-[18%] z-[1] h-[42%] overflow-hidden contain-paint"
       aria-hidden
     >
-      <div className="services-cloud-drift absolute -left-[8%] top-[10%] h-40 w-[55%] rounded-[100%] bg-brand-foreground/25 blur-3xl sm:h-52" />
-      <div className="services-cloud-drift-slow absolute left-[35%] top-[28%] h-36 w-[50%] rounded-[100%] bg-brand-foreground/20 blur-[40px] sm:h-44" />
-      <div className="services-cloud-drift absolute right-[-10%] top-[8%] h-44 w-[48%] rounded-[100%] bg-background/35 blur-3xl sm:h-56" />
-      <svg
-        className="absolute inset-0 size-full text-brand-foreground opacity-70"
-        viewBox="0 0 1440 400"
-        preserveAspectRatio="xMidYMid slice"
-        fill="none"
-      >
-        <defs>
-          <filter id="wispBlur" x="-20%" y="-40%" width="140%" height="180%">
-            <feGaussianBlur stdDeviation="18" />
-          </filter>
-        </defs>
-        <g
-          filter="url(#wispBlur)"
-          className="services-cloud-drift"
-          fill="currentColor"
-          fillOpacity="0.45"
-        >
-          <ellipse cx="220" cy="160" rx="180" ry="48" />
-          <ellipse cx="320" cy="140" rx="120" ry="36" />
-          <ellipse cx="160" cy="180" rx="100" ry="30" />
-        </g>
-        <g
-          filter="url(#wispBlur)"
-          className="services-cloud-drift-slow"
-          fill="currentColor"
-          fillOpacity="0.35"
-        >
-          <ellipse cx="900" cy="120" rx="200" ry="52" />
-          <ellipse cx="1040" cy="150" rx="140" ry="40" />
-          <ellipse cx="780" cy="160" rx="110" ry="34" />
-        </g>
-        <g filter="url(#wispBlur)" fill="currentColor" fillOpacity="0.28">
-          <ellipse cx="1280" cy="200" rx="160" ry="44" />
-          <ellipse cx="1180" cy="220" rx="100" ry="28" />
-        </g>
-      </svg>
+      <div className="services-cloud-drift absolute -left-[8%] top-[10%] h-40 w-[55%] rounded-[100%] bg-brand-foreground/25 blur-2xl sm:h-52 sm:blur-3xl" />
+      <div className="services-cloud-drift-slow absolute left-[35%] top-[28%] h-36 w-[50%] rounded-[100%] bg-brand-foreground/20 blur-2xl sm:h-44 sm:blur-[40px]" />
+      <div className="services-cloud-drift absolute right-[-10%] top-[8%] h-44 w-[48%] rounded-[100%] bg-background/35 blur-2xl sm:h-56 sm:blur-3xl" />
     </div>
   );
 }
@@ -144,33 +111,29 @@ function MidClouds() {
 function BottomCloudBank() {
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[240px] sm:h-[270px] lg:h-[300px]"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[240px] contain-paint sm:h-[270px] lg:h-[300px]"
       aria-hidden
     >
       <div className="absolute inset-x-0 bottom-0 h-full">
-        <div className="services-cloud-bank absolute -left-[12%] bottom-[18%] h-36 w-[72%] rounded-[100%] bg-background/80 blur-2xl sm:h-44 sm:blur-3xl" />
-        <div className="services-cloud-bank-alt absolute left-[16%] bottom-[8%] h-40 w-[78%] rounded-[100%] bg-background/85 blur-2xl sm:h-52 sm:blur-3xl" />
-        <div className="services-cloud-bank absolute -right-[14%] bottom-[20%] h-36 w-[68%] rounded-[100%] bg-background/80 blur-2xl sm:h-48 sm:blur-3xl" />
+        <div className="services-cloud-bank absolute -left-[12%] bottom-[18%] h-36 w-[72%] rounded-[100%] bg-background/80 blur-xl sm:h-44 sm:blur-2xl md:blur-3xl" />
+        <div className="services-cloud-bank-alt absolute left-[16%] bottom-[8%] h-40 w-[78%] rounded-[100%] bg-background/85 blur-xl sm:h-52 sm:blur-2xl md:blur-3xl" />
+        <div className="services-cloud-bank absolute -right-[14%] bottom-[20%] h-36 w-[68%] rounded-[100%] bg-background/80 blur-xl sm:h-48 sm:blur-2xl md:blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-[42%] bg-linear-to-t from-background via-background/88 to-transparent" />
       </div>
+      {/* Hard silhouette — no SVG filter; soft edges come from the CSS blobs above. */}
       <svg
         className="absolute inset-x-0 bottom-0 h-full w-full text-background"
         viewBox="0 0 1440 320"
         preserveAspectRatio="none"
       >
         <defs>
-          <filter id="fluffBlur" x="-10%" y="-40%" width="120%" height="180%">
-            <feGaussianBlur stdDeviation="15" />
-          </filter>
           <linearGradient id="cloudFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.14" />
-            <stop offset="18%" stopColor="currentColor" stopOpacity="0.38" />
-            <stop offset="40%" stopColor="currentColor" stopOpacity="0.72" />
-            <stop offset="65%" stopColor="currentColor" stopOpacity="0.94" />
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
+            <stop offset="35%" stopColor="currentColor" stopOpacity="0.75" />
             <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
           </linearGradient>
         </defs>
-        <g filter="url(#fluffBlur)" fill="url(#cloudFade)">
+        <g fill="url(#cloudFade)">
           <ellipse cx="120" cy="175" rx="230" ry="88" />
           <ellipse cx="360" cy="150" rx="210" ry="98" />
           <ellipse cx="580" cy="180" rx="250" ry="92" />

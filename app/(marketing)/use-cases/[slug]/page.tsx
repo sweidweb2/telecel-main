@@ -9,7 +9,6 @@ import {
 } from "@/constants/marketing-pages";
 import {
   USE_CASE_BLUEPRINTS,
-  blueprintPathForSlug,
   blueprintStaticParams,
   getBlueprintByPath,
 } from "@/constants/page-blueprints";
@@ -30,9 +29,7 @@ export async function generateMetadata({
 
 export default async function Page({ params }: PageProps<"/use-cases/[slug]">) {
   const { slug } = await params;
-  const config = getBlueprintByPath(
-    blueprintPathForSlug(ROUTES.useCases, slug),
-  );
+  const config = getBlueprintByPath(marketingChildPath(ROUTES.useCases, slug));
   const journey = Object.hasOwn(USE_CASE_JOURNEYS, slug)
     ? USE_CASE_JOURNEYS[slug as keyof typeof USE_CASE_JOURNEYS]
     : undefined;
