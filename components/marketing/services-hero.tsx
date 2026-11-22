@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Services hub hero — full-bleed sky, centered headline, and a product
- * dashboard rising out of a cloud bank. Site chrome stays in `SiteNavbar`.
+ * dashboard rising out of a dust fade. Site chrome stays in `SiteNavbar`.
  *
  * Decorative layers use CSS blur only (no SVG feGaussianBlur) and
  * `contain-paint` so continuous cloud motion stays cheap on mobile GPUs.
@@ -107,45 +107,20 @@ function MidClouds() {
   );
 }
 
-/** Thick fluffy bank covering the lower third of the dashboard. */
+/**
+ * Dust over the lower dashboard — dense at the base, easing out toward
+ * the top. Soft mask (no contain-paint) so the top never clips into a line.
+ */
 function BottomCloudBank() {
   return (
     <div
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[240px] contain-paint sm:h-[270px] lg:h-[300px]"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[440px] [mask-image:linear-gradient(to_top,black_0%,black_48%,rgba(0,0,0,0.7)_68%,rgba(0,0,0,0.28)_86%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_top,black_0%,black_48%,rgba(0,0,0,0.7)_68%,rgba(0,0,0,0.28)_86%,transparent_100%)] sm:h-[520px] lg:h-[580px]"
       aria-hidden
     >
-      <div className="absolute inset-x-0 bottom-0 h-full">
-        <div className="services-cloud-bank absolute -left-[12%] bottom-[18%] h-36 w-[72%] rounded-[100%] bg-background/80 blur-xl sm:h-44 sm:blur-2xl md:blur-3xl" />
-        <div className="services-cloud-bank-alt absolute left-[16%] bottom-[8%] h-40 w-[78%] rounded-[100%] bg-background/85 blur-xl sm:h-52 sm:blur-2xl md:blur-3xl" />
-        <div className="services-cloud-bank absolute -right-[14%] bottom-[20%] h-36 w-[68%] rounded-[100%] bg-background/80 blur-xl sm:h-48 sm:blur-2xl md:blur-3xl" />
-        <div className="absolute inset-x-0 bottom-0 h-[42%] bg-linear-to-t from-background via-background/88 to-transparent" />
-      </div>
-      {/* Hard silhouette — no SVG filter; soft edges come from the CSS blobs above. */}
-      <svg
-        className="absolute inset-x-0 bottom-0 h-full w-full text-background"
-        viewBox="0 0 1440 320"
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="cloudFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.2" />
-            <stop offset="35%" stopColor="currentColor" stopOpacity="0.75" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
-          </linearGradient>
-        </defs>
-        <g fill="url(#cloudFade)">
-          <ellipse cx="120" cy="175" rx="230" ry="88" />
-          <ellipse cx="360" cy="150" rx="210" ry="98" />
-          <ellipse cx="580" cy="180" rx="250" ry="92" />
-          <ellipse cx="820" cy="145" rx="220" ry="104" />
-          <ellipse cx="1060" cy="170" rx="240" ry="95" />
-          <ellipse cx="1300" cy="160" rx="210" ry="90" />
-          <ellipse cx="200" cy="228" rx="190" ry="70" />
-          <ellipse cx="700" cy="238" rx="300" ry="76" />
-          <ellipse cx="1180" cy="222" rx="230" ry="72" />
-          <rect x="0" y="222" width="1440" height="110" />
-        </g>
-      </svg>
+      <div className="services-cloud-bank absolute -left-[18%] bottom-[-42%] h-[145%] w-[70%] rounded-full bg-background/72 blur-[90px] sm:blur-[120px]" />
+      <div className="services-cloud-bank-alt absolute left-[18%] bottom-[-46%] h-[155%] w-[66%] rounded-full bg-background/65 blur-[100px] sm:blur-[130px]" />
+      <div className="services-cloud-bank absolute -right-[16%] bottom-[-40%] h-[140%] w-[64%] rounded-full bg-background/72 blur-[90px] sm:blur-[120px]" />
+      <div className="absolute inset-x-0 bottom-0 h-[86%] bg-[linear-gradient(to_top,var(--background)_0%,var(--background)_26%,color-mix(in_oklch,var(--background)_88%,transparent)_48%,color-mix(in_oklch,var(--background)_48%,transparent)_70%,color-mix(in_oklch,var(--background)_16%,transparent)_88%,transparent_100%)]" />
     </div>
   );
 }

@@ -10,7 +10,11 @@ const HEIGHTS = { sm: 32, md: 42, lg: 56 } as const;
 type LogoProps = {
   className?: string;
   size?: keyof typeof HEIGHTS;
-  /** "reversed" = single-colour white for dark surfaces (footer, CMS sidebar). */
+  /**
+   * "reversed" was meant for dark surfaces (footer). Do not CSS-invert the
+   * artwork — the mark’s white “t” becomes a solid white disc. Use the colour
+   * lockup on charcoal; a true mono asset can replace this later.
+   */
   variant?: "color" | "reversed";
   priority?: boolean;
 };
@@ -52,11 +56,7 @@ export function Logo({
       height={274}
       priority={priority}
       unoptimized
-      className={cn(
-        "w-auto select-none",
-        variant === "reversed" && "brightness-0 invert",
-        className,
-      )}
+      className={cn("w-auto select-none", className)}
       style={{ height }}
     />
   );

@@ -8,9 +8,9 @@ import { Text } from "@/components/ui/text";
 import { SITE_CTAS, SITE_LEGAL_LINKS, SITE_NAV } from "@/constants/site-nav";
 
 /**
- * Charcoal footer: reversed logo, sales routes, full sitemap, one narrow
- * motif strip at the far edge. Social links and legal wording come from
- * Telecel (CMS Site settings); none are invented here.
+ * Charcoal footer: colour lockup (red mark reads on charcoal), sales routes,
+ * full sitemap, one narrow motif strip at the far edge. Social links and
+ * legal wording come from Telecel (CMS Site settings); none are invented here.
  */
 export function SiteFooter() {
   return (
@@ -19,7 +19,7 @@ export function SiteFooter() {
         <div className="min-w-0 flex-1">
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="space-y-8 lg:col-span-4">
-              <Logo variant="reversed" size="lg" />
+              <Logo size="lg" />
               <div className="grid gap-1">
                 <Text variant="notation" className="text-charcoal-muted">
                   Work with us
