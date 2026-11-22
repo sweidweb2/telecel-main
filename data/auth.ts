@@ -50,12 +50,8 @@ export const getSessionContext = cache(
       isActive: row?.is_active ?? false,
       sessionFresh: row?.session_fresh ?? false,
     };
-  }
+  },
 );
-
-export async function isAuthenticated(): Promise<boolean> {
-  return (await getSessionContext()) !== null;
-}
 
 /** Ends the session via the sign-out route (Server Components cannot clear cookies). */
 function endSession(reason: LoginReason): never {
@@ -73,11 +69,6 @@ export async function requireStaff(nextPath?: string): Promise<StaffSession> {
   if (!context.isActive || !context.role) endSession("no-access");
 
   return { ...context, role: context.role, supabase: await createClient() };
-}
-
-/** True when the current staff member can open admin-only portal sections. */
-export function isAdminSession(session: Pick<SessionContext, "role">): boolean {
-  return session.role === "admin";
 }
 
 /**
@@ -107,7 +98,7 @@ export type ActionSession =
  * rules again in the database.
  */
 export async function authorizeAction(
-  level: "staff" | "admin"
+  level: "staff" | "admin",
 ): Promise<ActionSession> {
   const context = await getSessionContext();
   if (!context) return { status: "error", message: "You must be signed in." };

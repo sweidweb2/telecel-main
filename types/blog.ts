@@ -1,6 +1,7 @@
 import type { Tables } from "@/types/database";
 import type { Article, ArticleListItem } from "@/types/article";
-import { insightPath } from "@/constants/routes";
+import { categoryToTabId } from "@/constants/blog-ui";
+import { insightPath, ROUTES } from "@/constants/routes";
 import { formatDate } from "@/lib/format";
 
 export type BlogStatus = "draft" | "published";
@@ -59,29 +60,35 @@ function formatPublishedAt(value: string | null): string {
   return formatDate(value);
 }
 
+function categoryHref(label: string): string {
+  const tab = categoryToTabId(label);
+  return tab === "all" ? ROUTES.insights : `${ROUTES.insights}?category=${tab}`;
+}
+
 function toArticleListFields(blog: BlogPublicListItem): ArticleListItem {
   const categories = blog.categories ?? [];
   const primary = categories[0] ?? "General";
+  const href = insightPath(blog.slug);
 
   return {
     id: blog.id,
     slug: blog.slug,
     title: blog.title,
     summary: blog.summary,
-    href: insightPath(blog.slug),
-    category: { name: primary, href: "#" },
+    href,
+    category: { name: primary, href: categoryHref(primary) },
     thumbnailUrl: blog.thumbnail_url ?? "",
     publishedAt: formatPublishedAt(blog.published_at),
     readingTime: readingTimeLabel(blog.reading_time_minutes),
     author: {
       name: blog.author_name,
-      href: "#",
+      href,
       avatarUrl: blog.author_avatar_url ?? "",
     },
     tags: categories.map((name) => ({
       name,
       color: "gray",
-      href: "#",
+      href: categoryHref(name),
     })),
     isFeatured: blog.is_featured,
   };

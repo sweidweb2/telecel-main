@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { recordActivity, unexpectedActionError } from "@/actions/observability";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import {
   BACKUP_EXPORT_TABLES,
   type BackupExportTable,
@@ -55,7 +56,7 @@ async function backupUnexpectedError(
     actorId,
     error,
     isExpected: false,
-    userMessage: error.message || "The backup operation failed.",
+    userMessage: ACTION_GENERIC_ERROR,
   });
 }
 

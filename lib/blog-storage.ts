@@ -37,8 +37,6 @@ export function extensionForMime(mime: string): string {
       return "png";
     case "image/webp":
       return "webp";
-    case "image/gif":
-      return "gif";
     default:
       return "jpg";
   }

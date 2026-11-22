@@ -98,16 +98,10 @@ async function uploadImage(options: {
       ? existing.thumbnail_url
       : existing.author_avatar_url;
 
-  const { error: updateError } =
-    column === "thumbnail_url"
-      ? await session.supabase
-          .from("blogs")
-          .update({ thumbnail_url: publicUrl })
-          .eq("id", blogId)
-      : await session.supabase
-          .from("blogs")
-          .update({ author_avatar_url: publicUrl })
-          .eq("id", blogId);
+  const { error: updateError } = await session.supabase
+    .from("blogs")
+    .update({ [column]: publicUrl })
+    .eq("id", blogId);
 
   if (updateError) {
     const cleanup = await session.supabase.storage.from(bucket).remove([path]);
@@ -229,16 +223,12 @@ export async function removeBlogImage(input: {
       : existing.author_avatar_url;
 
   // Null the column first so a failed DB update cannot leave a dead URL.
-  const { error } =
-    input.kind === "thumbnail"
-      ? await session.supabase
-          .from("blogs")
-          .update({ thumbnail_url: null })
-          .eq("id", input.id)
-      : await session.supabase
-          .from("blogs")
-          .update({ author_avatar_url: null })
-          .eq("id", input.id);
+  const column =
+    input.kind === "thumbnail" ? "thumbnail_url" : "author_avatar_url";
+  const { error } = await session.supabase
+    .from("blogs")
+    .update({ [column]: null })
+    .eq("id", input.id);
 
   if (error) {
     return blogUnexpectedError(

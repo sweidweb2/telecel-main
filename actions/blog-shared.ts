@@ -3,6 +3,7 @@ import "server-only";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { unexpectedActionError } from "@/actions/observability";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { insightPath, ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
 import { BLOGS_CACHE_TAG } from "@/data/blogs";
@@ -21,12 +22,11 @@ export const BLOG_MESSAGES = {
   uploadSuccess: "Image uploaded successfully.",
   removeSuccess: "Image removed successfully.",
   notFound: "Blog not found.",
-  genericError: "Something went wrong. Please try again.",
+  genericError: ACTION_GENERIC_ERROR,
   slugTaken: "That slug is already in use.",
   featuredTaken:
     "Another post is already featured. Unfeature it first, or save again.",
-  invalidImage:
-    "Please upload a JPEG, PNG or WebP image under the size limit.",
+  invalidImage: "Please upload a JPEG, PNG or WebP image under the size limit.",
 } as const;
 
 export type StaffAuth = Extract<
@@ -69,7 +69,9 @@ export function refreshBlogPaths(...slugs: (string | null | undefined)[]) {
   revalidatePath(ROUTES.blogs);
   revalidatePath(ROUTES.insights);
   revalidatePath("/sitemap.xml");
-  for (const slug of new Set(slugs.filter(Boolean))) {
-    revalidatePath(insightPath(slug as string));
+  for (const slug of new Set(
+    slugs.filter((value): value is string => Boolean(value)),
+  )) {
+    revalidatePath(insightPath(slug));
   }
 }

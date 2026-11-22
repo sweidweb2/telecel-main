@@ -1,13 +1,14 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { match, P } from "ts-pattern";
 
 import { recordAppError } from "@/actions/observability";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
+import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { absoluteUrl } from "@/lib/seo/site";
@@ -25,19 +26,10 @@ export type AuthActionResult =
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
-const GENERIC_ERROR = "Something went wrong. Please try again.";
+const GENERIC_ERROR = ACTION_GENERIC_ERROR;
 const RATE_LIMITED = "Too many attempts. Wait a few minutes and try again.";
 const MAINTENANCE_LOGIN_BLOCKED =
   "Only administrators can sign in while maintenance is active.";
-
-async function clientIp(): Promise<string> {
-  const headerStore = await headers();
-  return (
-    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headerStore.get("x-real-ip") ||
-    "unknown"
-  );
-}
 
 function mapAuthError(message: string): string {
   const lower = message.toLowerCase();

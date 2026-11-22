@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { match, P } from "ts-pattern";
 
 import {
   recordActivity,
@@ -27,39 +26,38 @@ function validationMessage(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "Check the submitted user details.";
 }
 
-function mapSupabaseError(message: string): string {
-  const lower = message.toLowerCase();
+const USER_ERROR_RULES = [
+  {
+    match: (value: string) =>
+      value.includes("already registered") ||
+      value.includes("already been registered") ||
+      value.includes("duplicate"),
+    message: "A user with this email already exists.",
+    expected: true,
+  },
+  {
+    match: (value: string) => value.includes("password"),
+    message: "The password does not meet the project requirements.",
+    expected: true,
+  },
+  {
+    match: (value: string) => value.includes("last active administrator"),
+    message: "You cannot remove the last active administrator.",
+    expected: true,
+  },
+] as const;
 
-  return match(lower)
-    .with(
-      P.when(
-        (value) =>
-          value.includes("already registered") ||
-          value.includes("already been registered") ||
-          value.includes("duplicate"),
-      ),
-      () => "A user with this email already exists.",
-    )
-    .with(
-      P.when((value) => value.includes("password")),
-      () => "The password does not meet the project requirements.",
-    )
-    .with(
-      P.when((value) => value.includes("last active administrator")),
-      () => "You cannot remove the last active administrator.",
-    )
-    .otherwise(() => message || "The user operation failed.");
-}
-
-function isExpectedUserError(message: string): boolean {
+function classifyUserError(message: string): {
+  userMessage: string;
+  isExpected: boolean;
+} {
   const lower = message.toLowerCase();
-  return (
-    lower.includes("already registered") ||
-    lower.includes("already been registered") ||
-    lower.includes("duplicate") ||
-    lower.includes("password") ||
-    lower.includes("last active administrator")
-  );
+  const rule = USER_ERROR_RULES.find((entry) => entry.match(lower));
+  if (rule) return { userMessage: rule.message, isExpected: rule.expected };
+  return {
+    userMessage: message || "The user operation failed.",
+    isExpected: false,
+  };
 }
 
 function refreshUsersRoute() {
@@ -71,13 +69,13 @@ async function userUnexpectedError(
   actorId: string,
   error: { code?: string; message?: string },
 ): Promise<UserActionResult> {
-  const mapped = mapSupabaseError(error.message ?? "");
+  const classified = classifyUserError(error.message ?? "");
   return unexpectedActionError({
     source,
     actorId,
     error,
-    isExpected: isExpectedUserError(error.message ?? ""),
-    userMessage: mapped,
+    isExpected: classified.isExpected,
+    userMessage: classified.userMessage,
   });
 }
 
@@ -214,10 +212,12 @@ export async function updateUser(
     );
   }
 
+  const roleChanged = before.role !== parsed.data.role;
   const authNeedsUpdate =
     before.email !== parsed.data.email ||
     before.full_name !== parsed.data.fullName ||
-    before.is_active !== parsed.data.isActive;
+    before.is_active !== parsed.data.isActive ||
+    roleChanged;
 
   if (authNeedsUpdate) {
     const { error: authError } = await admin.auth.admin.updateUserById(
@@ -226,6 +226,10 @@ export async function updateUser(
         email: parsed.data.email,
         user_metadata: { full_name: parsed.data.fullName },
         ban_duration: parsed.data.isActive ? "none" : "876000h",
+        // Keep JWT app_role in sync with profiles.role (proxy isAdminClaim).
+        ...(roleChanged
+          ? { app_metadata: { app_role: parsed.data.role } }
+          : {}),
       },
     );
 

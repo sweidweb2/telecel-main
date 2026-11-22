@@ -1,12 +1,13 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { recordActivity, recordAppError } from "@/actions/observability";
+import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { CONTACT_CONSENT_VERSION } from "@/constants/inquiries";
 import { ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
+import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -27,16 +28,7 @@ export type InquiryActionResult =
 const ONE_HOUR = 60 * 60 * 1000;
 const RATE_LIMITED =
   "Too many inquiries from this network. Please try again later.";
-const GENERIC_ERROR = "Something went wrong. Please try again.";
-
-async function clientIp(): Promise<string> {
-  const headerStore = await headers();
-  return (
-    headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headerStore.get("x-real-ip") ||
-    "unknown"
-  );
-}
+const GENERIC_ERROR = ACTION_GENERIC_ERROR;
 
 /** Public contact form — Turnstile + rate limit + service-role insert. */
 export async function submitInquiry(
