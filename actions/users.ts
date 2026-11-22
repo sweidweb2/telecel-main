@@ -5,6 +5,7 @@ import { match, P } from "ts-pattern";
 
 import {
   recordActivity,
+  recordAppError,
   unexpectedActionError,
 } from "@/actions/observability";
 import { ROUTES } from "@/constants/routes";
@@ -20,8 +21,7 @@ import {
 } from "@/validations/users";
 
 export type UserActionResult =
-  | { status: "success"; message: string }
-  | { status: "error"; message: string };
+  { status: "success"; message: string } | { status: "error"; message: string };
 
 function validationMessage(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "Check the submitted user details.";
@@ -44,6 +44,10 @@ function mapSupabaseError(message: string): string {
       P.when((value) => value.includes("password")),
       () => "The password does not meet the project requirements.",
     )
+    .with(
+      P.when((value) => value.includes("last active administrator")),
+      () => "You cannot remove the last active administrator.",
+    )
     .otherwise(() => message || "The user operation failed.");
 }
 
@@ -53,7 +57,8 @@ function isExpectedUserError(message: string): boolean {
     lower.includes("already registered") ||
     lower.includes("already been registered") ||
     lower.includes("duplicate") ||
-    lower.includes("password")
+    lower.includes("password") ||
+    lower.includes("last active administrator")
   );
 }
 
@@ -106,22 +111,42 @@ export async function createUser(
 
   // Auth Admin createUser sets app_metadata, but the handle_new_user trigger
   // can still insert profiles.role as NULL on hosted projects. profiles.role
-  // is authoritative for CMS access — set it explicitly.
-  const { error: profileError } = await admin
+  // is authoritative for CMS access — upsert it explicitly.
+  const { data: profile, error: profileError } = await admin
     .from("profiles")
-    .update({
-      role: parsed.data.role,
-      full_name: parsed.data.fullName,
-      email: parsed.data.email,
-    })
-    .eq("id", data.user.id);
+    .upsert(
+      {
+        id: data.user.id,
+        role: parsed.data.role,
+        full_name: parsed.data.fullName,
+        email: parsed.data.email,
+      },
+      { onConflict: "id" },
+    )
+    .select("id")
+    .maybeSingle();
 
-  if (profileError) {
-    await admin.auth.admin.deleteUser(data.user.id);
+  if (profileError || !profile) {
+    const { error: deleteError } = await admin.auth.admin.deleteUser(
+      data.user.id,
+    );
+    if (deleteError) {
+      await recordAppError({
+        severity: "error",
+        source: "actions.users.createUser",
+        actorId: auth.session.userId,
+        code: deleteError.code ?? null,
+        message: deleteError.message,
+        context: {
+          orphanAuthUserId: data.user.id,
+          reason: "compensating_delete_failed",
+        },
+      });
+    }
     return userUnexpectedError(
       "actions.users.createUser",
       auth.session.userId,
-      profileError,
+      profileError ?? { message: "Profile row was not created." },
     );
   }
 
@@ -159,38 +184,25 @@ export async function updateUser(
 
   const { data: before } = await session.supabase
     .from("profiles")
-    .select("role, is_active, email")
+    .select("role, is_active, email, full_name")
     .eq("id", parsed.data.id)
     .maybeSingle();
 
-  // Auth side: email, display name, and a ban while suspended so refresh
-  // tokens stop working immediately (not just at the next RLS check).
-  const admin = createAdminClient();
-  const { error: authError } = await admin.auth.admin.updateUserById(
-    parsed.data.id,
-    {
-      email: parsed.data.email,
-      user_metadata: { full_name: parsed.data.fullName },
-      ban_duration: parsed.data.isActive ? "none" : "876000h",
-    },
-  );
-
-  if (authError) {
-    return userUnexpectedError(
-      "actions.users.updateUser",
-      session.userId,
-      authError,
-    );
+  if (!before) {
+    return { status: "error", message: "User not found." };
   }
 
-  // Role and status go through the caller's session so RLS (is_admin) and the
-  // protect_profile_access_fields trigger check them again in the database.
-  const { error: profileError } = await session.supabase
+  const admin = createAdminClient();
+
+  // One profile write (incl. email). authorizeAction("admin") already gated;
+  // last-admin trigger still runs for service_role.
+  const { error: profileError } = await admin
     .from("profiles")
     .update({
       full_name: parsed.data.fullName,
       role: parsed.data.role,
       is_active: parsed.data.isActive,
+      email: parsed.data.email,
     })
     .eq("id", parsed.data.id);
 
@@ -202,24 +214,58 @@ export async function updateUser(
     );
   }
 
-  // profiles.email mirrors Auth and is only writable by the service role.
-  const { error: emailError } = await admin
-    .from("profiles")
-    .update({ email: parsed.data.email })
-    .eq("id", parsed.data.id);
+  const authNeedsUpdate =
+    before.email !== parsed.data.email ||
+    before.full_name !== parsed.data.fullName ||
+    before.is_active !== parsed.data.isActive;
 
-  if (emailError) {
-    return userUnexpectedError(
-      "actions.users.updateUser",
-      session.userId,
-      emailError,
+  if (authNeedsUpdate) {
+    const { error: authError } = await admin.auth.admin.updateUserById(
+      parsed.data.id,
+      {
+        email: parsed.data.email,
+        user_metadata: { full_name: parsed.data.fullName },
+        ban_duration: parsed.data.isActive ? "none" : "876000h",
+      },
     );
+
+    if (authError) {
+      const { error: revertError } = await admin
+        .from("profiles")
+        .update({
+          full_name: before.full_name,
+          role: before.role,
+          is_active: before.is_active,
+          email: before.email,
+        })
+        .eq("id", parsed.data.id);
+
+      if (revertError) {
+        await recordAppError({
+          severity: "error",
+          source: "actions.users.updateUser",
+          actorId: session.userId,
+          code: revertError.code ?? null,
+          message: revertError.message,
+          context: {
+            userId: parsed.data.id,
+            reason: "profile_revert_after_auth_failure",
+          },
+        });
+      }
+
+      return userUnexpectedError(
+        "actions.users.updateUser",
+        session.userId,
+        authError,
+      );
+    }
   }
 
   const action =
-    before && before.role !== parsed.data.role
+    before.role !== parsed.data.role
       ? "role_change"
-      : before && before.is_active !== parsed.data.isActive
+      : before.is_active !== parsed.data.isActive
         ? parsed.data.isActive
           ? "reactivate"
           : "suspend"

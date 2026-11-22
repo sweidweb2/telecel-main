@@ -1,14 +1,25 @@
-import 'server-only'
+import "server-only";
 
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import {
+  createClient as createSupabaseClient,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 
-import type { Database } from '@/types/database'
+import type { Database } from "@/types/database";
+
+type AdminClient = SupabaseClient<Database>;
+
+let cachedAdminClient: AdminClient | null = null;
 
 /** Service-role client. Bypasses RLS: authorize the caller before using it. */
-export function createAdminClient() {
-  return createSupabaseClient<Database>(
+export function createAdminClient(): AdminClient {
+  if (cachedAdminClient) return cachedAdminClient;
+
+  cachedAdminClient = createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+
+  return cachedAdminClient;
 }

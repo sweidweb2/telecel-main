@@ -1,5 +1,7 @@
 import "server-only";
 
+import { after } from "next/server";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/types/database";
 
@@ -94,20 +96,14 @@ function scrubValue(value: unknown): Json | undefined {
   return String(value).slice(0, CONTEXT_STRING_MAX);
 }
 
-/**
- * Append a successful CMS/admin mutation to `audit_log`.
- * Never throws — logging must not break the primary action.
- */
-export async function recordActivity(input: RecordActivityInput): Promise<void> {
+async function persistActivity(input: RecordActivityInput): Promise<void> {
   try {
     const admin = createAdminClient();
     const { error } = await admin.from("audit_log").insert({
       actor_id: input.actorId,
       action: truncateMessage(input.action, 64),
       entity_type: truncateMessage(input.entityType, 64),
-      entity_id: input.entityId
-        ? truncateMessage(input.entityId, 128)
-        : null,
+      entity_id: input.entityId ? truncateMessage(input.entityId, 128) : null,
       summary: scrubContext(input.summary ?? null),
     });
     if (error) {
@@ -121,11 +117,7 @@ export async function recordActivity(input: RecordActivityInput): Promise<void> 
   }
 }
 
-/**
- * Append an unexpected operational failure to `app_errors`.
- * Never throws — logging must not break the primary action.
- */
-export async function recordAppError(input: RecordAppErrorInput): Promise<void> {
+async function persistAppError(input: RecordAppErrorInput): Promise<void> {
   try {
     const admin = createAdminClient();
     const { error } = await admin.from("app_errors").insert({
@@ -148,6 +140,32 @@ export async function recordAppError(input: RecordAppErrorInput): Promise<void> 
       error instanceof Error ? error.message : error,
     );
   }
+}
+
+/**
+ * Append a successful CMS/admin mutation to `audit_log`.
+ * Never throws — logging must not break the primary action.
+ * Scheduled via `after()` so it stays off the mutation critical path.
+ */
+export async function recordActivity(
+  input: RecordActivityInput,
+): Promise<void> {
+  after(() => {
+    void persistActivity(input);
+  });
+}
+
+/**
+ * Append an unexpected operational failure to `app_errors`.
+ * Never throws — logging must not break the primary action.
+ * Scheduled via `after()` so it stays off the mutation critical path.
+ */
+export async function recordAppError(
+  input: RecordAppErrorInput,
+): Promise<void> {
+  after(() => {
+    void persistAppError(input);
+  });
 }
 
 export type UnexpectedActionErrorResult = {

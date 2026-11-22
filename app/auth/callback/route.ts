@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { recordAppError } from "@/actions/observability";
 import { loginPath } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -27,9 +28,31 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.redirect(new URL(next, request.url));
     }
-    console.error("[auth] OAuth code exchange failed", error.code ?? error.message);
+    console.error(
+      "[auth] OAuth code exchange failed",
+      error.code ?? error.message,
+    );
+    await recordAppError({
+      severity: "error",
+      source: "auth.callback.exchangeCodeForSession",
+      code: error.code ?? null,
+      message: error.message,
+    });
   } else if (searchParams.get("error")) {
-    console.error("[auth] OAuth provider error", searchParams.get("error_code"));
+    const providerError =
+      searchParams.get("error_description") ??
+      searchParams.get("error") ??
+      "OAuth provider error";
+    console.error(
+      "[auth] OAuth provider error",
+      searchParams.get("error_code"),
+    );
+    await recordAppError({
+      severity: "error",
+      source: "auth.callback.provider",
+      code: searchParams.get("error_code"),
+      message: providerError,
+    });
   }
 
   return NextResponse.redirect(

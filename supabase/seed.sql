@@ -5,6 +5,10 @@
 -- a hosted project; the deploy workflow does not run seed.sql):
 -- email: admin@telecel.local
 -- password: LocalAdmin#2026
+--
+-- Note: hosted DBs reject deleting/demoting the last active admin
+-- (assert_not_last_active_admin). This seed only inserts when the email is
+-- missing, so local resets stay safe.
 
 create extension if not exists pgcrypto with schema extensions;
 

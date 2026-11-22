@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 const recordAppError = vi.fn(async () => undefined);
 
 vi.mock("@/actions/observability", () => ({
-  recordAppError: (input: unknown) => recordAppError(input),
+  recordAppError: (...args: unknown[]) => recordAppError(...args),
 }));
 
 import { reportRouteError } from "@/actions/report-route-error";

@@ -22,8 +22,20 @@ describe("verifyTurnstileToken", () => {
         token: "",
         expectedAction: TURNSTILE_CONTACT_ACTION,
       }),
-    ).resolves.toBe(false);
+    ).resolves.toEqual({ ok: false, reason: "rejected" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reports misconfigured when secret or hostnames are missing", async () => {
+    vi.stubEnv("TURNSTILE_SECRET", "");
+    vi.stubEnv("TURNSTILE_HOSTNAMES", "");
+
+    await expect(
+      verifyTurnstileToken({
+        token: "valid-token",
+        expectedAction: TURNSTILE_CONTACT_ACTION,
+      }),
+    ).resolves.toEqual({ ok: false, reason: "misconfigured" });
   });
 
   it("accepts a successful siteverify response", async () => {
@@ -44,7 +56,7 @@ describe("verifyTurnstileToken", () => {
         expectedAction: TURNSTILE_CONTACT_ACTION,
         remoteip: "127.0.0.1",
       }),
-    ).resolves.toBe(true);
+    ).resolves.toEqual({ ok: true });
   });
 
   it("rejects when hostname is not allowlisted", async () => {
@@ -64,6 +76,23 @@ describe("verifyTurnstileToken", () => {
         token: "valid-token",
         expectedAction: TURNSTILE_CONTACT_ACTION,
       }),
-    ).resolves.toBe(false);
+    ).resolves.toEqual({ ok: false, reason: "rejected" });
+  });
+
+  it("reports provider_error when siteverify HTTP fails", async () => {
+    vi.stubEnv("TURNSTILE_SECRET", "test-secret");
+    vi.stubEnv("TURNSTILE_HOSTNAMES", "localhost");
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({}),
+    }) as typeof fetch;
+
+    await expect(
+      verifyTurnstileToken({
+        token: "valid-token",
+        expectedAction: TURNSTILE_CONTACT_ACTION,
+      }),
+    ).resolves.toEqual({ ok: false, reason: "provider_error" });
   });
 });
