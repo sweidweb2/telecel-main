@@ -13,6 +13,9 @@ import {
 const ACTIVITY_COLUMNS =
   "id, action, entity_type, entity_id, summary, created_at, actor:profiles!audit_log_actor_id_fkey(full_name, email)" as const;
 
+/** Max profiles the actor filter resolves before asking the admin to refine. */
+const ACTOR_MATCH_CAP = 1000;
+
 /**
  * Paginated activity log for the admin Activity page.
  * Caller must already pass requireSection / admin gate; RLS re-checks is_admin.
@@ -44,6 +47,7 @@ export async function getActivityLogPage(
     request = request.gte("created_at", `${query.from}T00:00:00Z`);
   if (query.to) request = request.lt("created_at", endOfDayExclusive(query.to));
 
+  let actorsCapped = false;
   if (query.actor) {
     // Resolve matching profiles first; PostgREST cannot OR across the embed.
     const term = query.actor;
@@ -51,9 +55,11 @@ export async function getActivityLogPage(
       .from("profiles")
       .select("id")
       .or(`email.ilike.%${term}%,full_name.ilike.%${term}%`)
-      .limit(200);
+      .limit(ACTOR_MATCH_CAP + 1);
     if (actorError) throw actorError;
-    const ids = (actors ?? []).map((actor) => actor.id);
+    const matched = actors ?? [];
+    actorsCapped = matched.length > ACTOR_MATCH_CAP;
+    const ids = matched.slice(0, ACTOR_MATCH_CAP).map((actor) => actor.id);
     if (ids.length === 0) {
       return { rows: [], total: 0, totalPages: 1 };
     }
@@ -68,5 +74,6 @@ export async function getActivityLogPage(
     rows: (data ?? []) as unknown as ActivityLogRow[],
     total,
     totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+    actorsCapped,
   };
 }

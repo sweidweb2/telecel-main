@@ -2,7 +2,7 @@
 # Skips cleanly (green, with a notice) when the Vercel secrets are not set,
 # and for PRs from forks (GitHub does not expose secrets to them).
 #
-# Required repo secrets (see Docs/04-runbooks/github-secrets.md):
+# Required environment secrets on the "preview" GitHub environment (see Docs/04-runbooks/github-secrets.md):
 #   VERCEL_TOKEN       - https://vercel.com/account/tokens
 #   VERCEL_ORG_ID      - .vercel/project.json "orgId" after `vercel link`
 #   VERCEL_PROJECT_ID  - .vercel/project.json "projectId" after `vercel link`
@@ -27,6 +27,8 @@ jobs:
     name: Vercel preview
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # VERCEL_* live as environment secrets on "preview" (required reviewers).
+    environment: preview
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     env:
@@ -34,6 +36,7 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TELEMETRY_DISABLED: "1"
+      GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
     steps:
       - name: Check secrets
@@ -61,11 +64,11 @@ jobs:
 
       - name: Install Vercel CLI
         if: steps.guard.outputs.enabled == 'true'
-        run: npm install --global vercel@latest
+        run: npm install --global vercel@66.6.0
 
       - name: Pull Vercel environment
         if: steps.guard.outputs.enabled == 'true'
-        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=preview --git-branch="$GIT_BRANCH" --token="$VERCEL_TOKEN"
 
       - name: Build
         if: steps.guard.outputs.enabled == 'true'

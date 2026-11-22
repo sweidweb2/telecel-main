@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { Fragment, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { DownloadIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -97,15 +97,15 @@ export function ScheduledBackupsSection({
 }: {
   overview: ScheduledBackupsOverview;
 }) {
-  const { lastRun, files, retentionDays, loadError } = overview;
+  const { lastRun, runs, legacyFiles, retentionDays, loadError } = overview;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Scheduled backups</CardTitle>
         <CardDescription>
-          A full JSON backup of all tables runs daily and is kept for{" "}
-          {retentionDays} days.
+          A JSON backup of every table runs daily (one file per table) and is
+          kept for {retentionDays} days.
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-2 text-sm">
           <span className="text-muted-foreground">Last run:</span>
@@ -130,7 +130,7 @@ export function ScheduledBackupsSection({
           <p className="text-sm text-destructive">
             Could not list backup files: {loadError}
           </p>
-        ) : files.length === 0 ? (
+        ) : runs.length === 0 && legacyFiles.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No scheduled backups stored yet.
           </p>
@@ -146,7 +146,37 @@ export function ScheduledBackupsSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {files.map((file) => (
+                {runs.map((run) => (
+                  <Fragment key={run.stamp}>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableCell colSpan={4} className="font-medium">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>Run {formatTimestamp(run.createdAt)}</span>
+                          {run.complete ? null : (
+                            <Badge variant="destructive">Incomplete</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {run.files.map((file) => (
+                      <TableRow key={file.path}>
+                        <TableCell className="pl-6 break-all">
+                          {file.name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatTimestamp(file.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatSize(file.size)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DownloadButton name={file.relativePath} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </Fragment>
+                ))}
+                {legacyFiles.map((file) => (
                   <TableRow key={file.path}>
                     <TableCell className="font-medium break-all">
                       {file.name}

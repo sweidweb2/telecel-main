@@ -52,6 +52,24 @@ export function createSupabaseBackupStorage(
       return out;
     },
 
+    async listFolders(prefix) {
+      const out: string[] = [];
+      const limit = 1000;
+      for (let offset = 0; ; offset += limit) {
+        const { data, error } = await storage().list(prefix, {
+          limit,
+          offset,
+        });
+        if (error) throw error;
+        // Supabase Storage reports folders as entries with a null id.
+        for (const item of data ?? []) {
+          if (item.id === null) out.push(item.name);
+        }
+        if ((data ?? []).length < limit) break;
+      }
+      return out;
+    },
+
     async remove(paths) {
       if (paths.length === 0) return;
       const { error } = await storage().remove(paths);

@@ -18,8 +18,9 @@ import {
  *
  * Maintenance policy (full mode): rewrite public traffic to /maintenance
  * (503 + Retry-After); keep auth surfaces + sign-out reachable; anonymous
- * /dashboard visitors go to /login; only JWT-admins keep /dashboard/* so they
- * can turn maintenance off (DB role re-checked in requireStaff). Admin exceptions for *new* sessions are
+ * /dashboard visitors go to /login; signed-in /dashboard
+ * requests reach the app, where requireStaff() does the authoritative DB role
+ * check (non-admins go to /maintenance). Admin exceptions for *new* sessions are
  * enforced in actions/auth and auth route handlers (DB role), not via
  * JWT-admin public browse.
  */
@@ -174,8 +175,10 @@ export async function proxy(request: NextRequest) {
     const allow =
       MAINTENANCE_PASSTHROUGH.has(pathname) ||
       isAuthSurfacePath(pathname) ||
-      // Anonymous → login redirect below; signed-in → admins only.
-      (isProtectedPath(pathname) && (!signedIn || isAdminClaim(claims)));
+      // Anonymous → login redirect below. Signed-in users pass through:
+      // requireStaff() checks the DB role and sends non-admins to
+      // /maintenance (the token role is not trusted for the lockout).
+      isProtectedPath(pathname);
     if (!allow) return maintenanceRewriteWithCookies(request, response);
   }
 

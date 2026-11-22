@@ -32,6 +32,7 @@ export type InquiryActionResult =
 const ONE_HOUR = 60 * 60 * 1000;
 const CONTACT_IP_LIMIT = 8;
 const CONTACT_EMAIL_LIMIT = 3;
+const CONTACT_ATTEMPT_LIMIT = 30;
 const RATE_LIMITED =
   "Too many inquiries from this network. Please try again later.";
 const GENERIC_ERROR = ACTION_GENERIC_ERROR;
@@ -60,6 +61,15 @@ export async function submitInquiry(
   if (
     isRateLimited(ipKey, CONTACT_IP_LIMIT, ONE_HOUR) ||
     isRateLimited(emailKey, CONTACT_EMAIL_LIMIT, ONE_HOUR)
+  ) {
+    return { status: "error", message: RATE_LIMITED };
+  }
+
+  // Attempt bucket, consumed before siteverify: caps how often one IP can
+  // make us call Cloudflare (or retry failed challenges), independent of the
+  // success quota below.
+  if (
+    !consumeRateLimit(`contact:attempt:${ip}`, CONTACT_ATTEMPT_LIMIT, ONE_HOUR)
   ) {
     return { status: "error", message: RATE_LIMITED };
   }

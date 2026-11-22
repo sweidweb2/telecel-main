@@ -3,9 +3,13 @@ import "server-only";
 import type { StaffSession } from "@/data/auth";
 import { getBackupStorage } from "@/lib/backup-storage";
 import {
+  MANIFEST_FILENAME,
   parseRetentionDays,
+  parseRunStamp,
+  runFolderPath,
   SCHEDULED_BACKUP_PREFIX,
   sortBackupsNewestFirst,
+  sortRunStampsNewestFirst,
   type StoredBackup,
 } from "@/lib/scheduled-backup";
 
@@ -14,9 +18,21 @@ export type ScheduledBackupRun = {
   at: string;
 };
 
+/** One per-run folder: `scheduled/<stamp>/<table>.json` + manifest. */
+export type StoredBackupRun = {
+  stamp: string;
+  createdAt: string;
+  /** False while/if the run never wrote its manifest (incomplete). */
+  complete: boolean;
+  /** Table files; `relativePath` is `<stamp>/<file>` for downloads. */
+  files: (StoredBackup & { relativePath: string })[];
+};
+
 export type ScheduledBackupsOverview = {
   lastRun: ScheduledBackupRun | null;
-  files: StoredBackup[];
+  runs: StoredBackupRun[];
+  /** Pre-folder single-file backups directly under `scheduled/`. */
+  legacyFiles: StoredBackup[];
   retentionDays: number;
   loadError: string | null;
 };
@@ -47,14 +63,37 @@ export async function getScheduledBackupsOverview(
     : null;
 
   try {
-    const files = sortBackupsNewestFirst(
-      await getBackupStorage().list(SCHEDULED_BACKUP_PREFIX),
+    const storage = getBackupStorage();
+    const [legacy, folders] = await Promise.all([
+      storage.list(SCHEDULED_BACKUP_PREFIX),
+      storage.listFolders(SCHEDULED_BACKUP_PREFIX),
+    ]);
+    const runs = await Promise.all(
+      sortRunStampsNewestFirst(folders).map(async (stamp) => {
+        const files = await storage.list(runFolderPath(stamp));
+        return {
+          stamp,
+          createdAt: parseRunStamp(stamp)!.toISOString(),
+          complete: files.some((f) => f.name === MANIFEST_FILENAME),
+          files: files
+            .filter((f) => f.name !== MANIFEST_FILENAME)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((f) => ({ ...f, relativePath: `${stamp}/${f.name}` })),
+        } satisfies StoredBackupRun;
+      }),
     );
-    return { lastRun, files, retentionDays, loadError: null };
+    return {
+      lastRun,
+      runs,
+      legacyFiles: sortBackupsNewestFirst(legacy),
+      retentionDays,
+      loadError: null,
+    };
   } catch (error) {
     return {
       lastRun,
-      files: [],
+      runs: [],
+      legacyFiles: [],
       retentionDays,
       loadError: error instanceof Error ? error.message : String(error),
     };

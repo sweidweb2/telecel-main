@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { recordActivity } from "@/actions/observability";
 import { loginPath, ROUTES, type LoginReason } from "@/constants/routes";
 import { getSessionContext } from "@/data/auth";
+import { getMaintenanceModeUncached } from "@/data/site-settings";
+import { isMaintenanceActive } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
 
 const REASONS = new Set<LoginReason>([
@@ -72,9 +74,14 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   const context = await getSessionContext().catch(() => null);
-  const healthy = Boolean(
+  let healthy = Boolean(
     context && context.sessionFresh && context.isActive && context.role,
   );
+  // A non-admin during maintenance cannot use the dashboard: not healthy.
+  if (healthy && context?.role !== "admin") {
+    const mode = await getMaintenanceModeUncached().catch(() => null);
+    if (mode && isMaintenanceActive(mode)) healthy = false;
+  }
   if (healthy) {
     const response = NextResponse.redirect(
       new URL(ROUTES.dashboard, request.url),

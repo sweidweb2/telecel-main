@@ -7,6 +7,7 @@ import { recordActivity, recordAppError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
+import { allowAuthAuditWrite } from "@/lib/auth-audit-throttle";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
 import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -83,12 +84,18 @@ export async function signIn(
     !consumeRateLimit(`login:ip:${ip}`, 20, FIFTEEN_MINUTES) ||
     !consumeRateLimit(`login:email:${parsed.data.email}`, 5, FIFTEEN_MINUTES)
   ) {
-    await recordActivity({
-      actorId: null,
-      action: "sign_in_failed",
-      entityType: "auth",
-      summary: { email: parsed.data.email, reason: "rate_limited" },
-    });
+    // Log only the first throttled hit per IP per window, within the audit budget.
+    if (
+      consumeRateLimit(`audit:auth:ratelimited:${ip}`, 1, FIFTEEN_MINUTES) &&
+      allowAuthAuditWrite(ip)
+    ) {
+      await recordActivity({
+        actorId: null,
+        action: "sign_in_failed",
+        entityType: "auth",
+        summary: { email: parsed.data.email, reason: "rate_limited" },
+      });
+    }
     return { status: "error", message: RATE_LIMITED };
   }
 
@@ -178,12 +185,14 @@ export async function signInWithGoogle(
     return { status: "error", message: GENERIC_ERROR };
   }
 
-  await recordActivity({
-    actorId: null,
-    action: "sign_in_started",
-    entityType: "auth",
-    summary: { method: "google" },
-  });
+  if (allowAuthAuditWrite(await clientIp())) {
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_started",
+      entityType: "auth",
+      summary: { method: "google" },
+    });
+  }
   redirect(data.url);
 }
 

@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 
 import { canAccessSection, getPortalSection } from "@/constants/dashboard-nav";
 import { loginPath, ROUTES, type LoginReason } from "@/constants/routes";
-import { getMaintenanceMode } from "@/data/site-settings";
+import {
+  getMaintenanceMode,
+  getMaintenanceModeUncached,
+} from "@/data/site-settings";
 import { isMaintenanceActive } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types/profile";
@@ -79,6 +82,11 @@ async function isMaintenanceOn(): Promise<boolean> {
   return isMaintenanceActive(await getMaintenanceMode());
 }
 
+/** Direct DB read (no SWR cache) for authoritative action enforcement. */
+async function isMaintenanceOnUncached(): Promise<boolean> {
+  return isMaintenanceActive(await getMaintenanceModeUncached());
+}
+
 export const MAINTENANCE_ACTION_BLOCKED =
   "The site is under maintenance. Try again later.";
 
@@ -88,7 +96,7 @@ export const MAINTENANCE_ACTION_BLOCKED =
  * off, or the caller is an active admin.
  */
 export async function isActionAllowedDuringMaintenance(): Promise<boolean> {
-  if (!(await isMaintenanceOn())) return true;
+  if (!(await isMaintenanceOnUncached())) return true;
   const context = await getSessionContext();
   return Boolean(
     context?.role === "admin" && context.isActive && context.sessionFresh,
@@ -141,7 +149,7 @@ export async function authorizeAction(
       message: "Only administrators can do this.",
     };
   }
-  if (context.role !== "admin" && (await isMaintenanceOn())) {
+  if (context.role !== "admin" && (await isMaintenanceOnUncached())) {
     return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
   }
 

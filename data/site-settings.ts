@@ -28,3 +28,11 @@ const cachedMaintenanceMode = unstable_cache(
 export async function getMaintenanceMode(): Promise<MaintenanceMode> {
   return resolveMaintenanceMode(await cachedMaintenanceMode());
 }
+
+/**
+ * Uncached direct read for enforcement (action gates): never trusts the SWR
+ * cache, so a just-enabled maintenance window blocks writes immediately.
+ */
+export async function getMaintenanceModeUncached(): Promise<MaintenanceMode> {
+  return resolveMaintenanceMode(await fetchMaintenanceModeFromRest());
+}

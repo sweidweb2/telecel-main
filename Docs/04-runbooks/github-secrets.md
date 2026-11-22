@@ -3,7 +3,9 @@
 Every workflow in `.github/workflows/` reads credentials only through
 `${{ secrets.NAME }}`. Nothing secret is committed (the repo is public).
 Each workflow still runs without its secrets: CI uses placeholders and skips
-the Supabase-backed E2E suites, and the deploy workflows skip with a notice.
+the Supabase-backed E2E suites, and the preview workflow skips with a notice. Deploy Migrations skips only
+when run manually (`workflow_dispatch`); on a push to `main` missing secrets
+fail the run so unapplied migrations are never reported green.
 
 Set secrets with the GitHub CLI from the repo root (`gh auth login` first).
 `gh secret set NAME` prompts for the value, so it never lands in shell history.

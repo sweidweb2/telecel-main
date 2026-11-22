@@ -52,6 +52,7 @@ export default async function ActivityLogPage({
         rows={list.rows}
         total={list.total}
         totalPages={list.totalPages}
+        actorsCapped={list.actorsCapped ?? false}
         query={query}
       />
     </main>

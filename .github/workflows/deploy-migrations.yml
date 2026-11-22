@@ -41,6 +41,10 @@ jobs:
         id: guard
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ] || [ -z "$SUPABASE_PROJECT_ID" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              echo "::error::Supabase secrets not configured - migrations were NOT deployed."
+              exit 1
+            fi
             echo "::notice::Supabase secrets not configured - skipping migration deploy."
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           else

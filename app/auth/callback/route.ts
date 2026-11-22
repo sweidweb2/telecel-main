@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { recordActivity, recordAppError } from "@/actions/observability";
 import { loginPath } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
+import { createAuthAuditor, signInOutcome } from "@/lib/auth-audit-throttle";
+import { clientIp } from "@/lib/client-ip";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
  * when signups are disabled and arrive here with `error` params instead of a
  * `code`. Accounts without a CMS role are signed out by requireStaff().
  * During maintenance only active admins keep the new session.
+ * Audit/error writes are throttled per IP; no activity rows without a code.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -18,12 +20,13 @@ export async function GET(request: NextRequest) {
   const next = safeRedirectPath(searchParams.get("next"));
 
   if (code) {
+    const { audit, logError } = createAuthAuditor(await clientIp());
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const userId = data.user?.id ?? null;
       if (!(await allowSessionDuringMaintenance())) {
-        await recordActivity({
+        await audit({
           actorId: userId,
           action: "sign_in_blocked",
           entityType: "auth",
@@ -34,16 +37,21 @@ export async function GET(request: NextRequest) {
           new URL(loginPath({ reason: "no-access" }), request.url),
         );
       }
-      await recordActivity({
+      // sign_in only for active profiles with a role; requireStaff() signs
+      // the rest out on the next request.
+      const outcome = await signInOutcome();
+      await audit({
         actorId: userId,
-        action: "sign_in",
+        action: outcome.ok ? "sign_in" : "sign_in_blocked",
         entityType: "auth",
         entityId: userId,
-        summary: { method: "oauth" },
+        summary: outcome.ok
+          ? { method: "oauth" }
+          : { method: "oauth", reason: outcome.reason },
       });
       return NextResponse.redirect(new URL(next, request.url));
     }
-    await recordActivity({
+    await audit({
       actorId: null,
       action: "sign_in_failed",
       entityType: "auth",
@@ -53,13 +61,15 @@ export async function GET(request: NextRequest) {
       "[auth] OAuth code exchange failed",
       error.code ?? error.message,
     );
-    await recordAppError({
+    await logError({
       severity: "error",
       source: "auth.callback.exchangeCodeForSession",
       code: error.code ?? null,
       message: error.message,
     });
   } else if (searchParams.get("error")) {
+    // No code: no activity row, and the app_errors write is IP-throttled.
+    const { logError } = createAuthAuditor(await clientIp());
     const providerError =
       searchParams.get("error_description") ??
       searchParams.get("error") ??
@@ -68,16 +78,7 @@ export async function GET(request: NextRequest) {
       "[auth] OAuth provider error",
       searchParams.get("error_code"),
     );
-    await recordActivity({
-      actorId: null,
-      action: "sign_in_failed",
-      entityType: "auth",
-      summary: {
-        method: "oauth",
-        code: searchParams.get("error_code") ?? searchParams.get("error"),
-      },
-    });
-    await recordAppError({
+    await logError({
       severity: "error",
       source: "auth.callback.provider",
       code: searchParams.get("error_code"),

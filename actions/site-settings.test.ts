@@ -11,21 +11,25 @@ vi.mock("@/data/auth", () => ({
 
 vi.mock("@/actions/observability", () => ({
   recordActivity: vi.fn(async () => undefined),
-  unexpectedActionError: vi.fn(async ({ userMessage }: { userMessage: string }) => ({
-    status: "error" as const,
-    message: userMessage,
-  })),
+  unexpectedActionError: vi.fn(
+    async ({ userMessage }: { userMessage: string }) => ({
+      status: "error" as const,
+      message: userMessage,
+    }),
+  ),
 }));
 
 vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
+  updateTag: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 
 vi.mock("@/lib/maintenance", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/maintenance")>(
-    "@/lib/maintenance",
-  );
+  const actual =
+    await vi.importActual<typeof import("@/lib/maintenance")>(
+      "@/lib/maintenance",
+    );
   return {
     ...actual,
     clearMaintenanceProxyCache: vi.fn(),
@@ -35,6 +39,8 @@ vi.mock("@/lib/maintenance", async () => {
 import { authorizeAction } from "@/data/auth";
 import { recordActivity } from "@/actions/observability";
 import { updateMaintenanceMode } from "@/actions/site-settings";
+import { updateTag } from "next/cache";
+import { MAINTENANCE_CACHE_TAG } from "@/types/site-settings";
 
 describe("updateMaintenanceMode", () => {
   beforeEach(() => {
@@ -90,5 +96,6 @@ describe("updateMaintenanceMode", () => {
         summary: { mode: "full" },
       }),
     );
+    expect(updateTag).toHaveBeenCalledWith(MAINTENANCE_CACHE_TAG);
   });
 });

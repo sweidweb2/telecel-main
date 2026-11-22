@@ -11,6 +11,21 @@ export const BACKUP_EXPORT_TABLES = [
 
 export type BackupExportTable = (typeof BACKUP_EXPORT_TABLES)[number];
 
+/**
+ * Primary-key column per exportable table (see supabase/migrations). Backups
+ * use keyset pagination ordered by this column so rows are never skipped or
+ * duplicated while the table changes mid-export.
+ */
+export const BACKUP_TABLE_PRIMARY_KEYS: Record<BackupExportTable, string> = {
+  profiles: "id",
+  blogs: "id",
+  inquiries: "id",
+  audit_log: "id",
+  app_errors: "id",
+  site_settings: "key",
+  backup_export_settings: "id",
+};
+
 export const BACKUP_EXPORT_FORMATS = ["csv", "json"] as const;
 export type BackupExportFormat = (typeof BACKUP_EXPORT_FORMATS)[number];
 
