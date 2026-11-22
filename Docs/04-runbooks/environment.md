@@ -40,6 +40,25 @@ RFQ §4.2 asks for staging, UAT and production processes. Use separate Supabase 
 - `supabase/seed.sql` is **local only**. The GitHub migration workflow never runs it.
 - **Last active admin:** demoting, suspending, or deleting the only active admin is blocked in the database. Keep at least two admins in staging/prod, or create a second admin before removing the first. Local `db:reset` still works because seed inserts a fresh admin into an empty DB.
 
+## Scheduled backups
+
+`vercel.json` registers a daily Vercel Cron (`0 2 * * *`, UTC) hitting `GET /api/cron/backup`. The route:
+
+1. Rejects anything without `Authorization: Bearer $CRON_SECRET` (401; an unset secret denies everything).
+2. Dumps every table in `constants/backup-tables.ts` (same code as the manual export) to one JSON file, `scheduled/all_tables_<timestamp>.json`, in the private Supabase Storage bucket `backups` (migration `20261122090000`, no RLS policies, so service role only).
+3. Deletes files in `scheduled/` older than `BACKUP_RETENTION_DAYS` (default 30).
+4. Logs success/failure to the activity log (`entity_type = scheduled_backup`) and failures to the error log (`source = api.cron.backup`).
+
+Admins see the last run and stored files under **Scheduled backups** on `/dashboard/backups`; downloads use 60-second signed URLs. The route is exempt from maintenance mode.
+
+| Env var | Where | Notes |
+| --- | --- | --- |
+| `CRON_SECRET` | Vercel project env (Production) | Random 32+ byte string. Vercel adds the bearer header automatically. |
+| `BACKUP_RETENTION_DAYS` | Vercel project env | Optional, positive integer, default 30. |
+
+Manual test: `curl -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/backup`.
+Storage is behind `BackupStorageAdapter` (`lib/scheduled-backup.ts`, Supabase impl in `lib/backup-storage.ts`); swap `getBackupStorage()` to move to S3 or similar. Vercel Hobby plans allow daily crons only.
+
 ## CI secrets (GitHub → Settings → Secrets)
 
 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` (CI E2E), and `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` (migration deploy). Without them, CI still runs lint/types/unit/build/public E2E; auth, blogs, users, and observability E2E suites skip themselves.

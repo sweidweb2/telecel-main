@@ -14,13 +14,14 @@ import type { StaffSession } from "@/data/auth";
 import type { BackupExportSetting } from "@/types/backups";
 
 const SETTING_COLUMNS =
-  "id, name, scope, table_name, format, created_by, created_at, updated_at, last_exported_at" as const;
+  "id, name, scope, table_name, table_names, format, created_by, created_at, updated_at, last_exported_at" as const;
 
 type SettingRow = {
   id: string;
   name: string;
   scope: string;
   table_name: string | null;
+  table_names: string[] | null;
   format: string;
   created_by: string | null;
   created_at: string;
@@ -46,20 +47,28 @@ function mapSetting(row: SettingRow): BackupExportSetting | null {
   if (!scope || !format) return null;
 
   const tableName = match(scope)
-    .with("all", () => null)
+    .with("all", "multiple", () => null)
     .with("single", () => {
-      if (!row.table_name || !isBackupExportTable(row.table_name)) return undefined;
+      if (!row.table_name || !isBackupExportTable(row.table_name))
+        return undefined;
       return row.table_name as BackupExportTable;
     })
     .exhaustive();
 
   if (tableName === undefined) return null;
 
+  const tableNames =
+    scope === "multiple"
+      ? (row.table_names ?? []).filter(isBackupExportTable)
+      : [];
+  if (scope === "multiple" && tableNames.length === 0) return null;
+
   return {
     id: row.id,
     name: row.name,
     scope,
     tableName,
+    tableNames,
     format,
     createdBy: row.created_by,
     createdAt: row.created_at,

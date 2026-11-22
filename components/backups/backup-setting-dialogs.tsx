@@ -44,7 +44,10 @@ import {
   BACKUP_EXPORT_TABLES,
 } from "@/constants/backup-tables";
 import type { BackupExportSetting } from "@/types/backups";
-import { BACKUP_SETTING_NAME_MAX } from "@/validations/backups";
+import {
+  BACKUP_SETTING_NAME_MAX,
+  refineSettingFields,
+} from "@/validations/backups";
 
 const formSchema = z
   .object({
@@ -58,22 +61,16 @@ const formSchema = z
       ),
     scope: z.enum(BACKUP_EXPORT_SCOPES, "Choose a scope"),
     tableName: z.enum(BACKUP_EXPORT_TABLES).nullable(),
+    tableNames: z.array(z.enum(BACKUP_EXPORT_TABLES)),
     format: z.enum(BACKUP_EXPORT_FORMATS, "Choose a format"),
   })
-  .superRefine((value, ctx) => {
-    if (value.scope === "single" && !value.tableName) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["tableName"],
-        message: "Choose a table to export",
-      });
-    }
-  });
+  .superRefine(refineSettingFields);
 
 const DEFAULT_VALUES: BackupSettingFormValues = {
   name: "",
   scope: "single",
   tableName: "profiles",
+  tableNames: [],
   format: "csv",
 };
 
@@ -84,7 +81,18 @@ function settingToFormValues(
     name: setting.name,
     scope: setting.scope,
     tableName: setting.tableName,
+    tableNames: setting.tableNames,
     format: setting.format,
+  };
+}
+
+function formValuesToInput(values: BackupSettingFormValues) {
+  return {
+    name: values.name,
+    scope: values.scope,
+    tableName: values.scope === "single" ? values.tableName : null,
+    tableNames: values.scope === "multiple" ? values.tableNames : null,
+    format: values.format,
   };
 }
 
@@ -101,12 +109,7 @@ export function CreateBackupSettingDialog() {
 
   function onSubmit(values: BackupSettingFormValues) {
     startTransition(async () => {
-      const result = await createBackupSetting({
-        name: values.name,
-        scope: values.scope,
-        tableName: values.scope === "single" ? values.tableName : null,
-        format: values.format,
-      });
+      const result = await createBackupSetting(formValuesToInput(values));
       if (result.status === "error") {
         toast.error(result.message);
         return;
@@ -190,10 +193,7 @@ export function EditBackupSettingDialog({
     startTransition(async () => {
       const result = await updateBackupSetting({
         id: setting.id,
-        name: values.name,
-        scope: values.scope,
-        tableName: values.scope === "single" ? values.tableName : null,
-        format: values.format,
+        ...formValuesToInput(values),
       });
       if (result.status === "error") {
         toast.error(result.message);

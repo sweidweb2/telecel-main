@@ -131,6 +131,7 @@ export type Database = {
           name: string;
           scope: string;
           table_name: string | null;
+          table_names: string[] | null;
           updated_at: string;
         };
         Insert: {
@@ -142,6 +143,7 @@ export type Database = {
           name: string;
           scope: string;
           table_name?: string | null;
+          table_names?: string[] | null;
           updated_at?: string;
         };
         Update: {
@@ -153,6 +155,7 @@ export type Database = {
           name?: string;
           scope?: string;
           table_name?: string | null;
+          table_names?: string[] | null;
           updated_at?: string;
         };
         Relationships: [

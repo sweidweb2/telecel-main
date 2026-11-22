@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { recordActivity, unexpectedActionError } from "@/actions/observability";
+import {
+  recordActivity,
+  recordAppError,
+  unexpectedActionError,
+} from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import {
   BACKUP_EXPORT_TABLES,
@@ -15,9 +19,8 @@ import {
   buildAllTablesFiles,
   buildSingleTableFile,
   type BackupExportFile,
-  type BackupRow,
 } from "@/lib/backup-export";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchAllTables, fetchTableRows } from "@/lib/backup-data";
 import {
   createBackupSettingSchema,
   deleteBackupSettingSchema,
@@ -35,8 +38,6 @@ export type BackupActionResult =
 export type BackupExportResult =
   | { status: "success"; message: string; files: BackupExportFile[] }
   | { status: "error"; message: string };
-
-const PAGE_SIZE = 1000;
 
 function validationMessage(error: { issues: { message: string }[] }): string {
   return error.issues[0]?.message ?? "Check the submitted backup details.";
@@ -60,41 +61,6 @@ async function backupUnexpectedError(
   });
 }
 
-async function fetchTableRows(
-  tableName: BackupExportTable,
-): Promise<BackupRow[]> {
-  const admin = createAdminClient();
-  const rows: BackupRow[] = [];
-  let lastId: string | number | null = null;
-
-  for (;;) {
-    // Keyset pagination — avoids deep offset scans on large log tables.
-    // Full-row dump: select all columns intentionally for admin backups.
-    let request = admin
-      .from(tableName)
-      .select("*")
-      .order("id", { ascending: true })
-      .limit(PAGE_SIZE);
-
-    if (lastId !== null) {
-      request = request.gt("id", lastId);
-    }
-
-    const { data, error } = await request;
-    if (error) throw error;
-
-    const batch = (data ?? []) as BackupRow[];
-    rows.push(...batch);
-    if (batch.length < PAGE_SIZE) break;
-
-    const nextId = batch[batch.length - 1]?.id;
-    if (nextId === undefined || nextId === null) break;
-    lastId = nextId as string | number;
-  }
-
-  return rows;
-}
-
 export async function createBackupSetting(
   input: CreateBackupSettingInput,
 ): Promise<BackupActionResult> {
@@ -112,6 +78,7 @@ export async function createBackupSetting(
       name: parsed.data.name,
       scope: parsed.data.scope,
       table_name: parsed.data.tableName,
+      table_names: parsed.data.tableNames,
       format: parsed.data.format,
       created_by: auth.session.userId,
     })
@@ -135,6 +102,7 @@ export async function createBackupSetting(
       scope: parsed.data.scope,
       format: parsed.data.format,
       tableName: parsed.data.tableName,
+      tableNames: parsed.data.tableNames,
     },
   });
 
@@ -159,6 +127,7 @@ export async function updateBackupSetting(
       name: parsed.data.name,
       scope: parsed.data.scope,
       table_name: parsed.data.tableName,
+      table_names: parsed.data.tableNames,
       format: parsed.data.format,
     })
     .eq("id", parsed.data.id);
@@ -180,6 +149,7 @@ export async function updateBackupSetting(
       scope: parsed.data.scope,
       format: parsed.data.format,
       tableName: parsed.data.tableName,
+      tableNames: parsed.data.tableNames,
     },
   });
 
@@ -265,16 +235,13 @@ export async function runBackupExport(
       rowCounts[setting.tableName] = rows.length;
       files = [buildSingleTableFile(setting.tableName, rows, setting.format)];
     } else {
-      const tables: Partial<Record<BackupExportTable, BackupRow[]>> = {};
-      const fetched = await Promise.all(
-        BACKUP_EXPORT_TABLES.map(async (tableName) => {
-          const rows = await fetchTableRows(tableName);
-          return [tableName, rows] as const;
-        }),
-      );
-      for (const [tableName, rows] of fetched) {
-        tables[tableName] = rows;
-        rowCounts[tableName] = rows.length;
+      const selected =
+        setting.scope === "multiple"
+          ? setting.tableNames
+          : BACKUP_EXPORT_TABLES;
+      const tables = await fetchAllTables(selected);
+      for (const tableName of selected) {
+        rowCounts[tableName] = tables[tableName]?.length ?? 0;
       }
       files = buildAllTablesFiles(tables, setting.format);
     }
@@ -285,12 +252,14 @@ export async function runBackupExport(
       .eq("id", setting.id);
 
     if (stampError) {
-      return unexpectedActionError({
+      // The export itself succeeded; log and still hand the files back.
+      await recordAppError({
+        severity: "warning",
         source: "actions.backups.runBackupExport",
+        code: stampError.code ?? null,
+        message: `Could not update last_exported_at: ${stampError.message}`,
         actorId: auth.session.userId,
-        error: stampError,
-        isExpected: false,
-        userMessage: "Export built but could not update last-exported time.",
+        context: { settingId: setting.id },
       });
     }
 
@@ -303,6 +272,7 @@ export async function runBackupExport(
         scope: setting.scope,
         format: setting.format,
         tableName: setting.tableName,
+        tableNames: setting.tableNames,
         fileCount: files.length,
         rowCounts,
       },

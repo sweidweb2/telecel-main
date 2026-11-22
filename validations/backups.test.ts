@@ -21,9 +21,34 @@ describe("createBackupSettingSchema", () => {
         name: "Profiles CSV",
         scope: "single",
         tableName: "profiles",
+        tableNames: null,
         format: "csv",
       });
     }
+  });
+
+  it("accepts a multiple-table setting in canonical order", () => {
+    const result = createBackupSettingSchema.safeParse({
+      name: "Content",
+      scope: "multiple",
+      tableNames: ["site_settings", "blogs", "blogs"],
+      format: "json",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tableNames).toEqual(["blogs", "site_settings"]);
+      expect(result.data.tableName).toBeNull();
+    }
+  });
+
+  it("rejects multiple scope with fewer than two tables", () => {
+    const result = createBackupSettingSchema.safeParse({
+      name: "One",
+      scope: "multiple",
+      tableNames: ["blogs"],
+      format: "csv",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("accepts all-tables JSON and clears tableName", () => {

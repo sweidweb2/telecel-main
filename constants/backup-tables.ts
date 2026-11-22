@@ -5,6 +5,8 @@ export const BACKUP_EXPORT_TABLES = [
   "inquiries",
   "audit_log",
   "app_errors",
+  "site_settings",
+  "backup_export_settings",
 ] as const;
 
 export type BackupExportTable = (typeof BACKUP_EXPORT_TABLES)[number];
@@ -12,7 +14,7 @@ export type BackupExportTable = (typeof BACKUP_EXPORT_TABLES)[number];
 export const BACKUP_EXPORT_FORMATS = ["csv", "json"] as const;
 export type BackupExportFormat = (typeof BACKUP_EXPORT_FORMATS)[number];
 
-export const BACKUP_EXPORT_SCOPES = ["all", "single"] as const;
+export const BACKUP_EXPORT_SCOPES = ["all", "single", "multiple"] as const;
 export type BackupExportScope = (typeof BACKUP_EXPORT_SCOPES)[number];
 
 export const BACKUP_TABLE_LABELS: Record<BackupExportTable, string> = {
@@ -21,6 +23,8 @@ export const BACKUP_TABLE_LABELS: Record<BackupExportTable, string> = {
   inquiries: "Inquiries",
   audit_log: "Activity log",
   app_errors: "Error log",
+  site_settings: "Site settings",
+  backup_export_settings: "Export settings",
 };
 
 export function isBackupExportTable(value: string): value is BackupExportTable {

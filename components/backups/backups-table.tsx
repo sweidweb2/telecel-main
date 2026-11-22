@@ -29,6 +29,9 @@ import type { BackupExportSetting } from "@/types/backups";
 
 function scopeLabel(setting: BackupExportSetting): string {
   if (setting.scope === "all") return "All tables";
+  if (setting.scope === "multiple") {
+    return setting.tableNames.map((t) => BACKUP_TABLE_LABELS[t]).join(", ");
+  }
   return setting.tableName
     ? BACKUP_TABLE_LABELS[setting.tableName]
     : "One table";

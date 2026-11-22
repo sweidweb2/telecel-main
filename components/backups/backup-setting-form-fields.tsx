@@ -15,6 +15,7 @@ import {
   type BackupExportScope,
   type BackupExportTable,
 } from "@/constants/backup-tables";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ export type BackupSettingFormValues = {
   name: string;
   scope: BackupExportScope;
   tableName: BackupExportTable | null;
+  tableNames: BackupExportTable[];
   format: BackupExportFormat;
 };
 
@@ -85,13 +87,20 @@ export function BackupSettingFormFields({
               items={{ all: "All tables", single: "One table" }}
               value={field.value}
               onValueChange={(value) => {
-                if (value !== "all" && value !== "single") return;
+                if (
+                  value !== "all" &&
+                  value !== "single" &&
+                  value !== "multiple"
+                ) {
+                  return;
+                }
                 field.onChange(value);
-                if (value === "all") {
+                if (value !== "single") {
                   setValue("tableName", null);
                 } else if (!watch("tableName")) {
                   setValue("tableName", "profiles");
                 }
+                if (value !== "multiple") setValue("tableNames", []);
               }}
               disabled={disabled}
             >
@@ -105,12 +114,54 @@ export function BackupSettingFormFields({
               <SelectContent>
                 <SelectItem value="all">All tables</SelectItem>
                 <SelectItem value="single">One table</SelectItem>
+                <SelectItem value="multiple">Multiple tables</SelectItem>
               </SelectContent>
             </Select>
             <FormFieldError message={fieldState.error?.message} />
           </Field>
         )}
       />
+
+      {scope === "multiple" ? (
+        <Controller
+          name="tableNames"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={Boolean(fieldState.error)}>
+              <Label>Tables</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {BACKUP_EXPORT_TABLES.map((table) => {
+                  const checkboxId = `${idPrefix}-tables-${table}`;
+                  const checked = field.value.includes(table);
+                  return (
+                    <label
+                      key={table}
+                      htmlFor={checkboxId}
+                      className="flex min-h-11 items-center gap-2 text-sm sm:min-h-8"
+                    >
+                      <Checkbox
+                        id={checkboxId}
+                        checked={checked}
+                        disabled={disabled}
+                        aria-invalid={Boolean(fieldState.error)}
+                        onCheckedChange={(next) => {
+                          field.onChange(
+                            next
+                              ? [...field.value, table]
+                              : field.value.filter((t) => t !== table),
+                          );
+                        }}
+                      />
+                      {BACKUP_TABLE_LABELS[table]}
+                    </label>
+                  );
+                })}
+              </div>
+              <FormFieldError message={fieldState.error?.message} />
+            </Field>
+          )}
+        />
+      ) : null}
 
       {scope === "single" ? (
         <Controller
