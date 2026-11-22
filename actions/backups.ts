@@ -21,6 +21,8 @@ import {
   type BackupExportFile,
 } from "@/lib/backup-export";
 import { fetchAllTables, fetchTableRows } from "@/lib/backup-data";
+import { getBackupStorage } from "@/lib/backup-storage";
+import { buildRunStamp, manualExportFolder } from "@/lib/scheduled-backup";
 import {
   createBackupSettingSchema,
   deleteBackupSettingSchema,
@@ -35,8 +37,13 @@ import {
 export type BackupActionResult =
   { status: "success"; message: string } | { status: "error"; message: string };
 
+/** Short-lived signed URL for one uploaded export file. */
+export type BackupDownload = { filename: string; url: string };
+
+const MANUAL_EXPORT_URL_TTL_SECONDS = 300;
+
 export type BackupExportResult =
-  | { status: "success"; message: string; files: BackupExportFile[] }
+  | { status: "success"; message: string; downloads: BackupDownload[] }
   | { status: "error"; message: string };
 
 function validationMessage(error: { issues: { message: string }[] }): string {
@@ -246,6 +253,21 @@ export async function runBackupExport(
       files = buildAllTablesFiles(tables, setting.format);
     }
 
+    // Upload to private storage (manual/<stamp>/…, pruned after 7 days by the
+    // backup cron) and hand back signed URLs instead of the file contents.
+    const storage = getBackupStorage();
+    const folder = manualExportFolder(buildRunStamp());
+    const runId = crypto.randomUUID().slice(0, 8);
+    const downloads: BackupDownload[] = [];
+    for (const file of files) {
+      const path = `${folder}/${runId}_${file.filename}`;
+      await storage.upload(path, file.content, file.mimeType);
+      downloads.push({
+        filename: file.filename,
+        url: await storage.signedUrl(path, MANUAL_EXPORT_URL_TTL_SECONDS),
+      });
+    }
+
     const { error: stampError } = await auth.session.supabase
       .from("backup_export_settings")
       .update({ last_exported_at: new Date().toISOString() })
@@ -274,6 +296,7 @@ export async function runBackupExport(
         tableName: setting.tableName,
         tableNames: setting.tableNames,
         fileCount: files.length,
+        folder,
         rowCounts,
       },
     });
@@ -285,7 +308,7 @@ export async function runBackupExport(
         files.length === 1
           ? "Download started."
           : `${files.length} downloads started.`,
-      files,
+      downloads,
     };
   } catch (error) {
     return unexpectedActionError({

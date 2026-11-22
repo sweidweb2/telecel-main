@@ -170,3 +170,82 @@ export function isSafeScheduledBackupPath(relative: string): boolean {
     !/^\.+$/.test(file)
   );
 }
+
+/* ---------- Table parts: scheduled/<stamp>/<table>.<NNNN>.json ---------- */
+
+/** Flush a part once it reaches this many rows… */
+export const PART_MAX_ROWS = 20_000;
+/** …or roughly this many bytes of JSON, whichever comes first. */
+export const PART_MAX_BYTES = 20 * 1024 * 1024;
+
+export function runTablePartPath(
+  stamp: string,
+  table: string,
+  part: number,
+): string {
+  return `${runFolderPath(stamp)}/${table}.${String(part).padStart(4, "0")}.json`;
+}
+
+export type BackupPart = { path: string; rows: number; bytes: number };
+
+/**
+ * Buffers keyset pages for one table and uploads a compact JSON array part
+ * whenever the row or byte limit is reached, so only one part is ever held in
+ * memory. `finish()` flushes the remainder (always at least one part, so an
+ * empty table still yields `<table>.0001.json` containing `[]`).
+ */
+export function createTablePartWriter(options: {
+  stamp: string;
+  table: string;
+  upload: (path: string, content: string) => Promise<void>;
+  maxRows?: number;
+  maxBytes?: number;
+}) {
+  const maxRows = options.maxRows ?? PART_MAX_ROWS;
+  const maxBytes = options.maxBytes ?? PART_MAX_BYTES;
+  const parts: BackupPart[] = [];
+  let buffer: string[] = [];
+  let bufferBytes = 0;
+  const encoder = new TextEncoder();
+
+  async function flush() {
+    const content = `[${buffer.join(",")}]`;
+    const path = runTablePartPath(
+      options.stamp,
+      options.table,
+      parts.length + 1,
+    );
+    await options.upload(path, content);
+    parts.push({
+      path,
+      rows: buffer.length,
+      bytes: encoder.encode(content).length,
+    });
+    buffer = [];
+    bufferBytes = 0;
+  }
+
+  return {
+    async write(rows: readonly unknown[]) {
+      for (const row of rows) {
+        const json = JSON.stringify(row);
+        buffer.push(json);
+        bufferBytes += encoder.encode(json).length + 1;
+        if (buffer.length >= maxRows || bufferBytes >= maxBytes) await flush();
+      }
+    },
+    async finish(): Promise<BackupPart[]> {
+      if (buffer.length > 0 || parts.length === 0) await flush();
+      return parts;
+    },
+  };
+}
+
+/* ---------- Manual exports: manual/<stamp>/<id>_<file> ---------- */
+
+export const MANUAL_EXPORT_PREFIX = "manual";
+export const MANUAL_EXPORT_RETENTION_DAYS = 7;
+
+export function manualExportFolder(stamp: string): string {
+  return `${MANUAL_EXPORT_PREFIX}/${stamp}`;
+}

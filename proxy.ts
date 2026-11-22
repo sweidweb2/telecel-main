@@ -61,12 +61,22 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
 }
 
 /** Carries refreshed session cookies (with their options) onto a redirect. */
-function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
-  const redirect = NextResponse.redirect(url);
+/** Headers setAll() attached to a refreshed-session response (cache safety). */
+const SESSION_HEADER_NAMES = ["cache-control", "expires", "pragma"] as const;
+
+function copySessionState(from: NextResponse, to: NextResponse): NextResponse {
   for (const cookie of from.cookies.getAll()) {
-    redirect.cookies.set(cookie);
+    to.cookies.set(cookie);
   }
-  return redirect;
+  for (const name of SESSION_HEADER_NAMES) {
+    const value = from.headers.get(name);
+    if (value !== null) to.headers.set(name, value);
+  }
+  return to;
+}
+
+function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
+  return copySessionState(from, NextResponse.redirect(url));
 }
 
 /** Seconds clients should wait before retrying during maintenance. */
@@ -91,11 +101,7 @@ function maintenanceRewriteWithCookies(
   request: NextRequest,
   from: NextResponse,
 ): NextResponse {
-  const rewrite = maintenanceRewrite(request);
-  for (const cookie of from.cookies.getAll()) {
-    rewrite.cookies.set(cookie);
-  }
-  return rewrite;
+  return copySessionState(from, maintenanceRewrite(request));
 }
 
 export async function proxy(request: NextRequest) {
@@ -148,7 +154,7 @@ export async function proxy(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
@@ -156,6 +162,13 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
+        // A refreshed session must never be cached by a CDN or shared cache.
+        for (const [name, value] of Object.entries(headers ?? {})) {
+          response.headers.set(name, value);
+        }
+        if (cookiesToSet.length > 0) {
+          response.headers.set("Cache-Control", "private, no-store");
+        }
       },
     },
   });

@@ -14,7 +14,9 @@ const ACTIVITY_COLUMNS =
   "id, action, entity_type, entity_id, summary, created_at, actor:profiles!audit_log_actor_id_fkey(full_name, email)" as const;
 
 /** Max profiles the actor filter resolves before asking the admin to refine. */
-const ACTOR_MATCH_CAP = 1000;
+// Fetch CAP + 1 to detect overflow; stays far below PostgREST max_rows (1000)
+// and keeps the `actor_id in (...)` URL short.
+const ACTOR_MATCH_CAP = 100;
 
 /**
  * Paginated activity log for the admin Activity page.

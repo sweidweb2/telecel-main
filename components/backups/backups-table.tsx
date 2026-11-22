@@ -56,7 +56,7 @@ function ExportButton({ setting }: { setting: BackupExportSetting }) {
       }
 
       try {
-        await downloadExportFiles(result.files);
+        await downloadExportFiles(result.downloads);
         toast.success(result.message);
         router.refresh();
       } catch {

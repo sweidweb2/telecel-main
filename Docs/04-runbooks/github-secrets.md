@@ -37,6 +37,13 @@ suites write data.
 
 ### Preview Deploy (`preview.yml`): Vercel preview per same-repo PR
 
+These are **environment secrets** on the GitHub `preview` environment, not
+repository secrets. Configure required reviewers on that environment
+(Settings → Environments → `preview` → Required reviewers) so a PR cannot
+reach the Vercel token without approval. If a repository-scoped
+`VERCEL_TOKEN` exists from an earlier setup, delete it
+(`gh secret delete VERCEL_TOKEN`) and rotate the token in Vercel.
+
 | Secret | Where to get it |
 | --- | --- |
 | `VERCEL_TOKEN` | https://vercel.com/account/tokens → Create (scope it to the team that owns the project) |
@@ -65,10 +72,11 @@ gh secret set SUPABASE_ACCESS_TOKEN
 gh secret set SUPABASE_PROJECT_ID
 gh secret set SUPABASE_DB_PASSWORD
 
-# Vercel previews
-gh secret set VERCEL_TOKEN
-gh secret set VERCEL_ORG_ID
-gh secret set VERCEL_PROJECT_ID
+# Vercel previews: scoped to the "preview" environment, never repo-wide
+gh secret set VERCEL_TOKEN --env preview
+gh secret set VERCEL_ORG_ID --env preview
+gh secret set VERCEL_PROJECT_ID --env preview
+gh secret delete VERCEL_TOKEN   # only if a repo-scoped copy exists; then rotate it
 
 # Check what is set (names only, values are never shown)
 gh secret list
@@ -87,5 +95,6 @@ gh secret list
 
 ## Rotating
 
-Generate the new value at the source, run `gh secret set NAME` again, then
+Generate the new value at the source, run `gh secret set NAME` again
+(`gh secret set NAME --env preview` for the `VERCEL_*` secrets), then
 revoke the old token. Re-run the latest workflow to confirm.

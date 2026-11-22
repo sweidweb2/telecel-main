@@ -50,10 +50,6 @@ export async function submitInquiry(
     };
   }
 
-  if (!(await isActionAllowedDuringMaintenance())) {
-    return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
-  }
-
   const ip = await clientIp();
   const ipKey = `contact:ip:${ip}`;
   const emailKey = `contact:email:${parsed.data.email}`;
@@ -72,6 +68,11 @@ export async function submitInquiry(
     !consumeRateLimit(`contact:attempt:${ip}`, CONTACT_ATTEMPT_LIMIT, ONE_HOUR)
   ) {
     return { status: "error", message: RATE_LIMITED };
+  }
+
+  // After the attempt bucket so maintenance probes are throttled too.
+  if (!(await isActionAllowedDuringMaintenance())) {
+    return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
   }
 
   const turnstile = await verifyTurnstileToken({

@@ -27,8 +27,9 @@ export function allowAuthAuditWrite(ip: string, now = Date.now()): boolean {
 /** Throttled recordActivity/recordAppError bound to one client IP. */
 export function createAuthAuditor(ip: string) {
   return {
+    /** Rows tied to a real user are always written; anonymous ones are throttled. */
     async audit(input: RecordActivityInput): Promise<void> {
-      if (allowAuthAuditWrite(ip)) await recordActivity(input);
+      if (input.actorId || allowAuthAuditWrite(ip)) await recordActivity(input);
     },
     async logError(input: RecordAppErrorInput): Promise<void> {
       if (allowAuthAuditWrite(ip)) await recordAppError(input);

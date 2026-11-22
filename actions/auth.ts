@@ -7,7 +7,7 @@ import { recordActivity, recordAppError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
-import { allowAuthAuditWrite } from "@/lib/auth-audit-throttle";
+import { allowAuthAuditWrite, signInOutcome } from "@/lib/auth-audit-throttle";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
 import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -140,12 +140,17 @@ export async function signIn(
     return { status: "error", message: MAINTENANCE_LOGIN_BLOCKED };
   }
 
+  // sign_in only for active profiles with a role; requireStaff() signs the
+  // rest out on the next request.
+  const outcome = await signInOutcome();
   await recordActivity({
     actorId: userId,
-    action: "sign_in",
+    action: outcome.ok ? "sign_in" : "sign_in_blocked",
     entityType: "auth",
     entityId: userId,
-    summary: { method: "password" },
+    summary: outcome.ok
+      ? { method: "password" }
+      : { method: "password", reason: outcome.reason },
   });
 
   return {

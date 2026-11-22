@@ -5,10 +5,7 @@ import { redirect } from "next/navigation";
 
 import { canAccessSection, getPortalSection } from "@/constants/dashboard-nav";
 import { loginPath, ROUTES, type LoginReason } from "@/constants/routes";
-import {
-  getMaintenanceMode,
-  getMaintenanceModeUncached,
-} from "@/data/site-settings";
+import { getMaintenanceModeUncached } from "@/data/site-settings";
 import { isMaintenanceActive } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/types/profile";
@@ -71,15 +68,11 @@ export async function requireStaff(nextPath?: string): Promise<StaffSession> {
   if (!context.sessionFresh) endSession("session-expired");
   if (!context.isActive || !context.role) endSession("no-access");
   // Proxy gate is JWT-optimistic; the DB role decides during maintenance.
-  if (context.role !== "admin" && (await isMaintenanceOn())) {
+  if (context.role !== "admin" && (await isMaintenanceOnUncached())) {
     redirect(ROUTES.maintenance);
   }
 
   return { ...context, role: context.role, supabase: await createClient() };
-}
-
-async function isMaintenanceOn(): Promise<boolean> {
-  return isMaintenanceActive(await getMaintenanceMode());
 }
 
 /** Direct DB read (no SWR cache) for authoritative action enforcement. */
@@ -109,8 +102,7 @@ export async function isActionAllowedDuringMaintenance(): Promise<boolean> {
  * returns false when maintenance blocks them.
  */
 export async function allowSessionDuringMaintenance(): Promise<boolean> {
-  const mode = await getMaintenanceMode();
-  if (!isMaintenanceActive(mode)) return true;
+  if (!(await isMaintenanceOnUncached())) return true;
 
   const context = await getSessionContext();
   if (context?.role === "admin" && context.isActive) return true;

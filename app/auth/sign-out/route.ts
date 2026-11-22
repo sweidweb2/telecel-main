@@ -66,28 +66,39 @@ export async function POST(request: NextRequest) {
   return endSessionAndRedirect(request, parseReason(request), "route.post");
 }
 
+function noStoreRedirect(request: NextRequest, path: string): NextResponse {
+  const response = NextResponse.redirect(new URL(path, request.url));
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 /**
  * Server Components cannot write cookies, so guards in data/auth.ts redirect
  * here (a GET) when a session expired or access was revoked. To keep GET free
- * of CSRF-able side effects, it only clears cookies for sessions that are
- * already unusable; a healthy session is sent back to the dashboard untouched.
+ * of CSRF-able side effects, it only clears cookies for sessions confirmed
+ * unusable (expired, inactive or without a role). A healthy session goes back
+ * to the dashboard (or /maintenance for non-admins during maintenance), and a
+ * transient session lookup failure goes to /login without signing out.
  */
 export async function GET(request: NextRequest) {
-  const context = await getSessionContext().catch(() => null);
-  let healthy = Boolean(
-    context && context.sessionFresh && context.isActive && context.role,
-  );
-  // A non-admin during maintenance cannot use the dashboard: not healthy.
-  if (healthy && context?.role !== "admin") {
+  let context: Awaited<ReturnType<typeof getSessionContext>>;
+  try {
+    context = await getSessionContext();
+  } catch {
+    return noStoreRedirect(request, loginPath({}));
+  }
+  if (!context) return noStoreRedirect(request, loginPath({}));
+
+  const unusable = !context.sessionFresh || !context.isActive || !context.role;
+  if (unusable) {
+    return endSessionAndRedirect(request, parseReason(request), "route.get");
+  }
+
+  if (context.role !== "admin") {
     const mode = await getMaintenanceModeUncached().catch(() => null);
-    if (mode && isMaintenanceActive(mode)) healthy = false;
+    if (mode && isMaintenanceActive(mode)) {
+      return noStoreRedirect(request, ROUTES.maintenance);
+    }
   }
-  if (healthy) {
-    const response = NextResponse.redirect(
-      new URL(ROUTES.dashboard, request.url),
-    );
-    response.headers.set("Cache-Control", "no-store");
-    return response;
-  }
-  return endSessionAndRedirect(request, parseReason(request), "route.get");
+  return noStoreRedirect(request, ROUTES.dashboard);
 }

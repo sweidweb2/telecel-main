@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildRunStamp,
+  createTablePartWriter,
   DEFAULT_RETENTION_DAYS,
   isAuthorizedCronRequest,
   isSafeScheduledBackupPath,
   parseRetentionDays,
   parseRunStamp,
   runManifestPath,
+  runTablePartPath,
   runTablePath,
   selectExpiredBackups,
   selectExpiredRuns,
@@ -152,5 +154,83 @@ describe("run folders", () => {
     expect(isSafeScheduledBackupPath("2026-11-22T02-00-05Z/..")).toBe(false);
     expect(isSafeScheduledBackupPath("a/b/c.json")).toBe(false);
     expect(isSafeScheduledBackupPath("..")).toBe(false);
+  });
+});
+
+describe("createTablePartWriter", () => {
+  const stamp = "2026-11-22T02-00-05Z";
+
+  function collect() {
+    const uploads: { path: string; content: string }[] = [];
+    return {
+      uploads,
+      upload: async (path: string, content: string) => {
+        uploads.push({ path, content });
+      },
+    };
+  }
+
+  it("splits rows into numbered parts by row count", async () => {
+    const sink = collect();
+    const writer = createTablePartWriter({
+      stamp,
+      table: "blogs",
+      upload: sink.upload,
+      maxRows: 2,
+    });
+    await writer.write([{ id: 1 }, { id: 2 }, { id: 3 }]);
+    await writer.write([{ id: 4 }, { id: 5 }]);
+    const parts = await writer.finish();
+    expect(parts.map((p) => [p.path, p.rows])).toEqual([
+      ["scheduled/2026-11-22T02-00-05Z/blogs.0001.json", 2],
+      ["scheduled/2026-11-22T02-00-05Z/blogs.0002.json", 2],
+      ["scheduled/2026-11-22T02-00-05Z/blogs.0003.json", 1],
+    ]);
+    expect(sink.uploads.flatMap((u) => JSON.parse(u.content))).toEqual([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+      { id: 4 },
+      { id: 5 },
+    ]);
+  });
+
+  it("flushes on the byte budget", async () => {
+    const sink = collect();
+    const writer = createTablePartWriter({
+      stamp,
+      table: "blogs",
+      upload: sink.upload,
+      maxBytes: 10,
+    });
+    await writer.write([{ v: "aaaaaaaaaa" }, { v: "b" }]);
+    const parts = await writer.finish();
+    expect(parts).toHaveLength(2);
+    expect(parts[0].bytes).toBe(sink.uploads[0].content.length);
+  });
+
+  it("writes one empty part for an empty table", async () => {
+    const sink = collect();
+    const writer = createTablePartWriter({
+      stamp,
+      table: "inquiries",
+      upload: sink.upload,
+    });
+    const parts = await writer.finish();
+    expect(parts).toEqual([
+      {
+        path: "scheduled/2026-11-22T02-00-05Z/inquiries.0001.json",
+        rows: 0,
+        bytes: 2,
+      },
+    ]);
+    expect(sink.uploads[0].content).toBe("[]");
+  });
+
+  it("accepts part files as safe download paths", () => {
+    expect(runTablePartPath(stamp, "blogs", 12)).toBe(
+      "scheduled/2026-11-22T02-00-05Z/blogs.0012.json",
+    );
+    expect(isSafeScheduledBackupPath(`${stamp}/blogs.0012.json`)).toBe(true);
   });
 });

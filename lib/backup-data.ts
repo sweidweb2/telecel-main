@@ -11,17 +11,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const PAGE_SIZE = 1000;
 
 /**
- * Full-row dump of one allowlisted table via the service-role client.
- * Callers must authorize first (admin action or CRON_SECRET).
- * Keyset pagination on the table's primary key keeps pages stable while rows
- * are inserted/deleted mid-export.
+ * Keyset-paginated pages of one allowlisted table via the service-role client.
+ * Callers must authorize first (admin action or CRON_SECRET). Paging on the
+ * primary key keeps pages stable while rows are inserted/deleted mid-export;
+ * the loop only ends once a page comes back empty (a short page is not proof
+ * that no rows remain).
  */
-export async function fetchTableRows(
+export async function* iterateTablePages(
   tableName: BackupExportTable,
-): Promise<BackupRow[]> {
+): AsyncGenerator<BackupRow[]> {
   const admin = createAdminClient();
   const pk = BACKUP_TABLE_PRIMARY_KEYS[tableName];
-  const rows: BackupRow[] = [];
   let cursor: string | number | null = null;
 
   for (;;) {
@@ -37,11 +37,18 @@ export async function fetchTableRows(
     if (error) throw error;
 
     const batch = (data ?? []) as BackupRow[];
-    rows.push(...batch);
-    if (batch.length < PAGE_SIZE) break;
+    if (batch.length === 0) return;
+    yield batch;
     cursor = batch[batch.length - 1][pk] as string | number;
   }
+}
 
+/** Full-row dump of one allowlisted table (whole table in memory). */
+export async function fetchTableRows(
+  tableName: BackupExportTable,
+): Promise<BackupRow[]> {
+  const rows: BackupRow[] = [];
+  for await (const batch of iterateTablePages(tableName)) rows.push(...batch);
   return rows;
 }
 

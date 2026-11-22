@@ -45,8 +45,8 @@ RFQ §4.2 asks for staging, UAT and production processes. Use separate Supabase 
 `vercel.json` registers a daily Vercel Cron (`0 2 * * *`, UTC) hitting `GET /api/cron/backup`. The route:
 
 1. Rejects anything without `Authorization: Bearer $CRON_SECRET` (401; an unset secret denies everything).
-2. Dumps every table in `constants/backup-tables.ts` (same code as the manual export) to one JSON file, `scheduled/all_tables_<timestamp>.json`, in the private Supabase Storage bucket `backups` (migration `20261122090000`, no RLS policies, so service role only).
-3. Deletes files in `scheduled/` older than `BACKUP_RETENTION_DAYS` (default 30).
+2. Streams every table in `constants/backup-tables.ts` from the keyset loop into compact JSON parts, `scheduled/<stamp>/<table>.<NNNN>.json` (a new part every 20k rows or ~20MB), then writes `manifest.json` listing the parts, in the private Supabase Storage bucket `backups` (migration `20261122090000`, no RLS policies, so service role only).
+3. Deletes run folders older than `BACKUP_RETENTION_DAYS` (default 30) and manual export folders (`manual/<stamp>/`) older than 7 days.
 4. Logs success/failure to the activity log (`entity_type = scheduled_backup`) and failures to the error log (`source = api.cron.backup`).
 
 Admins see the last run and stored files under **Scheduled backups** on `/dashboard/backups`; downloads use 60-second signed URLs. The route is exempt from maintenance mode.
@@ -58,6 +58,12 @@ Admins see the last run and stored files under **Scheduled backups** on `/dashbo
 
 Manual test: `curl -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/backup`.
 Storage is behind `BackupStorageAdapter` (`lib/scheduled-backup.ts`, Supabase impl in `lib/backup-storage.ts`); swap `getBackupStorage()` to move to S3 or similar. Vercel Hobby plans allow daily crons only.
+
+Manual exports on `/dashboard/backups` are uploaded to `manual/<stamp>/` in the same bucket and downloaded through 5-minute signed URLs.
+
+### Known limitations
+
+- Table exports (manual and scheduled) are not a single transactional snapshot: each table is paged separately by primary key, so rows written while an export runs may or may not appear, and related tables can be slightly out of sync. Use Supabase point-in-time recovery / database backups when you need a consistent snapshot.
 
 ## CI secrets (GitHub → Settings → Secrets)
 
