@@ -1,12 +1,12 @@
 import "server-only";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { unexpectedActionError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { insightPath, ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
-import { BLOGS_CACHE_TAG } from "@/data/blogs";
+import { BLOGS_CACHE_TAG, blogSlugTag } from "@/lib/cache-tags";
 
 export type BlogActionResult =
   | { status: "success"; message: string; id?: string }
@@ -63,15 +63,20 @@ export async function blogUnexpectedError(
   });
 }
 
-/** Revalidates listings, the sitemap and every detail path that changed. */
+/**
+ * Expires every public blog read after a create/update/delete/publish/media
+ * change. `updateTag` (Server Actions only) makes the next request wait for
+ * fresh data instead of serving stale content. Pass old and new slugs on rename.
+ */
 export function refreshBlogPaths(...slugs: (string | null | undefined)[]) {
-  revalidateTag(BLOGS_CACHE_TAG, "max");
+  updateTag(BLOGS_CACHE_TAG);
   revalidatePath(ROUTES.blogs);
   revalidatePath(ROUTES.insights);
   revalidatePath("/sitemap.xml");
   for (const slug of new Set(
     slugs.filter((value): value is string => Boolean(value)),
   )) {
+    updateTag(blogSlugTag(slug));
     revalidatePath(insightPath(slug));
   }
 }

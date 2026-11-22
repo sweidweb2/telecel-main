@@ -6,6 +6,9 @@ import { ROUTES } from "@/constants/routes";
 import { getAllInsights, getFeaturedInsight } from "@/data/insights";
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 
+/** ISR backstop; CMS actions expire the "blogs" tag immediately on change. */
+export const revalidate = 300;
+
 export const metadata = buildMarketingMetadata({
   path: ROUTES.insights,
   title: "Insights",
