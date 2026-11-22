@@ -18,9 +18,6 @@
     "bones:build": "boneyard-js build http://localhost:3000",
     "bones:watch": "boneyard-js build --watch http://localhost:3000",
     "brand:extract": "node scripts/extract-brand-assets.mjs",
-    "db:start": "supabase start",
-    "db:stop": "supabase stop",
-    "db:reset": "supabase db reset",
     "db:migrate:remote": "supabase db push",
     "db:types": "supabase gen types typescript --linked > types/database.ts",
     "prepare": "husky"
