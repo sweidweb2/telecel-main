@@ -14,7 +14,8 @@ import {
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 import { SITE_NAME } from "@/lib/seo/site";
 
-export const dynamicParams = false;
+// Allow newly published slugs after revalidate without waiting for a rebuild.
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await getInsightSlugs();

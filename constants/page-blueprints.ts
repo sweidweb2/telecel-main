@@ -19,10 +19,7 @@ import type {
 
 export type { BlueprintSectionConfig, PageBlueprintConfig };
 
-/**
- * Homepage wireframe — modules land when the approved home composition ships.
- * Copy stays aligned with `HOME_HERO`.
- */
+/** Meta + header copy for `/` — body is composed in the home route. */
 export const HOME_BLUEPRINT: PageBlueprintConfig = {
   path: "/",
   eyebrow: HOME_HERO.eyebrow,
@@ -30,53 +27,6 @@ export const HOME_BLUEPRINT: PageBlueprintConfig = {
   description: HOME_HERO.body,
   metaTitle: "Telecel Global | International Connectivity & Digital Services",
   metaDescription: HOME_HERO.body,
-  sections: [
-    {
-      id: "hero",
-      title: "Hero",
-      note: "Silent loopable film + headline, subline, service line, Explore Services + Talk to Sales.",
-    },
-    {
-      id: "customer-challenge",
-      title: "Customer challenge and value",
-      note: "Move faster with one accountable technology partner.",
-    },
-    {
-      id: "service-pillars",
-      title: "Service pillar module",
-      note: "International capability. One managed experience. — five pillar cards in approved order.",
-    },
-    {
-      id: "outcomes",
-      title: "Outcome-led value module",
-      note: "Built around how your business grows. — five buyer-value outcomes.",
-    },
-    {
-      id: "solutions-by-customer",
-      title: "Solutions by customer",
-      note: "Designed for the decisions you need to make. — four audience pathways.",
-    },
-    {
-      id: "delivery-model",
-      title: "Delivery model",
-      note: "From complexity to execution. — Connect, Orchestrate, Deliver, Monitor, Optimize.",
-    },
-    {
-      id: "proof",
-      title: "Proof and differentiation",
-      note: "Built on operator experience. Designed for international growth. — no invented metrics/logos.",
-    },
-    {
-      id: "why-telecel-global",
-      title: "Why Telecel Global",
-      note: "Operator-led understanding, one accountable relationship, reach, agility, proximity.",
-    },
-    {
-      id: "lead-capture",
-      title: "Final CTA and inquiry form",
-      note: "Ready to connect the next opportunity? — Talk to Sales / Request a Demo.",
-    },
-  ],
 };
 
 /** Meta + header copy for `/platform` — body is composed in the route. */

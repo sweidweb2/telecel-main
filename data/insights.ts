@@ -19,8 +19,8 @@ export async function getAllInsights(): Promise<ArticleListItem[]> {
 }
 
 /**
- * Public insights list, filtered in Postgres when a category tab is active
- * (`blogs.categories` contains the tab label).
+ * Public insights list filtered from the cached published list when a
+ * category tab is active (`blogs.categories` label match).
  */
 export async function getInsights(
   categoryTab: BlogTabId = "all",

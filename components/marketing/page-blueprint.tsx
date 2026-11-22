@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { Heading } from "@/components/ui/heading";
@@ -86,7 +84,6 @@ type BlueprintSectionProps = {
   title: string;
   note?: string;
   tone?: "default" | "surface";
-  children?: ReactNode;
 };
 
 /** Named section shell with a default skeleton body. */
@@ -95,7 +92,6 @@ export function BlueprintSection({
   title,
   note,
   tone = "default",
-  children,
 }: BlueprintSectionProps) {
   return (
     <Section id={id} tone={tone} bleed>
@@ -113,7 +109,7 @@ export function BlueprintSection({
             ) : null}
           </div>
           <div className="min-w-0 lg:col-span-8">
-            {children ?? <BlueprintPlaceholder />}
+            <BlueprintPlaceholder />
           </div>
         </div>
       </Container>

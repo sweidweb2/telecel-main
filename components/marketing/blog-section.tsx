@@ -3,13 +3,12 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
-import { BlogArticleFilters } from "@/components/marketing/blog-article-filters";
+import { BlogArticlesPanel } from "@/components/marketing/blog-articles-panel";
 import { BlogCard } from "@/components/marketing/blog-card";
 import type { BlogLabels } from "@/components/marketing/blog-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
-import type { BlogTabId } from "@/constants/blog-ui";
 import { insightPath } from "@/constants/routes";
 import type { ArticleListItem } from "@/types/article";
 
@@ -24,10 +23,9 @@ function authorInitials(name: string) {
 
 type BlogSectionProps = {
   labels: BlogLabels;
+  /** Full published list — category filtering happens in the client panel. */
   articles: ArticleListItem[];
   featured?: ArticleListItem;
-  /** Active category tab from `?category=` — defaults to all. */
-  activeTab?: BlogTabId;
 };
 
 function FeaturedPost({
@@ -133,20 +131,11 @@ function FeaturedPost({
 }
 
 /**
- * Insights listing shell (Server Component). Header, featured, and article
- * grid stay on the server; only the category tabs are a client island.
- * `articles` must already be category-filtered in `data/insights`.
+ * Insights listing shell. Header + featured stay on the server; tabs and the
+ * filtered grid are a client island so `?category=` does not force a dynamic
+ * Server Component render.
  */
-export function BlogSection({
-  labels,
-  articles,
-  featured,
-  activeTab = "all",
-}: BlogSectionProps) {
-  const gridArticles = featured
-    ? articles.filter((article) => article.id !== featured.id)
-    : articles;
-
+export function BlogSection({ labels, articles, featured }: BlogSectionProps) {
   return (
     <main>
       <section className="py-10 sm:py-14 lg:py-16">
@@ -168,24 +157,11 @@ export function BlogSection({
       <Container className="flex flex-col gap-12 pb-16 md:gap-16 lg:pb-24">
         {featured ? <FeaturedPost labels={labels} article={featured} /> : null}
 
-        <div className="flex flex-col gap-8">
-          <BlogArticleFilters
-            labels={{ tabs: labels.tabs }}
-            activeTab={activeTab}
-          />
-
-          {gridArticles.length === 0 ? (
-            <Text variant="muted">{labels.emptyState}</Text>
-          ) : (
-            <ul className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-              {gridArticles.map((article) => (
-                <li key={article.id}>
-                  <BlogCard article={article} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <BlogArticlesPanel
+          labels={labels}
+          articles={articles}
+          featuredId={featured?.id}
+        />
       </Container>
     </main>
   );

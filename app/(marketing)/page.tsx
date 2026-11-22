@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ArrowRightIcon, ArrowUpRightIcon } from "lucide-react";
 
-import { SignalMotif } from "@/components/brand/signal-motif";
 import { Container } from "@/components/layout/container";
 import { PlatformRail } from "@/components/marketing/platform-rail";
 import { ServicePortfolioDiagram } from "@/components/marketing/service-portfolio-diagram";
+import { TalkToSalesSection } from "@/components/marketing/talk-to-sales-section";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -27,8 +27,8 @@ const useCases =
 /**
  * Foundation homepage in the "Connected Energies" system. The production
  * homepage (approved V11/V11.1 direction + hero film) replaces the hero
- * diagram slot; section order follows the RFQ: pillars, outcomes, buyer
- * routes, delivery model, proof, CTAs. All copy is provisional.
+ * diagram slot; section order: hero, platform rail, buyer routes, use cases,
+ * CTA. All copy is provisional.
  */
 export default function HomePage() {
   return (
@@ -166,42 +166,12 @@ export default function HomePage() {
         </Container>
       </section>
 
-      <section className="border-t bg-surface">
-        <Container className="flex items-stretch gap-8 py-14 lg:gap-16 lg:py-20">
-          <SignalMotif rows={6} className="hidden h-48 w-auto sm:block" />
-          <div className="flex flex-1 flex-col justify-center gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <Heading level="section" className="max-w-[18ch]">
-                Talk to the team behind the platform
-              </Heading>
-              <Text variant="lead" className="mt-4 max-w-[52ch]">
-                Tell us what you need to connect, secure or launch. We route
-                every request to the right specialists.
-              </Text>
-            </div>
-            <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
-              <Link
-                href={SITE_CTAS.talkToSales.href}
-                className={cn(
-                  buttonVariants({ size: "cta" }),
-                  "w-full sm:w-auto",
-                )}
-              >
-                {SITE_CTAS.talkToSales.label}
-              </Link>
-              <Link
-                href={SITE_CTAS.requestDemo.href}
-                className={cn(
-                  buttonVariants({ size: "cta", variant: "ink-outline" }),
-                  "w-full bg-background sm:w-auto",
-                )}
-              >
-                {SITE_CTAS.requestDemo.label}
-              </Link>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <TalkToSalesSection
+        title="Talk to the team behind the platform"
+        description="Tell us what you need to connect, secure or launch. We route every request to the right specialists."
+        showRequestDemo
+        showMotif
+      />
     </main>
   );
 }

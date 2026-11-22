@@ -30,6 +30,7 @@ describe("marketing catalog sync", () => {
   it("keeps home and services blueprint copy aligned with live heroes", () => {
     expect(HOME_BLUEPRINT.title).toBe(HOME_HERO.title);
     expect(HOME_BLUEPRINT.description).toBe(HOME_HERO.body);
+    expect(HOME_BLUEPRINT.sections).toBeUndefined();
     expect(SERVICES_HUB_BLUEPRINT.title).toBe(
       SERVICES_HERO.headline.replace(/\n/g, " "),
     );
