@@ -44,6 +44,7 @@ describe("blog helpers used by insights", () => {
       author_avatar_url: null,
       reading_time_minutes: 3,
       published_at: "2025-01-20T00:00:00.000Z",
+      updated_at: "2025-01-20T00:00:00.000Z",
       is_featured: false,
     });
 
@@ -59,7 +60,7 @@ describe("blog helpers used by insights", () => {
   });
 
   it("sanitizes script tags from html", () => {
-    const clean = sanitizeBlogHtml('<p>Hi</p><script>alert(1)</script>');
+    const clean = sanitizeBlogHtml("<p>Hi</p><script>alert(1)</script>");
     expect(clean).toContain("<p>Hi</p>");
     expect(clean).not.toContain("script");
   });

@@ -2,7 +2,7 @@
 
 import { nanoid } from "nanoid";
 
-import { recordActivity } from "@/actions/observability";
+import { recordActivity, recordAppError } from "@/actions/observability";
 import {
   authorizeStaff,
   blogUnexpectedError,
@@ -56,11 +56,11 @@ async function uploadImage(options: {
 
   const ext = extensionForMime(file.type);
   const path = `${blogId}/${nanoid(10)}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
 
+  // Pass File directly — avoid an extra full-buffer copy in memory.
   const { error: uploadError } = await session.supabase.storage
     .from(bucket)
-    .upload(path, buffer, {
+    .upload(path, file, {
       contentType: file.type,
       upsert: false,
     });
@@ -75,6 +75,16 @@ async function uploadImage(options: {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!supabaseUrl) {
+    const cleanup = await session.supabase.storage.from(bucket).remove([path]);
+    if (cleanup.error) {
+      await recordAppError({
+        severity: "warning",
+        source: "actions.blog-media.uploadImage",
+        actorId: session.session.userId,
+        message: cleanup.error.message ?? "Orphan upload cleanup failed",
+        context: { blogId, bucket, path },
+      });
+    }
     return blogUnexpectedError(
       "actions.blog-media.uploadImage",
       session.session.userId,
@@ -85,8 +95,8 @@ async function uploadImage(options: {
   const publicUrl = publicObjectUrl(supabaseUrl, bucket, path);
   const previousUrl =
     column === "thumbnail_url"
-      ? (existing as { thumbnail_url: string | null }).thumbnail_url
-      : (existing as { author_avatar_url: string | null }).author_avatar_url;
+      ? existing.thumbnail_url
+      : existing.author_avatar_url;
 
   const { error: updateError } =
     column === "thumbnail_url"
@@ -100,7 +110,16 @@ async function uploadImage(options: {
           .eq("id", blogId);
 
   if (updateError) {
-    await session.supabase.storage.from(bucket).remove([path]);
+    const cleanup = await session.supabase.storage.from(bucket).remove([path]);
+    if (cleanup.error) {
+      await recordAppError({
+        severity: "warning",
+        source: "actions.blog-media.uploadImage",
+        actorId: session.session.userId,
+        message: cleanup.error.message ?? "Orphan upload cleanup failed",
+        context: { blogId, bucket, path },
+      });
+    }
     return blogUnexpectedError(
       "actions.blog-media.uploadImage",
       session.session.userId,
@@ -108,14 +127,34 @@ async function uploadImage(options: {
     );
   }
 
-  await removeStorageUrlIfOwned(session.supabase, previousUrl, bucket);
-  await recordActivity({
-    actorId: session.session.userId,
-    action: "update",
-    entityType: "blog",
-    entityId: blogId,
-    summary: { image: column },
-  });
+  // Cleanup + audit are independent after the column write succeeds.
+  await Promise.all([
+    (async () => {
+      const previousCleanup = await removeStorageUrlIfOwned(
+        session.supabase,
+        previousUrl,
+        bucket,
+      );
+      if (!previousCleanup.ok) {
+        await recordAppError({
+          severity: "warning",
+          source: "actions.blog-media.uploadImage",
+          actorId: session.session.userId,
+          message:
+            previousCleanup.errorMessage ?? "Previous image cleanup failed",
+          context: { blogId, bucket, column },
+        });
+      }
+    })(),
+    recordActivity({
+      actorId: session.session.userId,
+      action: "update",
+      entityType: "blog",
+      entityId: blogId,
+      summary: { image: column },
+    }),
+  ]);
+
   refreshBlogPaths(existing.slug);
   return {
     status: "success",
@@ -188,8 +227,8 @@ export async function removeBlogImage(input: {
     input.kind === "thumbnail"
       ? existing.thumbnail_url
       : existing.author_avatar_url;
-  await removeStorageUrlIfOwned(session.supabase, url, bucket);
 
+  // Null the column first so a failed DB update cannot leave a dead URL.
   const { error } =
     input.kind === "thumbnail"
       ? await session.supabase
@@ -209,13 +248,31 @@ export async function removeBlogImage(input: {
     );
   }
 
-  await recordActivity({
-    actorId: session.session.userId,
-    action: "update",
-    entityType: "blog",
-    entityId: input.id,
-    summary: { removedImage: input.kind },
-  });
+  await Promise.all([
+    (async () => {
+      const cleanup = await removeStorageUrlIfOwned(
+        session.supabase,
+        url,
+        bucket,
+      );
+      if (!cleanup.ok) {
+        await recordAppError({
+          severity: "warning",
+          source: "actions.blog-media.removeBlogImage",
+          actorId: session.session.userId,
+          message: cleanup.errorMessage ?? "Image object cleanup failed",
+          context: { blogId: input.id, kind: input.kind },
+        });
+      }
+    })(),
+    recordActivity({
+      actorId: session.session.userId,
+      action: "update",
+      entityType: "blog",
+      entityId: input.id,
+      summary: { removedImage: input.kind },
+    }),
+  ]);
 
   refreshBlogPaths(existing.slug);
   return {

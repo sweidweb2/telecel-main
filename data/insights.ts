@@ -1,9 +1,12 @@
+import { categoryLabelForTab, type BlogTabId } from "@/constants/blog-ui";
 import {
   getFeaturedBlog,
+  getLatestPublishedBlog,
   getPublishedBlogBySlug,
   getPublishedBlogSlugRows,
   getPublishedBlogSlugs,
   getPublishedBlogs,
+  getPublishedBlogsByCategory,
   getRelatedPublishedBlogs,
 } from "@/data/blogs";
 import { toArticle, toArticleList } from "@/types/blog";
@@ -12,6 +15,20 @@ import type { BlogSlugRow } from "@/types/blog";
 
 export async function getAllInsights(): Promise<ArticleListItem[]> {
   const blogs = await getPublishedBlogs();
+  return blogs.map((blog) => toArticleList(blog));
+}
+
+/**
+ * Public insights list, filtered in Postgres when a category tab is active
+ * (`blogs.categories` contains the tab label).
+ */
+export async function getInsights(
+  categoryTab: BlogTabId = "all",
+): Promise<ArticleListItem[]> {
+  const label = categoryLabelForTab(categoryTab);
+  if (!label) return getAllInsights();
+
+  const blogs = await getPublishedBlogsByCategory(label);
   return blogs.map((blog) => toArticleList(blog));
 }
 
@@ -30,13 +47,15 @@ export async function getInsightBySlug(
   return blog ? toArticle(blog) : undefined;
 }
 
-export async function getFeaturedInsight(): Promise<ArticleListItem | undefined> {
+export async function getFeaturedInsight(): Promise<
+  ArticleListItem | undefined
+> {
+  // Prefer explicit featured; otherwise newest published (same cached list).
   const featured = await getFeaturedBlog();
   if (featured) return toArticleList(featured);
 
-  const blogs = await getPublishedBlogs();
-  const first = blogs[0];
-  return first ? toArticleList(first) : undefined;
+  const latest = await getLatestPublishedBlog();
+  return latest ? toArticleList(latest) : undefined;
 }
 
 export async function getRelatedInsights(

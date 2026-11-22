@@ -14,12 +14,16 @@ import {
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 import { SITE_NAME } from "@/lib/seo/site";
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const slugs = await getInsightSlugs();
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/insights/[slug]">) {
+export async function generateMetadata({
+  params,
+}: PageProps<"/insights/[slug]">) {
   const { slug } = await params;
   const article = await getInsightBySlug(slug);
 
@@ -34,7 +38,9 @@ export async function generateMetadata({ params }: PageProps<"/insights/[slug]">
   });
 }
 
-export default async function InsightDetailRoute({ params }: PageProps<"/insights/[slug]">) {
+export default async function InsightDetailRoute({
+  params,
+}: PageProps<"/insights/[slug]">) {
   const { slug } = await params;
   const [article, related] = await Promise.all([
     getInsightBySlug(slug),

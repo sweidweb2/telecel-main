@@ -25,7 +25,7 @@ export type BlogListItem = Pick<
   | "updated_at"
 >;
 
-/** Public list/related row (no body_html). */
+/** Public list/related row (no body_html). Includes updated_at for sitemap. */
 export type BlogPublicListItem = Pick<
   Blog,
   | "id"
@@ -38,6 +38,7 @@ export type BlogPublicListItem = Pick<
   | "author_avatar_url"
   | "reading_time_minutes"
   | "published_at"
+  | "updated_at"
   | "is_featured"
 >;
 

@@ -8,5 +8,15 @@ export const BLOG_TAB_IDS: readonly BlogTabId[] = [
 ];
 
 export function categoryToTabId(name: string): BlogTabId {
-  return INSIGHT_CATEGORIES.find((category) => category.label === name)?.id ?? "all";
+  return (
+    INSIGHT_CATEGORIES.find((category) => category.label === name)?.id ?? "all"
+  );
+}
+
+/** DB `blogs.categories` stores labels; tabs use short ids. */
+export function categoryLabelForTab(tab: BlogTabId): string | null {
+  if (tab === "all") return null;
+  return (
+    INSIGHT_CATEGORIES.find((category) => category.id === tab)?.label ?? null
+  );
 }
