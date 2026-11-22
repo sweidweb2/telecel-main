@@ -51,10 +51,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# docs (local only — repo is public)
-/docs/
-
 # confidential client material — repo is public
+# Track Docs/*.md + schema/RPC notes; keep client brand packs local-only.
+/Docs/05-about project/
+
 /public/brand/*
 !/public/brand/README.md
 /app/icon.png
