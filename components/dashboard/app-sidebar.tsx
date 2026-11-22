@@ -52,7 +52,11 @@ function isActive(pathname: string, href: string): boolean {
   );
 }
 
-export function AppSidebar({ user }: { user: { email: string; role: UserRole } }) {
+export function AppSidebar({
+  user,
+}: {
+  user: { email: string; role: UserRole };
+}) {
   const pathname = usePathname();
 
   return (
@@ -82,7 +86,9 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
       </SidebarHeader>
       <SidebarContent>
         {PORTAL_NAV.map((group) => {
-          const items = group.items.filter((item) => canAccessSection(user.role, item));
+          const items = group.items.filter((item) =>
+            canAccessSection(user.role, item),
+          );
           if (items.length === 0) return null;
 
           return (
@@ -99,14 +105,17 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                           render={
-                            <Link href={item.href} aria-current={active ? "page" : undefined} />
+                            <Link
+                              href={item.href}
+                              aria-current={active ? "page" : undefined}
+                            />
                           }
                           isActive={active}
                           tooltip={item.title}
                           className={cn(
                             "relative h-10 rounded-[3px] text-sidebar-foreground/75 hover:text-sidebar-accent-foreground",
                             "data-active:bg-sidebar-accent data-active:font-semibold data-active:text-sidebar-accent-foreground",
-                            "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:bg-brand before:opacity-0 data-active:before:opacity-100"
+                            "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:bg-brand before:opacity-0 data-active:before:opacity-100",
                           )}
                         >
                           <Icon />
@@ -123,8 +132,12 @@ export function AppSidebar({ user }: { user: { email: string; role: UserRole } }
       </SidebarContent>
       <SidebarFooter>
         <div className="grid gap-0.5 border-t border-sidebar-border px-2 pt-3 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-sm text-sidebar-foreground">{user.email}</p>
-          <p className="type-notation text-sidebar-foreground/55">{user.role}</p>
+          <p className="truncate text-sm text-sidebar-foreground">
+            {user.email}
+          </p>
+          <p className="type-notation text-sidebar-foreground/55">
+            {user.role}
+          </p>
         </div>
       </SidebarFooter>
       <SidebarRail />

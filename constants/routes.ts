@@ -10,7 +10,6 @@ export const ROUTES = {
   caseStudies: "/insights/case-studies",
   contact: "/contact",
   privacy: "/privacy",
-  cookies: "/cookies",
   terms: "/terms",
   maintenance: "/maintenance",
 

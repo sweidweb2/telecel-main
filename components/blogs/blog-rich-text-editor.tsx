@@ -148,8 +148,7 @@ export function BlogRichTextEditor({
           disabled={disabled}
           onClick={() => {
             const previous = editor.getAttributes("link").href as
-              | string
-              | undefined;
+              string | undefined;
             const url = window.prompt("URL", previous ?? "https://");
             if (url === null) return;
             if (url === "") {

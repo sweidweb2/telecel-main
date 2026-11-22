@@ -31,7 +31,14 @@ const GLYPHS: Record<Glyph, ReactNode> = {
   dots: (
     <>
       {[5, 12, 19, 26].map((cy) => (
-        <circle key={cy} cx="16" cy={cy} r="1.8" fill="currentColor" stroke="none" />
+        <circle
+          key={cy}
+          cx="16"
+          cy={cy}
+          r="1.8"
+          fill="currentColor"
+          stroke="none"
+        />
       ))}
     </>
   ),
@@ -58,9 +65,18 @@ const STRIP: Cell[][] = [
   [{ glyph: "terminal" }, { glyph: "routes", rotate: 90 }],
   [{ glyph: "wave" }, { glyph: "bars" }],
   [{ glyph: "bars" }, { glyph: "node", red: true }],
-  [{ glyph: "dots", rotate: 90 }, { glyph: "node", red: true }],
-  [{ glyph: "routes", red: true, rotate: 180 }, { glyph: "arcs", rotate: 270 }],
-  [{ glyph: "terminal", rotate: 180 }, { glyph: "wave", rotate: 90 }],
+  [
+    { glyph: "dots", rotate: 90 },
+    { glyph: "node", red: true },
+  ],
+  [
+    { glyph: "routes", red: true, rotate: 180 },
+    { glyph: "arcs", rotate: 270 },
+  ],
+  [
+    { glyph: "terminal", rotate: 180 },
+    { glyph: "wave", rotate: 90 },
+  ],
   [{ glyph: "arcs", rotate: 90 }, { glyph: "terminal" }],
 ];
 
@@ -78,7 +94,10 @@ export function SignalMotif({
   tone = "light",
   className,
 }: SignalMotifProps) {
-  const cells = Array.from({ length: rows }, (_, row) => STRIP[row % STRIP.length]);
+  const cells = Array.from(
+    { length: rows },
+    (_, row) => STRIP[row % STRIP.length],
+  );
   const long = rows * 32;
   const vertical = orientation === "vertical";
 
@@ -90,7 +109,7 @@ export function SignalMotif({
       className={cn(
         "shrink-0",
         tone === "dark" ? "text-[#5a5a58]" : "text-[#b9b9b5]",
-        className
+        className,
       )}
       fill="none"
       stroke="currentColor"
@@ -108,12 +127,14 @@ export function SignalMotif({
               key={`${row}-${col}`}
               transform={`translate(${x} ${y}) rotate(${rotate} 16 16)`}
               // Only the first pass of the composition carries the red route.
-              className={cell.red && row < STRIP.length ? "text-brand" : undefined}
+              className={
+                cell.red && row < STRIP.length ? "text-brand" : undefined
+              }
             >
               {GLYPHS[cell.glyph]}
             </g>
           );
-        })
+        }),
       )}
     </svg>
   );

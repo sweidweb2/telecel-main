@@ -2,7 +2,6 @@
 
 import {
   useCallback,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -28,7 +27,6 @@ import {
 import { cn } from "@/lib/utils";
 
 const LAYER_COUNT = PLATFORM_LAYERS.length;
-const AUTOPLAY_MS = 3000;
 const EASE_LIFT = "cubic-bezier(0.22, 1, 0.36, 1)";
 /** Tight centre-to-centre gap for the packed inactive stack. */
 const PLATE_GAP_PX = 16;
@@ -75,35 +73,18 @@ function plateLayout(index: number, activeIndex: number) {
   };
 }
 
-/** Packed plates fade downward for depth. */
-function inactiveFaceAlpha(packIndex: number): number {
-  return 0.72 - packIndex * 0.07;
-}
-
 /**
  * Interactive isometric “five platform layers” stack + list.
- * Hover/click/keyboard select a layer; auto-plays every 3s until paused.
+ * Hover/click/keyboard select a layer. Nothing auto-advances (DESIGN.md).
  */
 export function PlatformLayers({ className }: PlatformLayersProps) {
   const labelId = useId();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [progressKey, setProgressKey] = useState(0);
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const selectIndex = useCallback((index: number) => {
     setActiveIndex(((index % LAYER_COUNT) + LAYER_COUNT) % LAYER_COUNT);
-    setProgressKey((key) => key + 1);
   }, []);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % LAYER_COUNT);
-      setProgressKey((key) => key + 1);
-    }, AUTOPLAY_MS);
-    return () => window.clearInterval(timer);
-  }, [isPaused]);
 
   const focusIndex = (index: number) => {
     selectIndex(index);
@@ -151,25 +132,12 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
           </Text>
         </div>
 
-        <div
-          className="mt-12 flex flex-col items-center gap-12 lg:mt-16 lg:flex-row lg:items-center lg:justify-center lg:gap-24"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-          onFocusCapture={() => setIsPaused(true)}
-          onBlurCapture={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-              setIsPaused(false);
-            }
-          }}
-        >
+        <div className="mt-12 flex flex-col items-center gap-12 lg:mt-16 lg:flex-row lg:items-center lg:justify-center lg:gap-24">
           {/* Isometric plate stack — visual mirror of the list; a11y lives in the rows. */}
           <div
             aria-hidden
             className="relative flex w-full max-w-2xl shrink-0 justify-center scale-[0.58] sm:scale-[0.75] lg:w-[36rem] lg:scale-100"
           >
-            {/* Soft floor shadow under the whole stack */}
-            <div className="pointer-events-none absolute bottom-[6%] left-1/2 h-20 w-[80%] -translate-x-1/2 rounded-[100%] bg-[radial-gradient(ellipse_at_center,rgb(0_0_0_/_0.14),transparent_70%)] blur-md" />
-
             <div
               className="relative h-[36rem] w-[28rem]"
               style={{ perspective: "1200px" }}
@@ -181,13 +149,7 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                 {PLATFORM_LAYERS.map((layer, index) => {
                   const isActive = index === activeIndex;
                   const Icon = LAYER_ICONS[layer.icon];
-                  const { offsetY, packIndex, zIndex } = plateLayout(
-                    index,
-                    activeIndex,
-                  );
-                  const faceAlpha = isActive
-                    ? 1
-                    : inactiveFaceAlpha(Math.max(packIndex, 0));
+                  const { offsetY, zIndex } = plateLayout(index, activeIndex);
 
                   return (
                     <button
@@ -201,33 +163,18 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                         height: `${PLATE_SIZE_REM}rem`,
                         zIndex,
                         transform: `translate(-50%, calc(-50% + ${offsetY}px)) rotateX(55deg) rotateZ(-45deg)`,
-                        transition: `transform 500ms ${EASE_LIFT}`,
+                        transition: `transform 200ms ${EASE_LIFT}`,
                         transformStyle: "preserve-3d",
                       }}
                     >
-                      {/* Soft red glow — only under the active plate */}
-                      <span
-                        className={cn(
-                          "pointer-events-none absolute inset-[-20%] rounded-[40px] transition-opacity duration-500",
-                          isActive ? "opacity-100" : "opacity-0",
-                        )}
-                        style={{
-                          background:
-                            "radial-gradient(ellipse at 50% 60%, rgba(227, 6, 19, 0.35), transparent 68%)",
-                          filter: "blur(40px)",
-                          transform: `translateZ(-${PLATE_DEPTH_PX + 8}px)`,
-                          transitionTimingFunction: EASE_LIFT,
-                        }}
-                      />
-
                       {/* Thickness — same footprint as the face, pushed back in Z only */}
                       <span
-                        className="absolute inset-0 rounded-[28px] transition-[background-color] duration-500"
+                        className="absolute inset-0 rounded-[28px] transition-[background-color] duration-200"
                         style={{
                           transform: `translateZ(-${PLATE_DEPTH_PX}px)`,
                           background: isActive
-                            ? "#9E000C"
-                            : `rgba(230, 230, 230, ${Math.max(faceAlpha - 0.15, 0.35)})`,
+                            ? "var(--ink)"
+                            : "var(--hairline)",
                           transitionTimingFunction: EASE_LIFT,
                         }}
                       />
@@ -235,25 +182,18 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                       {/* Face */}
                       <span
                         className={cn(
-                          "absolute inset-0 flex items-center justify-center rounded-[28px] border transition-[background,border-color,box-shadow] duration-500",
-                          isActive
-                            ? "border-transparent"
-                            : "border-[rgba(0,0,0,0.08)]",
+                          "absolute inset-0 flex items-center justify-center rounded-[28px] border-2 transition-[border-color] duration-200",
+                          isActive ? "border-brand" : "border-hairline",
                         )}
                         style={{
                           transform: "translateZ(0)",
-                          background: isActive
-                            ? "linear-gradient(145deg, #E30613 0%, #B8000F 100%)"
-                            : `rgba(255, 255, 255, ${faceAlpha})`,
-                          boxShadow: isActive
-                            ? "inset 0 1px 0 rgba(255, 255, 255, 0.22)"
-                            : "0 10px 30px rgba(0, 0, 0, 0.06)",
+                          background: "var(--background)",
                           transitionTimingFunction: EASE_LIFT,
                         }}
                       >
                         <Icon
                           className={cn(
-                            "size-11 text-white transition-[opacity,transform] duration-500",
+                            "size-11 text-brand transition-[opacity,transform] duration-200",
                             isActive
                               ? "scale-100 opacity-100"
                               : "scale-[0.8] opacity-0",
@@ -274,7 +214,7 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
             <div
               role="group"
               aria-labelledby={labelId}
-              className="rounded-[20px] border border-hairline bg-white p-2 shadow-[0_18px_48px_rgb(23_23_23_/_0.08)]"
+              className="rounded-[20px] border border-hairline bg-background p-2"
             >
               <ul className="flex flex-col gap-0.5">
                 {PLATFORM_LAYERS.map((layer, index) => {
@@ -292,7 +232,7 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                         onMouseEnter={() => selectIndex(index)}
                         onKeyDown={(event) => onRowKeyDown(event, index)}
                         className={cn(
-                          "relative flex w-full min-h-12 items-center justify-between gap-3 overflow-hidden rounded-[14px] px-4 py-3.5 text-left transition-[background-color,color,box-shadow] duration-500",
+                          "relative flex w-full min-h-12 items-center justify-between gap-3 overflow-hidden rounded-[14px] px-4 py-3.5 text-left transition-[background-color,color] duration-200",
                           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                           isActive
                             ? "bg-surface shadow-[inset_0_0_0_1px_var(--hairline)]"
@@ -302,7 +242,7 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                       >
                         <span
                           className={cn(
-                            "text-base font-semibold tracking-tight transition-colors duration-500",
+                            "text-base font-semibold tracking-tight transition-colors duration-200",
                             isActive ? "text-brand" : "text-ink",
                           )}
                           style={{ transitionTimingFunction: EASE_LIFT }}
@@ -312,19 +252,6 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
                         <span className="shrink-0 text-sm text-muted-foreground">
                           {layer.tag}
                         </span>
-                        {isActive ? (
-                          <span
-                            key={progressKey}
-                            aria-hidden
-                            className={cn(
-                              "pointer-events-none absolute right-4 bottom-2 left-4 h-0.5 origin-left rounded-full bg-[#E30613]",
-                              isPaused && "[animation-play-state:paused]",
-                            )}
-                            style={{
-                              animation: `platform-layer-progress ${AUTOPLAY_MS}ms linear forwards`,
-                            }}
-                          />
-                        ) : null}
                       </button>
                     </li>
                   );
@@ -334,7 +261,8 @@ export function PlatformLayers({ className }: PlatformLayersProps) {
 
             <p
               key={activeLayer.key}
-              className="mt-5 min-h-[3rem] text-sm leading-6 text-muted-foreground motion-safe:animate-[fade-in-up_500ms_var(--ease-standard)_both]"
+              aria-live="polite"
+              className="mt-5 min-h-[3rem] text-sm leading-6 text-muted-foreground motion-safe:animate-[fade-in-up_200ms_var(--ease-standard)_both]"
             >
               {activeLayer.description}
             </p>

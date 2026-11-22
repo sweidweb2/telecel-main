@@ -37,7 +37,7 @@ export function BlogArticleFilters({
       >
         <TabsList
           variant="line"
-          className="h-auto w-full min-h-11 justify-start overflow-x-auto rounded-none p-0"
+          className="h-auto w-full min-h-11 no-scrollbar justify-start overflow-x-auto overflow-y-hidden rounded-none p-0"
         >
           {labels.tabs.map((item) => (
             <TabsTrigger

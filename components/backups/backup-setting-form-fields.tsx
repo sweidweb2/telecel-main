@@ -1,6 +1,11 @@
 "use client";
 
-import { Controller, type Control, type UseFormSetValue, type UseFormWatch } from "react-hook-form";
+import {
+  Controller,
+  type Control,
+  type UseFormSetValue,
+  type UseFormWatch,
+} from "react-hook-form";
 
 import {
   BACKUP_EXPORT_FORMATS,
@@ -77,6 +82,7 @@ export function BackupSettingFormFields({
           <Field data-invalid={Boolean(fieldState.error)}>
             <Label htmlFor={`${idPrefix}-scope`}>Scope</Label>
             <Select
+              items={{ all: "All tables", single: "One table" }}
               value={field.value}
               onValueChange={(value) => {
                 if (value !== "all" && value !== "single") return;
@@ -114,6 +120,7 @@ export function BackupSettingFormFields({
             <Field data-invalid={Boolean(fieldState.error)}>
               <Label htmlFor={`${idPrefix}-table`}>Table</Label>
               <Select
+                items={BACKUP_TABLE_LABELS}
                 value={field.value ?? undefined}
                 onValueChange={(value) => {
                   if (
@@ -153,6 +160,7 @@ export function BackupSettingFormFields({
           <Field data-invalid={Boolean(fieldState.error)}>
             <Label htmlFor={`${idPrefix}-format`}>Format</Label>
             <Select
+              items={{ csv: "CSV", json: "JSON" }}
               value={field.value}
               onValueChange={(value) => {
                 if (

@@ -9,7 +9,8 @@ const textVariants = cva("", {
       lead: "text-base leading-7 text-muted-foreground sm:text-lg",
       muted: "text-sm leading-6 text-muted-foreground",
       notation: "type-notation text-muted-foreground",
-      brand: "type-notation text-brand",
+      // Darker red keeps small eyebrows above 4.5:1 on the warm surface.
+      brand: "type-notation text-brand-hover",
     },
   },
   defaultVariants: {

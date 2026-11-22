@@ -63,11 +63,13 @@ export function RouteError({
           Go home
         </Link>
       )}
-      {error.digest ? (
-        <p className="basis-full pt-1 text-xs text-muted-foreground">
-          Reference {error.digest}
-        </p>
-      ) : null}
+      <p className="basis-full pt-1 text-xs text-muted-foreground">
+        If this keeps happening,{" "}
+        <Link href={ROUTES.contact} className="underline underline-offset-4">
+          contact us
+        </Link>
+        {error.digest ? ` and quote error reference ${error.digest}` : null}.
+      </p>
     </ErrorScreen>
   );
 }

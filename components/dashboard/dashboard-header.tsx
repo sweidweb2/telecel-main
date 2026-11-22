@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Spinner } from "@/components/ui/spinner";
 import { getDashboardPageTitle } from "@/constants/dashboard-nav";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -146,10 +147,21 @@ export function DashboardHeader({
             }}
           >
             <LogOutIcon />
-            {isPending ? "Signing out…" : "Log out"}
+            Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {isPending ? (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm"
+        >
+          <Spinner aria-hidden="true" className="size-6 text-brand" />
+          <p className="text-sm font-medium">Signing out…</p>
+        </div>
+      ) : null}
     </header>
   );
 }

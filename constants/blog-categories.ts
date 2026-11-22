@@ -13,7 +13,8 @@ export const INSIGHT_CATEGORIES = [
 ] as const;
 
 export const RECOMMENDED_BLOG_CATEGORIES = INSIGHT_CATEGORIES.map(
-  (category) => category.label
+  (category) => category.label,
 );
 
-export type RecommendedBlogCategory = (typeof INSIGHT_CATEGORIES)[number]["label"];
+export type RecommendedBlogCategory =
+  (typeof INSIGHT_CATEGORIES)[number]["label"];

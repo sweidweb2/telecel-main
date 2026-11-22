@@ -10,7 +10,12 @@ import { toast } from "sonner";
 import { signIn, signInWithGoogle } from "@/actions/auth";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
@@ -129,7 +134,11 @@ export function LoginForm({
             <FieldError>{errors.password?.message}</FieldError>
           </Field>
         </FieldGroup>
-        <Button type="submit" className="h-12 w-full text-[15px]" disabled={busy}>
+        <Button
+          type="submit"
+          className="h-12 w-full text-[15px]"
+          disabled={busy}
+        >
           {isPending ? (
             <>
               <Spinner />

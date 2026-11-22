@@ -1,14 +1,11 @@
-import {
-  BlueprintPage,
-  blueprintMetadata,
-} from "@/components/marketing/blueprint-page";
+import { blueprintMetadata } from "@/components/marketing/blueprint-page";
+import { LegalPage } from "@/components/marketing/legal-page";
+import { PRIVACY_POLICY } from "@/constants/legal-content";
 import { requireBlueprint } from "@/constants/page-blueprints";
 import { ROUTES } from "@/constants/routes";
 
-const config = requireBlueprint(ROUTES.privacy);
-
-export const metadata = blueprintMetadata(config);
+export const metadata = blueprintMetadata(requireBlueprint(ROUTES.privacy));
 
 export default function PrivacyPage() {
-  return <BlueprintPage config={config} />;
+  return <LegalPage doc={PRIVACY_POLICY} />;
 }

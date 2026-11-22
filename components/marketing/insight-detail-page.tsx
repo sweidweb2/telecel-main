@@ -146,7 +146,7 @@ export function InsightDetailPage({
 
         <Container className="mt-8 sm:mt-10">
           <div
-            className="prose prose-neutral dark:prose-invert mx-auto max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8"
+            className="prose prose-neutral dark:prose-invert mx-auto max-w-[68ch] text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         </Container>

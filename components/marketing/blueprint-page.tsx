@@ -1,3 +1,4 @@
+import { CtaSection } from "@/components/marketing/cta-section";
 import { PageBlueprint } from "@/components/marketing/page-blueprint";
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 import type { PageBlueprintConfig } from "@/types/marketing-blueprint";
@@ -14,11 +15,14 @@ export function blueprintMetadata(config: PageBlueprintConfig) {
 /** Renders a full public page from a blueprint config. */
 export function BlueprintPage({ config }: { config: PageBlueprintConfig }) {
   return (
-    <PageBlueprint
-      eyebrow={config.eyebrow}
-      title={config.title}
-      description={config.description}
-      sections={config.sections}
-    />
+    <>
+      <PageBlueprint
+        eyebrow={config.eyebrow}
+        title={config.title}
+        description={config.description}
+        sections={config.sections}
+      />
+      <CtaSection />
+    </>
   );
 }

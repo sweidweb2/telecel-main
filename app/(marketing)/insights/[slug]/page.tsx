@@ -19,7 +19,9 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: PageProps<"/insights/[slug]">) {
+export async function generateMetadata({
+  params,
+}: PageProps<"/insights/[slug]">) {
   const { slug } = await params;
   const article = await getInsightBySlug(slug);
 
@@ -34,7 +36,9 @@ export async function generateMetadata({ params }: PageProps<"/insights/[slug]">
   });
 }
 
-export default async function InsightDetailRoute({ params }: PageProps<"/insights/[slug]">) {
+export default async function InsightDetailRoute({
+  params,
+}: PageProps<"/insights/[slug]">) {
   const { slug } = await params;
   const [article, related] = await Promise.all([
     getInsightBySlug(slug),

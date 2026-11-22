@@ -1,6 +1,7 @@
 import { ConstructionIcon } from "lucide-react";
 
 import { ErrorScreen } from "@/components/layout/error-screen";
+import { Logo } from "@/components/brand/logo";
 
 export function MaintenanceScreen({ description }: { description?: string }) {
   return (
@@ -12,6 +13,8 @@ export function MaintenanceScreen({ description }: { description?: string }) {
         description ??
         "Telecel Global is temporarily unavailable while we perform scheduled maintenance. Please check back shortly."
       }
-    />
+    >
+      <Logo className="basis-full" />
+    </ErrorScreen>
   );
 }

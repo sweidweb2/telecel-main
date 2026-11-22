@@ -110,10 +110,7 @@ export const SITE_NAV: readonly SiteNavSection[] = [
         label: "Global Reach",
         href: `${WHY_TELECEL_PAGE.path}#global-reach`,
       },
-      {
-        label: "Partners & Ecosystem",
-        href: `${WHY_TELECEL_PAGE.path}#partners`,
-      },
+      // Partners & Ecosystem returns once partner marks are cleared (RFQ).
     ],
   },
   {

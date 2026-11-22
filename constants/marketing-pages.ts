@@ -93,7 +93,6 @@ export const CASE_STUDIES_PAGE = {
 
 export const LEGAL_PAGES = [
   { path: ROUTES.privacy, title: "Privacy Policy" },
-  { path: ROUTES.cookies, title: "Cookie Policy" },
   { path: ROUTES.terms, title: "Terms of Use" },
 ] as const satisfies readonly MarketingPathPage[];
 

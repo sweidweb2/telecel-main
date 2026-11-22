@@ -31,7 +31,7 @@ export function BlogCard({ article }: BlogCardProps) {
             src={article.thumbnailUrl}
             alt={article.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="object-cover transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : null}

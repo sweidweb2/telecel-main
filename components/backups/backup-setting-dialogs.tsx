@@ -77,7 +77,9 @@ const DEFAULT_VALUES: BackupSettingFormValues = {
   format: "csv",
 };
 
-function settingToFormValues(setting: BackupExportSetting): BackupSettingFormValues {
+function settingToFormValues(
+  setting: BackupExportSetting,
+): BackupSettingFormValues {
   return {
     name: setting.name,
     scope: setting.scope,
@@ -125,9 +127,7 @@ export function CreateBackupSettingDialog() {
       }}
     >
       <DialogTrigger
-        render={
-          <Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />
-        }
+        render={<Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />}
       >
         <PlusIcon data-icon="inline-start" />
         New export setting
@@ -309,11 +309,7 @@ export function DeleteBackupSettingDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            disabled={pending}
-            onClick={onDelete}
-          >
+          <Button variant="destructive" disabled={pending} onClick={onDelete}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
             Delete
           </Button>

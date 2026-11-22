@@ -76,6 +76,11 @@ export function BlogsAdminList({
             pending={isPending}
           />
           <Select
+            items={{
+              all: "All statuses",
+              draft: "Draft",
+              published: "Published",
+            }}
             value={query.status}
             onValueChange={(value) => {
               if (!value) return;
