@@ -18,6 +18,8 @@ type ErrorScreenProps = {
   description: string;
   tone?: "muted" | "destructive";
   children?: ReactNode;
+  /** Home link for the logo; `null` renders a non-linked logo (e.g. maintenance). */
+  logoHref?: string | null;
 };
 
 /** Shared 400/401/403/404/500 layout: notation code, display title, actions, motif. */
@@ -28,6 +30,7 @@ export function ErrorScreen({
   description,
   tone = "muted",
   children,
+  logoHref = ROUTES.home,
 }: ErrorScreenProps) {
   return (
     <Container
@@ -36,13 +39,19 @@ export function ErrorScreen({
     >
       <SignalMotif rows={8} className="hidden h-64 w-auto md:block" />
       <div className="max-w-xl">
-        <Link
-          href={ROUTES.home}
-          aria-label="Telecel Global Services home"
-          className="mb-10 inline-flex"
-        >
-          <Logo size="sm" />
-        </Link>
+        {logoHref === null ? (
+          <div className="mb-10 inline-flex">
+            <Logo size="sm" />
+          </div>
+        ) : (
+          <Link
+            href={logoHref}
+            aria-label="Telecel Global Services home"
+            className="mb-10 inline-flex"
+          >
+            <Logo size="sm" />
+          </Link>
+        )}
         <p
           className={cn(
             "flex items-center gap-2 type-notation",

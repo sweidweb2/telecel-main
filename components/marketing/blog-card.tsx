@@ -24,7 +24,10 @@ export function BlogCard({ article }: BlogCardProps) {
   const href = insightPath(article.slug);
 
   return (
-    <Link href={href} className="group flex flex-col gap-5 outline-none">
+    <Link
+      href={href}
+      className="group flex flex-col gap-5 rounded-2xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
       <div className="relative aspect-[1.5] w-full overflow-hidden rounded-2xl bg-muted">
         {article.thumbnailUrl ? (
           <Image
@@ -43,7 +46,7 @@ export function BlogCard({ article }: BlogCardProps) {
         <div className="flex gap-4">
           <Heading
             level="label"
-            className="flex-1 text-lg font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4"
+            className="flex-1 text-lg font-semibold tracking-tight group-hover:underline group-hover:underline-offset-4 group-focus-visible:underline group-focus-visible:underline-offset-4"
           >
             {article.title}
           </Heading>

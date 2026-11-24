@@ -202,7 +202,7 @@ export function ActivityLogTable({
                   }}
                 />
               </div>
-              <div className="flex w-full items-center gap-2 sm:w-auto">
+              <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                 <Label htmlFor="activity-from" className="sr-only">
                   From date
                 </Label>

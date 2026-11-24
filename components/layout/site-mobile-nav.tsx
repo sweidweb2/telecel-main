@@ -77,10 +77,11 @@ export function SiteMobileNav({
                   href={item.href}
                   prefetch={false}
                   onClick={() => setOpen(false)}
-                  aria-current={
-                    isNavActive(pathname, item.href) ? "page" : undefined
+                  aria-current={pathname === item.href ? "page" : undefined}
+                  data-active={
+                    isNavActive(pathname, item.href) ? "true" : undefined
                   }
-                  className="flex min-h-16 items-center justify-between text-ink aria-[current=page]:text-brand"
+                  className="flex min-h-16 items-center justify-between text-ink data-active:text-brand"
                 >
                   <Heading level="subtitle" as="span" className="text-xl">
                     {item.label}
@@ -96,9 +97,7 @@ export function SiteMobileNav({
                           prefetch={false}
                           onClick={() => setOpen(false)}
                           aria-current={
-                            isNavActive(pathname, child.href)
-                              ? "page"
-                              : undefined
+                            pathname === child.href ? "page" : undefined
                           }
                           className="flex min-h-11 items-center text-sm text-muted-foreground hover:text-ink aria-[current=page]:font-medium aria-[current=page]:text-brand"
                         >

@@ -135,7 +135,7 @@ export function CreateBackupSettingDialog() {
         <PlusIcon data-icon="inline-start" />
         New export setting
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex flex-col overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New export setting</DialogTitle>
           <DialogDescription>
@@ -144,16 +144,18 @@ export function CreateBackupSettingDialog() {
           </DialogDescription>
         </DialogHeader>
         <form
-          className="flex flex-col gap-4"
+          className="flex min-h-0 flex-1 flex-col gap-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <BackupSettingFormFields
-            idPrefix={`${id}-create`}
-            control={form.control}
-            watch={form.watch}
-            setValue={form.setValue}
-            disabled={pending}
-          />
+          <div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4">
+            <BackupSettingFormFields
+              idPrefix={`${id}-create`}
+              control={form.control}
+              watch={form.watch}
+              setValue={form.setValue}
+              disabled={pending}
+            />
+          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -225,7 +227,7 @@ export function EditBackupSettingDialog({
       >
         <PencilIcon />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex flex-col overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit export setting</DialogTitle>
           <DialogDescription>
@@ -233,16 +235,18 @@ export function EditBackupSettingDialog({
           </DialogDescription>
         </DialogHeader>
         <form
-          className="flex flex-col gap-4"
+          className="flex min-h-0 flex-1 flex-col gap-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <BackupSettingFormFields
-            idPrefix={`${id}-edit`}
-            control={form.control}
-            watch={form.watch}
-            setValue={form.setValue}
-            disabled={pending}
-          />
+          <div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4">
+            <BackupSettingFormFields
+              idPrefix={`${id}-edit`}
+              control={form.control}
+              watch={form.watch}
+              setValue={form.setValue}
+              disabled={pending}
+            />
+          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -303,8 +307,8 @@ export function DeleteBackupSettingDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete export setting?</AlertDialogTitle>
           <AlertDialogDescription>
-            “{setting.name}” will be removed. This does not delete any table
-            data — only the saved export configuration.
+            â€œ{setting.name}â€ will be removed. This does not delete any table
+            data â€” only the saved export configuration.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

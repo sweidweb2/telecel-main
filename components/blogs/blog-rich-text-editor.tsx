@@ -19,12 +19,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const EDITOR_CLASS =
+  "prose prose-sm sm:prose-base max-w-none min-h-48 px-3 py-2 focus:outline-none";
+
 type BlogRichTextEditorProps = {
   value: string;
   onChange: (html: string) => void;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  /** Id of the visible label element. */
+  labelledBy?: string;
+  /** Id of the error message, set while invalid. */
+  describedBy?: string;
+  invalid?: boolean;
 };
 
 export function BlogRichTextEditor({
@@ -33,7 +41,18 @@ export function BlogRichTextEditor({
   disabled = false,
   placeholder = "Write the article…",
   className,
+  labelledBy,
+  describedBy,
+  invalid = false,
 }: BlogRichTextEditorProps) {
+  const ariaAttributes: Record<string, string> = {
+    role: "textbox",
+    "aria-multiline": "true",
+    "aria-invalid": invalid ? "true" : "false",
+  };
+  if (labelledBy) ariaAttributes["aria-labelledby"] = labelledBy;
+  if (describedBy) ariaAttributes["aria-describedby"] = describedBy;
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -54,11 +73,21 @@ export function BlogRichTextEditor({
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm sm:prose-base max-w-none min-h-48 px-3 py-2 focus:outline-none",
+        ...ariaAttributes,
+        class: EDITOR_CLASS,
       },
     },
   });
+
+  const ariaKey = JSON.stringify(ariaAttributes);
+  useEffect(() => {
+    if (!editor) return;
+    editor.setOptions({
+      editorProps: {
+        attributes: { ...JSON.parse(ariaKey), class: EDITOR_CLASS },
+      },
+    });
+  }, [ariaKey, editor]);
 
   useEffect(() => {
     if (!editor) return;

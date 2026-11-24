@@ -16,7 +16,12 @@ import {
   type BackupExportTable,
 } from "@/constants/backup-tables";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldError } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,9 +41,9 @@ export type BackupSettingFormValues = {
   format: BackupExportFormat;
 };
 
-function FormFieldError({ message }: { message?: string }) {
+function FormFieldError({ message, id }: { message?: string; id?: string }) {
   if (!message) return null;
-  return <FieldError>{message}</FieldError>;
+  return <FieldError id={id}>{message}</FieldError>;
 }
 
 export function BackupSettingFormFields({
@@ -127,8 +132,14 @@ export function BackupSettingFormFields({
           name="tableNames"
           control={control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={Boolean(fieldState.error)}>
-              <Label>Tables</Label>
+            <FieldSet
+              data-invalid={Boolean(fieldState.error)}
+              aria-describedby={
+                fieldState.error ? `${idPrefix}-tables-error` : undefined
+              }
+              className="min-w-0 gap-2"
+            >
+              <FieldLegend variant="label">Tables</FieldLegend>
               <div className="grid gap-2 sm:grid-cols-2">
                 {BACKUP_EXPORT_TABLES.map((table) => {
                   const checkboxId = `${idPrefix}-tables-${table}`;
@@ -157,8 +168,11 @@ export function BackupSettingFormFields({
                   );
                 })}
               </div>
-              <FormFieldError message={fieldState.error?.message} />
-            </Field>
+              <FormFieldError
+                id={`${idPrefix}-tables-error`}
+                message={fieldState.error?.message}
+              />
+            </FieldSet>
           )}
         />
       ) : null}

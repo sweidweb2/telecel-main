@@ -1,7 +1,9 @@
-import { ConstructionIcon } from "lucide-react";
+"use client";
+
+import { ConstructionIcon, RotateCwIcon } from "lucide-react";
 
 import { ErrorScreen } from "@/components/layout/error-screen";
-import { Logo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
 
 export function MaintenanceScreen({ description }: { description?: string }) {
   return (
@@ -13,8 +15,17 @@ export function MaintenanceScreen({ description }: { description?: string }) {
         description ??
         "Telecel Global is temporarily unavailable while we perform scheduled maintenance. Please check back shortly."
       }
+      logoHref={null}
     >
-      <Logo className="basis-full" />
+      <Button
+        type="button"
+        size="cta"
+        aria-label="Try again (reload page)"
+        onClick={() => window.location.reload()}
+      >
+        <RotateCwIcon data-icon="inline-start" aria-hidden />
+        Try again
+      </Button>
     </ErrorScreen>
   );
 }

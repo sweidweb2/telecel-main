@@ -42,7 +42,7 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function DownloadButton({ name }: { name: string }) {
+function DownloadButton({ name, label }: { name: string; label: string }) {
   const [pending, startTransition] = useTransition();
 
   function onDownload() {
@@ -63,6 +63,7 @@ function DownloadButton({ name }: { name: string }) {
       className="min-h-11 sm:min-h-8"
       disabled={pending}
       onClick={onDownload}
+      aria-label={label}
     >
       {pending ? (
         <Spinner data-icon="inline-start" />
@@ -80,12 +81,12 @@ export function StorageExportComingSoon() {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>Storage export</CardTitle>
-          <Badge variant="outline">Coming soon</Badge>
+          <CardTitle>Uploaded media</CardTitle>
+          <Badge variant="outline">Planned</Badge>
         </div>
         <CardDescription>
-          Download uploaded media (blog covers and author photos) as an archive.
-          Table exports do not include these files.
+          Media export is planned. Table exports cover database rows only and
+          exclude uploaded files such as blog covers and author photos.
         </CardDescription>
       </CardHeader>
     </Card>
@@ -170,7 +171,10 @@ export function ScheduledBackupsSection({
                           {formatSize(file.size)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <DownloadButton name={file.relativePath} />
+                          <DownloadButton
+                            name={file.relativePath}
+                            label={`Download ${file.name} from run ${formatTimestamp(run.createdAt)}`}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -188,7 +192,10 @@ export function ScheduledBackupsSection({
                       {formatSize(file.size)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DownloadButton name={file.name} />
+                      <DownloadButton
+                        name={file.name}
+                        label={`Download ${file.name}, created ${formatTimestamp(file.createdAt)}`}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
