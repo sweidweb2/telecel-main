@@ -69,7 +69,7 @@ describe("parseActivityLogQuery", () => {
     const query = parseActivityLogQuery({
       action: "DROP TABLE",
       entity: "a,b",
-      actor: "x%y",
+      actor: "x(y",
       from: "2026-12-01",
       to: "2026-11-01",
     });
@@ -87,5 +87,20 @@ describe("parseActivityLogQuery", () => {
     setActivityFilterParams(params, query);
     expect(params.toString()).toBe("entity=blog&to=2026-11-02");
     expect(endOfDayExclusive("2026-12-31")).toBe("2027-01-01T00:00:00.000Z");
+  });
+});
+
+describe("actor search escaping", () => {
+  it("keeps underscores and escapes them for ILIKE", async () => {
+    const { escapeIlikeTerm } = await import("@/validations/audit-log");
+    const query = parseActivityLogQuery({ actor: "jane_doe@example.com" });
+    expect(query.actor).toBe("jane_doe@example.com");
+    expect(escapeIlikeTerm(query.actor)).toBe("jane\\_doe@example.com");
+    expect(escapeIlikeTerm("100%")).toBe("100\\%");
+  });
+
+  it("still rejects PostgREST-unsafe characters", () => {
+    expect(parseActivityLogQuery({ actor: "a,b" }).actor).toBe("");
+    expect(parseActivityLogQuery({ actor: "a(b)" }).actor).toBe("");
   });
 });

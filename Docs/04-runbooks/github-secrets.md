@@ -27,7 +27,21 @@ Set secrets with the GitHub CLI from the repo root (`gh auth login` first).
 Point CI at a **test or staging** Supabase project, never production: the E2E
 suites write data.
 
+`SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` and
+`TURNSTILE_SECRET` are only passed to **push** runs (the full E2E suite runs on
+pushes to `main`). `pull_request` runs are credential-free: they use the
+public Supabase URL/anon key (or placeholders) and the Supabase-backed E2E
+suites skip themselves.
+
 ### Deploy Migrations (`deploy-migrations.yml`): runs on push to `main`
+
+These are **environment secrets** on the GitHub `production` environment,
+not repository secrets. The job runs in `environment: production` and refuses
+to run unless `github.ref` is `refs/heads/main` (manual
+`workflow_dispatch` runs from other branches are skipped). Restrict the
+environment to the `main` branch and add required reviewers (Settings →
+Environments → `production`). Delete any repository-scoped copies
+(`gh secret delete SUPABASE_DB_PASSWORD`, etc.) and rotate them.
 
 | Secret | Where to get it |
 | --- | --- |
@@ -67,10 +81,10 @@ gh secret set E2E_SEED_PASSWORD
 gh secret set NEXT_PUBLIC_TURNSTILE_SITE_KEY   # optional
 gh secret set TURNSTILE_SECRET                 # optional
 
-# Migrations
-gh secret set SUPABASE_ACCESS_TOKEN
-gh secret set SUPABASE_PROJECT_ID
-gh secret set SUPABASE_DB_PASSWORD
+# Migrations: scoped to the "production" environment, never repo-wide
+gh secret set SUPABASE_ACCESS_TOKEN --env production
+gh secret set SUPABASE_PROJECT_ID --env production
+gh secret set SUPABASE_DB_PASSWORD --env production
 
 # Vercel previews: scoped to the "preview" environment, never repo-wide
 gh secret set VERCEL_TOKEN --env preview
@@ -91,10 +105,11 @@ gh secret list
   is not left in `.git/config` for later steps.
 - Concurrency groups cancel superseded CI and preview runs; migration deploys
   queue instead of cancelling.
-- Fork PRs receive no secrets; the preview job skips them.
+- Fork PRs receive no secrets; the preview job skips them. Same-repo PRs get
+  no privileged CI secrets either (push-only).
 
 ## Rotating
 
 Generate the new value at the source, run `gh secret set NAME` again
-(`gh secret set NAME --env preview` for the `VERCEL_*` secrets), then
+(`--env preview` for the `VERCEL_*` secrets, `--env production` for the migration secrets), then
 revoke the old token. Re-run the latest workflow to confirm.

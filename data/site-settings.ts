@@ -1,6 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 import {
   fetchMaintenanceModeFromRest,
@@ -32,7 +33,10 @@ export async function getMaintenanceMode(): Promise<MaintenanceMode> {
 /**
  * Uncached direct read for enforcement (action gates): never trusts the SWR
  * cache, so a just-enabled maintenance window blocks writes immediately.
+ * React `cache()` only dedupes within a single request (fetch stays no-store).
  */
+const requestMaintenanceMode = cache(fetchMaintenanceModeFromRest);
+
 export async function getMaintenanceModeUncached(): Promise<MaintenanceMode> {
-  return resolveMaintenanceMode(await fetchMaintenanceModeFromRest());
+  return resolveMaintenanceMode(await requestMaintenanceMode());
 }

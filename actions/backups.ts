@@ -15,14 +15,15 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { authorizeAction } from "@/data/auth";
 import { getBackupExportSetting } from "@/data/backups";
-import {
-  buildAllTablesFiles,
-  buildSingleTableFile,
-  type BackupExportFile,
-} from "@/lib/backup-export";
-import { fetchAllTables, fetchTableRows } from "@/lib/backup-data";
+import { iterateTablePages } from "@/lib/backup-data";
+import { rowsToCsv, type BackupRow } from "@/lib/backup-export";
 import { getBackupStorage } from "@/lib/backup-storage";
-import { buildRunStamp, manualExportFolder } from "@/lib/scheduled-backup";
+import {
+  buildRunStamp,
+  createTablePartWriter,
+  manualExportFolder,
+  manualPartFilename,
+} from "@/lib/scheduled-backup";
 import {
   createBackupSettingSchema,
   deleteBackupSettingSchema,
@@ -41,6 +42,8 @@ export type BackupActionResult =
 export type BackupDownload = { filename: string; url: string };
 
 const MANUAL_EXPORT_URL_TTL_SECONDS = 300;
+const JSON_MIME_TYPE = "application/json;charset=utf-8";
+const CSV_MIME_TYPE = "text/csv;charset=utf-8";
 
 export type BackupExportResult =
   | { status: "success"; message: string; downloads: BackupDownload[] }
@@ -229,8 +232,7 @@ export async function runBackupExport(
 
   try {
     const rowCounts: Partial<Record<BackupExportTable, number>> = {};
-    let files: BackupExportFile[];
-
+    let tablesToExport: readonly BackupExportTable[];
     if (setting.scope === "single") {
       if (!setting.tableName) {
         return {
@@ -238,35 +240,57 @@ export async function runBackupExport(
           message: "Single-table export is missing a table name.",
         };
       }
-      const rows = await fetchTableRows(setting.tableName);
-      rowCounts[setting.tableName] = rows.length;
-      files = [buildSingleTableFile(setting.tableName, rows, setting.format)];
+      tablesToExport = [setting.tableName];
     } else {
-      const selected =
+      tablesToExport =
         setting.scope === "multiple"
           ? setting.tableNames
           : BACKUP_EXPORT_TABLES;
-      const tables = await fetchAllTables(selected);
-      for (const tableName of selected) {
-        rowCounts[tableName] = tables[tableName]?.length ?? 0;
-      }
-      files = buildAllTablesFiles(tables, setting.format);
     }
 
-    // Upload to private storage (manual/<stamp>/…, pruned after 7 days by the
-    // backup cron) and hand back signed URLs instead of the file contents.
+    // Stream each table into compact per-table part files under
+    // manual/<stamp>/ (pruned after 7 days by the backup cron) and hand back
+    // one signed URL per part instead of building whole files in memory.
     const storage = getBackupStorage();
-    const folder = manualExportFolder(buildRunStamp());
+    const stamp = buildRunStamp();
+    const folder = manualExportFolder(stamp);
     const runId = crypto.randomUUID().slice(0, 8);
+    const format = setting.format;
+    const contentType = (
+      format === "csv" ? CSV_MIME_TYPE : JSON_MIME_TYPE
+    ).split(";")[0];
     const downloads: BackupDownload[] = [];
-    for (const file of files) {
-      const path = `${folder}/${runId}_${file.filename}`;
-      await storage.upload(path, file.content, file.mimeType);
-      downloads.push({
-        filename: file.filename,
-        url: await storage.signedUrl(path, MANUAL_EXPORT_URL_TTL_SECONDS),
+
+    for (const tableName of tablesToExport) {
+      const writer = createTablePartWriter({
+        stamp,
+        table: tableName,
+        pathFor: (part) =>
+          `${folder}/${runId}_${manualPartFilename(tableName, part, format)}`,
+        serialize:
+          format === "csv"
+            ? (rows) => rowsToCsv(rows as BackupRow[])
+            : undefined,
+        upload: (path, content) => storage.upload(path, content, contentType),
       });
+      for await (const batch of iterateTablePages(tableName)) {
+        await writer.write(batch);
+      }
+      const parts = await writer.finish();
+      rowCounts[tableName] = parts.reduce((sum, part) => sum + part.rows, 0);
+      for (const [index, part] of parts.entries()) {
+        const filename = manualPartFilename(tableName, index + 1, format);
+        downloads.push({
+          filename,
+          url: await storage.signedUrl(
+            part.path,
+            MANUAL_EXPORT_URL_TTL_SECONDS,
+            filename,
+          ),
+        });
+      }
     }
+    const files = downloads;
 
     const { error: stampError } = await auth.session.supabase
       .from("backup_export_settings")

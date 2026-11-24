@@ -1,3 +1,5 @@
+import { after } from "next/server";
+
 import {
   DEFAULT_MAINTENANCE_MODE,
   MAINTENANCE_CACHE_TTL_SECONDS,
@@ -30,15 +32,25 @@ export function reportMaintenanceFetchFailure(
 ): boolean {
   if (now - lastFetchFailureLogAt < FETCH_FAILURE_LOG_INTERVAL_MS) return false;
   lastFetchFailureLogAt = now;
-  void import("@/actions/observability")
-    .then(({ recordAppError }) =>
-      recordAppError({
+  const persist = async () => {
+    try {
+      const { recordAppErrorNow } = await import("@/actions/observability");
+      await recordAppErrorNow({
         severity: "warning",
         source: "lib.maintenance.fetch",
         message: `Maintenance mode read failed (failing open): ${reason}`,
-      }),
-    )
-    .catch(() => undefined);
+      });
+    } catch {
+      // Logging must never break the fail-open read.
+    }
+  };
+  try {
+    // Registered synchronously so the request scope keeps it alive.
+    after(persist);
+  } catch {
+    // No request scope (tests/scripts): best-effort fire-and-forget.
+    void persist();
+  }
   return true;
 }
 

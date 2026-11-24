@@ -7,6 +7,7 @@ import type {
 } from "@/types/observability";
 import {
   endOfDayExclusive,
+  escapeIlikeTerm,
   type ActivityLogQuery,
 } from "@/validations/audit-log";
 
@@ -52,7 +53,7 @@ export async function getActivityLogPage(
   let actorsCapped = false;
   if (query.actor) {
     // Resolve matching profiles first; PostgREST cannot OR across the embed.
-    const term = query.actor;
+    const term = escapeIlikeTerm(query.actor);
     const { data: actors, error: actorError } = await session.supabase
       .from("profiles")
       .select("id")

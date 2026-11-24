@@ -11,12 +11,14 @@ import {
   isAuthorizedCronRequest,
   MANUAL_EXPORT_PREFIX,
   MANUAL_EXPORT_RETENTION_DAYS,
+  MANIFEST_FILENAME,
   parseRetentionDays,
   runFolderPath,
   runManifestPath,
   SCHEDULED_BACKUP_PREFIX,
   selectExpiredBackups,
   selectExpiredRuns,
+  sortRunStampsNewestFirst,
   toCompactJson,
 } from "@/lib/scheduled-backup";
 
@@ -52,6 +54,7 @@ export async function GET(request: NextRequest) {
   const folder = runFolderPath(stamp);
 
   const rowCounts: Record<string, number> = {};
+  let backupFailed = false;
   try {
     const tables: Record<
       string,
@@ -103,12 +106,11 @@ export async function GET(request: NextRequest) {
       entityId: folder,
       summary: { storage: storage.name, error: message },
     });
-    return NextResponse.json(
-      { ok: false, error: "Backup failed" },
-      { status: 500 },
-    );
+    backupFailed = true;
   }
 
+  // Retention runs even when today's backup failed, but never deletes the
+  // newest complete (manifest-bearing) scheduled run.
   let deletedRuns = 0;
   let deletedLegacy = 0;
   try {
@@ -122,11 +124,20 @@ export async function GET(request: NextRequest) {
     deletedLegacy = legacy.length;
 
     // Whole run folders.
+    const runStamps = await storage.listFolders(SCHEDULED_BACKUP_PREFIX);
+    let newestComplete: string | null = null;
+    for (const run of sortRunStampsNewestFirst(runStamps)) {
+      const files = await storage.list(runFolderPath(run));
+      if (files.some((f) => f.name === MANIFEST_FILENAME)) {
+        newestComplete = run;
+        break;
+      }
+    }
     const expiredRuns = selectExpiredRuns(
-      await storage.listFolders(SCHEDULED_BACKUP_PREFIX),
+      runStamps,
       retentionDays,
       startedAt,
-    );
+    ).filter((run) => run !== newestComplete);
     for (const run of expiredRuns) {
       const files = await storage.list(runFolderPath(run));
       await storage.remove(files.map((f) => f.path));
@@ -144,7 +155,7 @@ export async function GET(request: NextRequest) {
       await storage.remove(files.map((f) => f.path));
     }
   } catch (error) {
-    // Backup itself succeeded; retention failure is a warning only.
+    // Retention failure is a warning only.
     await recordAppError({
       severity: "warning",
       source: SOURCE,
@@ -153,6 +164,13 @@ export async function GET(request: NextRequest) {
       }`,
       context: { storage: storage.name, retentionDays },
     });
+  }
+
+  if (backupFailed) {
+    return NextResponse.json(
+      { ok: false, error: "Backup failed", deletedRuns, deletedLegacy },
+      { status: 500 },
+    );
   }
 
   await recordActivity({

@@ -5,7 +5,8 @@
 # release that depends on new RPCs/tables (e.g. save_blog). App-first deploys
 # break CMS writes until db push succeeds.
 #
-# Required repo secrets:
+# Runs only from refs/heads/main (push or workflow_dispatch) in the GitHub
+# "production" environment. Required production environment secrets:
 #   SUPABASE_ACCESS_TOKEN  — Personal access token from https://supabase.com/dashboard/account/tokens
 #   SUPABASE_PROJECT_ID    — Project ref from the dashboard URL
 #   SUPABASE_DB_PASSWORD   — Database password for that project
@@ -30,6 +31,9 @@ jobs:
     name: supabase db push
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Refuse to deploy from any other branch (applies to workflow_dispatch too).
+    if: github.ref == 'refs/heads/main'
+    environment: production
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

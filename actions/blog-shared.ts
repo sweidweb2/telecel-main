@@ -5,7 +5,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { unexpectedActionError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { insightPath, ROUTES } from "@/constants/routes";
-import { authorizeAction } from "@/data/auth";
+import { authorizeAction, MAINTENANCE_ACTION_BLOCKED } from "@/data/auth";
 import { BLOGS_CACHE_TAG, blogSlugTag } from "@/lib/cache-tags";
 
 export type BlogActionResult =
@@ -50,11 +50,28 @@ export async function authorizeStaff(): Promise<
   };
 }
 
+/** Postgres insufficient_privilege (42501) or a Storage RLS rejection. */
+export function isRlsDenied(
+  error: { code?: string; message?: string } | null,
+): boolean {
+  if (!error) return false;
+  return (
+    error.code === "42501" ||
+    (error.message ?? "").toLowerCase().includes("row-level security")
+  );
+}
+
 export async function blogUnexpectedError(
   source: string,
   actorId: string | null | undefined,
   error: { code?: string; message?: string } | null,
 ): Promise<BlogActionResult> {
+  // Staff passed the app gate but RLS denied the write: with
+  // MAINTENANCE_FORCE_OFF set, the DB maintenance_on() row still blocks
+  // non-admin writes, so surface the maintenance message, not a generic error.
+  if (isRlsDenied(error)) {
+    return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
+  }
   return unexpectedActionError({
     source,
     actorId,

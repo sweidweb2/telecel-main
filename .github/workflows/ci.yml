@@ -5,8 +5,9 @@
 #   2. TypeScript (next typegen + tsc --noEmit)
 #   3. Vitest unit tests (lib, validations, data, actions — excludes e2e/)
 #   4. Next.js production build
-#   5. Playwright E2E (public site always; auth/blogs/users/observability when
-#      Supabase + E2E seed secrets are configured — otherwise those suites skip)
+#   5. Playwright E2E (public site always; auth/blogs/users/observability on
+#      push events when Supabase + E2E seed secrets are configured — PRs run
+#      credential-free and those suites skip)
 name: CI
 
 on:
@@ -32,18 +33,21 @@ jobs:
       # Prefer repo secrets so auth / blogs / users / observability E2E can run;
       # fall back to placeholders so lint / typecheck / unit / build / public E2E
       # still work without secrets.
+      # Privileged secrets (service role, seed password, Turnstile secret) are
+      # only provided on push events: pull_request runs are credential-free and
+      # the Supabase-backed E2E suites skip themselves.
       # NEXT_PUBLIC_* are inlined at build time — must be set for the whole job.
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ github.event_name == 'push' && secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
       # Turnstile: unset unless secrets exist (keeps current CI behaviour).
-      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
-      TURNSTILE_SECRET: ${{ secrets.TURNSTILE_SECRET }}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ github.event_name == 'push' && secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '' }}
+      TURNSTILE_SECRET: ${{ github.event_name == 'push' && secrets.TURNSTILE_SECRET || '' }}
       TURNSTILE_HOSTNAMES: localhost
       NEXT_PUBLIC_ALLOW_INDEXING: "false"
-      E2E_SEED_EMAIL: ${{ secrets.E2E_SEED_EMAIL }}
-      E2E_SEED_PASSWORD: ${{ secrets.E2E_SEED_PASSWORD }}
+      E2E_SEED_EMAIL: ${{ github.event_name == 'push' && secrets.E2E_SEED_EMAIL || '' }}
+      E2E_SEED_PASSWORD: ${{ github.event_name == 'push' && secrets.E2E_SEED_PASSWORD || '' }}
       CI: true
 
     steps:

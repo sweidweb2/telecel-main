@@ -24,7 +24,12 @@ export interface BackupStorageAdapter {
   /** Names of sub-folders directly under `prefix`. */
   listFolders(prefix: string): Promise<string[]>;
   remove(paths: string[]): Promise<void>;
-  signedUrl(path: string, expiresInSeconds: number): Promise<string>;
+  /** `downloadName` sets the Content-Disposition filename. */
+  signedUrl(
+    path: string,
+    expiresInSeconds: number,
+    downloadName?: string,
+  ): Promise<string>;
 }
 
 /** Constant-time string compare (avoids leaking the secret length/prefix). */
@@ -200,21 +205,27 @@ export function createTablePartWriter(options: {
   upload: (path: string, content: string) => Promise<void>;
   maxRows?: number;
   maxBytes?: number;
+  /** Override the object path for part N (1-based); default scheduled/<stamp>/… */
+  pathFor?: (part: number) => string;
+  /** Serialize a part from its rows; default is a compact JSON array. */
+  serialize?: (rows: unknown[]) => string;
 }) {
   const maxRows = options.maxRows ?? PART_MAX_ROWS;
   const maxBytes = options.maxBytes ?? PART_MAX_BYTES;
   const parts: BackupPart[] = [];
   let buffer: string[] = [];
+  let rowBuffer: unknown[] = [];
   let bufferBytes = 0;
   const encoder = new TextEncoder();
 
   async function flush() {
-    const content = `[${buffer.join(",")}]`;
-    const path = runTablePartPath(
-      options.stamp,
-      options.table,
-      parts.length + 1,
-    );
+    const content = options.serialize
+      ? options.serialize(rowBuffer)
+      : `[${buffer.join(",")}]`;
+    const partNumber = parts.length + 1;
+    const path = options.pathFor
+      ? options.pathFor(partNumber)
+      : runTablePartPath(options.stamp, options.table, partNumber);
     await options.upload(path, content);
     parts.push({
       path,
@@ -222,6 +233,7 @@ export function createTablePartWriter(options: {
       bytes: encoder.encode(content).length,
     });
     buffer = [];
+    rowBuffer = [];
     bufferBytes = 0;
   }
 
@@ -230,6 +242,7 @@ export function createTablePartWriter(options: {
       for (const row of rows) {
         const json = JSON.stringify(row);
         buffer.push(json);
+        if (options.serialize) rowBuffer.push(row);
         bufferBytes += encoder.encode(json).length + 1;
         if (buffer.length >= maxRows || bufferBytes >= maxBytes) await flush();
       }
@@ -248,4 +261,13 @@ export const MANUAL_EXPORT_RETENTION_DAYS = 7;
 
 export function manualExportFolder(stamp: string): string {
   return `${MANUAL_EXPORT_PREFIX}/${stamp}`;
+}
+
+/** Download-friendly part name, e.g. `blogs.0001.csv`. */
+export function manualPartFilename(
+  table: string,
+  part: number,
+  format: "json" | "csv",
+): string {
+  return `${table}.${String(part).padStart(4, "0")}.${format}`;
 }

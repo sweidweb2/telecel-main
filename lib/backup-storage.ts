@@ -76,11 +76,11 @@ export function createSupabaseBackupStorage(
       if (error) throw error;
     },
 
-    async signedUrl(path, expiresInSeconds) {
+    async signedUrl(path, expiresInSeconds, downloadName) {
       const { data, error } = await storage().createSignedUrl(
         path,
         expiresInSeconds,
-        { download: true },
+        { download: downloadName ?? true },
       );
       if (error) throw error;
       return data.signedUrl;

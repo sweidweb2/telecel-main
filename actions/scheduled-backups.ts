@@ -31,6 +31,7 @@ export async function getScheduledBackupDownloadUrl(
     const url = await getBackupStorage().signedUrl(
       `${SCHEDULED_BACKUP_PREFIX}/${name}`,
       SIGNED_URL_TTL_SECONDS,
+      name.replaceAll("/", "_"),
     );
     return { status: "success", url };
   } catch (error) {

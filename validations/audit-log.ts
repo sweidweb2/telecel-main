@@ -4,10 +4,26 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   firstSearchParam,
   parseAdminListQuery,
-  sanitizedSearchSchema,
   type AdminPageSize,
   type RawSearchParams,
 } from "@/validations/admin-list-query";
+
+/**
+ * Actor search: unlike the generic list search, `_` and `%` are allowed
+ * (emails like `jane_doe@…`) and escaped for ILIKE by `escapeIlikeTerm`.
+ * PostgREST-unsafe `, ( )` and the escape char `\` are still rejected.
+ */
+export const actorSearchSchema = z
+  .string()
+  .trim()
+  .max(100, "Search must be 100 characters or fewer")
+  .regex(/^[^,()\\]*$/, "Search contains unsupported characters")
+  .catch("");
+
+/** Escape ILIKE wildcards so `_` / `%` match literally. */
+export function escapeIlikeTerm(term: string): string {
+  return term.replace(/[%_]/g, (ch) => `\\${ch}`);
+}
 
 /** Default activity log page size (overridable via URL `limit`: 10 | 20 | 50). */
 export const ACTIVITY_LOG_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE;
@@ -84,7 +100,7 @@ export function parseActivityLogQuery(
     ...base,
     action: slugSchema.parse(firstSearchParam(input.action) ?? ""),
     entity: slugSchema.parse(firstSearchParam(input.entity) ?? ""),
-    actor: sanitizedSearchSchema.parse(firstSearchParam(input.actor) ?? ""),
+    actor: actorSearchSchema.parse(firstSearchParam(input.actor) ?? ""),
     from,
     to,
   };

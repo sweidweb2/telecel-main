@@ -29,6 +29,7 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
 const GENERIC_ERROR = ACTION_GENERIC_ERROR;
 const RATE_LIMITED = "Too many attempts. Wait a few minutes and try again.";
+const NO_ACCESS_ERROR = "Your account has no CMS access.";
 const MAINTENANCE_LOGIN_BLOCKED =
   "Only administrators can sign in while maintenance is active.";
 
@@ -143,14 +144,35 @@ export async function signIn(
   // sign_in only for active profiles with a role; requireStaff() signs the
   // rest out on the next request.
   const outcome = await signInOutcome();
+  if (!outcome.ok) {
+    // Never leave a session behind for an account that cannot use the CMS.
+    await supabase.auth.signOut({ scope: "local" });
+    if (outcome.reason === "no_session") {
+      // Session-context RPC failed: operational error, not a policy block.
+      await recordAppError({
+        severity: "error",
+        source: "actions.auth.signIn",
+        message: "Session context lookup failed after password sign-in.",
+        actorId: userId,
+      });
+      return { status: "error", message: GENERIC_ERROR };
+    }
+    await recordActivity({
+      actorId: userId,
+      action: "sign_in_blocked",
+      entityType: "auth",
+      entityId: userId,
+      summary: { method: "password", reason: outcome.reason },
+    });
+    return { status: "error", message: NO_ACCESS_ERROR };
+  }
+
   await recordActivity({
     actorId: userId,
-    action: outcome.ok ? "sign_in" : "sign_in_blocked",
+    action: "sign_in",
     entityType: "auth",
     entityId: userId,
-    summary: outcome.ok
-      ? { method: "password" }
-      : { method: "password", reason: outcome.reason },
+    summary: { method: "password" },
   });
 
   return {

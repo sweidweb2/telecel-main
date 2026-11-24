@@ -59,14 +59,28 @@ Admins see the last run and stored files under **Scheduled backups** on `/dashbo
 Manual test: `curl -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/backup`.
 Storage is behind `BackupStorageAdapter` (`lib/scheduled-backup.ts`, Supabase impl in `lib/backup-storage.ts`); swap `getBackupStorage()` to move to S3 or similar. Vercel Hobby plans allow daily crons only.
 
-Manual exports on `/dashboard/backups` are uploaded to `manual/<stamp>/` in the same bucket and downloaded through 5-minute signed URLs.
+Manual exports on `/dashboard/backups` are written per table as compact part files (JSON parts of ~20k rows / ~20MB; CSV parts of ~20k rows) under `manual/<stamp>/` in the same bucket and downloaded through 5-minute signed URLs (one per part, with a clean download filename).
 
 ### Known limitations
 
 - Table exports (manual and scheduled) are not a single transactional snapshot: each table is paged separately by primary key, so rows written while an export runs may or may not appear, and related tables can be slightly out of sync. Use Supabase point-in-time recovery / database backups when you need a consistent snapshot.
 
+## Maintenance break-glass (`MAINTENANCE_FORCE_OFF`)
+
+Setting `MAINTENANCE_FORCE_OFF=true` makes the app (proxy, pages and action gates) treat maintenance as off. It does **not** change the database: RLS policies still call `public.maintenance_on()`, which reads the `site_settings` `maintenance` row, so non-admin writes (blogs, media, inquiry updates, profile self-updates) keep failing with the maintenance message while that row says `full`.
+
+To fully break glass, also flip the row (SQL editor, as an admin/service role):
+
+```sql
+update public.site_settings
+set value = jsonb_set(value, '{mode}', '"off"')
+where key = 'maintenance';
+```
+
+Then remove `MAINTENANCE_FORCE_OFF` once the dashboard is reachable again.
+
 ## CI secrets (GitHub → Settings → Secrets)
 
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` (CI E2E), and `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` (migration deploy). Without them, CI still runs lint/types/unit/build/public E2E; auth, blogs, users, and observability E2E suites skip themselves.
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `E2E_SEED_EMAIL`, `E2E_SEED_PASSWORD` (CI E2E), and `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` (migration deploy, `production` environment secrets). Service role, seed and Turnstile secrets are only passed to push runs; PRs run credential-free. Without them, CI still runs lint/types/unit/build/public E2E; auth, blogs, users, and observability E2E suites skip themselves.
 
 Apply `supabase/migrations/` (including `audit_log` / `app_errors` / `save_blog`) to the project used for E2E before expecting those suites to pass.
