@@ -3,7 +3,10 @@ import { Container } from "@/components/layout/container";
 import { ContactForm } from "@/components/marketing/contact-form";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
-import { INQUIRY_INTENTS } from "@/constants/inquiries";
+import {
+  AREA_OF_INTEREST_OPTIONS,
+  INQUIRY_INTENTS,
+} from "@/constants/inquiries";
 import { ROUTES } from "@/constants/routes";
 import { buildMarketingMetadata } from "@/lib/seo/marketing-metadata";
 import type { InquiryIntent } from "@/types/inquiry";
@@ -30,10 +33,14 @@ export default async function ContactPage({
     ? params.intent[0]
     : params.intent;
   const intent = resolveIntent(intentRaw);
+  const areaRaw = Array.isArray(params.area) ? params.area[0] : params.area;
+  const area = AREA_OF_INTEREST_OPTIONS.find(
+    (item) => item.value === areaRaw,
+  )?.value;
 
   return (
     <main>
-      <section className="border-b">
+      <section className="border-b bg-surface">
         <Container className="grid gap-12 py-14 lg:grid-cols-12 lg:gap-10 lg:py-24">
           <div className="lg:col-span-5">
             <Text variant="brand">Contact</Text>
@@ -46,8 +53,12 @@ export default async function ContactPage({
             </Text>
             <SignalMotif className="mt-10 hidden max-w-xs text-brand/40 lg:block" />
           </div>
-          <div className="lg:col-span-7">
-            <ContactForm key={intent} defaultIntent={intent} />
+          <div className="rounded-xl border bg-background p-5 shadow-sm sm:p-8 lg:col-span-7">
+            <ContactForm
+              key={`${intent}-${area ?? ""}`}
+              defaultIntent={intent}
+              defaultArea={area}
+            />
           </div>
         </Container>
       </section>

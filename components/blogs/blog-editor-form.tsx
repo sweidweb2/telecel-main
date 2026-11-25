@@ -66,17 +66,21 @@ type BlogEditorFormProps = {
 };
 
 function FieldLabel({
+  id,
   htmlFor,
   children,
   hint,
 }: {
+  id?: string;
   htmlFor?: string;
   children: React.ReactNode;
   hint?: string;
 }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-      <Label htmlFor={htmlFor}>{children}</Label>
+      <Label id={id} htmlFor={htmlFor}>
+        {children}
+      </Label>
       {hint ? (
         <span className="text-xs text-muted-foreground">{hint}</span>
       ) : null}
@@ -469,7 +473,10 @@ export function BlogEditorForm({
             </div>
 
             <div className="grid gap-2">
-              <FieldLabel hint={`max ${BLOG_BODY_MAX.toLocaleString()} chars`}>
+              <FieldLabel
+                id="blog-body-label"
+                hint={`max ${BLOG_BODY_MAX.toLocaleString()} chars`}
+              >
                 Body
               </FieldLabel>
               <Controller
@@ -481,10 +488,17 @@ export function BlogEditorForm({
                     onChange={field.onChange}
                     disabled={isPending}
                     placeholder="Write the article body…"
+                    labelledBy="blog-body-label"
+                    invalid={Boolean(errors.bodyHtml)}
+                    describedBy={
+                      errors.bodyHtml ? "blog-body-error" : undefined
+                    }
                   />
                 )}
               />
-              <FieldError>{errors.bodyHtml?.message}</FieldError>
+              <FieldError id="blog-body-error">
+                {errors.bodyHtml?.message}
+              </FieldError>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

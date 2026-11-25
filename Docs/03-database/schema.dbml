@@ -526,8 +526,9 @@ Table app_errors {
 Table backup_export_settings {
   id uuid [pk]
   name text [not null, note: '1–120 chars']
-  scope text [not null, note: 'all | single']
-  table_name text [note: 'Required when scope=single; allowlist: profiles, blogs, inquiries, audit_log, app_errors']
+  scope text [not null, note: 'all | single | multiple']
+  table_name text [note: 'Required when scope=single; allowlist: profiles, blogs, inquiries, audit_log, app_errors, site_settings, backup_export_settings']
+  table_names "text[]" [note: 'Required when scope=multiple (2-7 tables from the same allowlist); added 20261122090100']
   format text [not null, note: 'csv | json']
   created_by uuid [ref: > profiles.id]
   created_at timestamptz [not null, default: `now()`]
@@ -539,7 +540,7 @@ Table backup_export_settings {
     (created_by, created_at)
   }
 
-  Note: '[MIGRATED 20261027230000] Admin-only CRUD via is_admin(). Stores reusable export configs; dumps download in the browser (no Storage). Admin UI: /dashboard/backups. Table data reads for export use service role in actions/backups.ts.'
+  Note: '[MIGRATED 20261027230000] Admin-only CRUD via is_admin(). Stores reusable export configs; dumps download in the browser (no Storage). Admin UI: /dashboard/backups. Table data reads for export use service role (lib/backup-data.ts). Scheduled backups (cron) are files in the private Storage bucket "backups" (20261122090000), not rows here.'
 }
 
 Table content_revisions {

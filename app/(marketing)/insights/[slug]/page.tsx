@@ -16,6 +16,8 @@ import { SITE_NAME } from "@/lib/seo/site";
 
 // Allow newly published slugs after revalidate without waiting for a rebuild.
 export const dynamicParams = true;
+/** ISR backstop; CMS actions expire the per-slug tag immediately on change. */
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const slugs = await getInsightSlugs();

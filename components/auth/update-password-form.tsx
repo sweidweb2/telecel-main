@@ -76,7 +76,9 @@ export function UpdatePasswordForm() {
           )}
         </Field>
         <Field data-invalid={Boolean(errors.confirmPassword)}>
-          <FieldLabel htmlFor="confirmPassword">Confirm new password</FieldLabel>
+          <FieldLabel htmlFor="confirmPassword">
+            Confirm new password
+          </FieldLabel>
           <PasswordInput
             className="h-12 border-input px-3 text-base"
             id="confirmPassword"
@@ -90,7 +92,11 @@ export function UpdatePasswordForm() {
           <FieldError>{errors.confirmPassword?.message}</FieldError>
         </Field>
       </FieldGroup>
-      <Button type="submit" className="h-12 w-full text-[15px]" disabled={isPending}>
+      <Button
+        type="submit"
+        className="h-12 w-full text-[15px]"
+        disabled={isPending}
+      >
         {isPending ? (
           <>
             <Spinner />

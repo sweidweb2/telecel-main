@@ -17,6 +17,7 @@ export type TurnstileApi = {
     options: TurnstileRenderOptions,
   ) => TurnstileWidgetId;
   reset: (widgetId: TurnstileWidgetId) => void;
+  remove: (widgetId: TurnstileWidgetId) => void;
 };
 
 declare global {

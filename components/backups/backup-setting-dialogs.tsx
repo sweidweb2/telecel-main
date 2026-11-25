@@ -44,7 +44,10 @@ import {
   BACKUP_EXPORT_TABLES,
 } from "@/constants/backup-tables";
 import type { BackupExportSetting } from "@/types/backups";
-import { BACKUP_SETTING_NAME_MAX } from "@/validations/backups";
+import {
+  BACKUP_SETTING_NAME_MAX,
+  refineSettingFields,
+} from "@/validations/backups";
 
 const formSchema = z
   .object({
@@ -58,31 +61,38 @@ const formSchema = z
       ),
     scope: z.enum(BACKUP_EXPORT_SCOPES, "Choose a scope"),
     tableName: z.enum(BACKUP_EXPORT_TABLES).nullable(),
+    tableNames: z.array(z.enum(BACKUP_EXPORT_TABLES)),
     format: z.enum(BACKUP_EXPORT_FORMATS, "Choose a format"),
   })
-  .superRefine((value, ctx) => {
-    if (value.scope === "single" && !value.tableName) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["tableName"],
-        message: "Choose a table to export",
-      });
-    }
-  });
+  .superRefine(refineSettingFields);
 
 const DEFAULT_VALUES: BackupSettingFormValues = {
   name: "",
   scope: "single",
   tableName: "profiles",
+  tableNames: [],
   format: "csv",
 };
 
-function settingToFormValues(setting: BackupExportSetting): BackupSettingFormValues {
+function settingToFormValues(
+  setting: BackupExportSetting,
+): BackupSettingFormValues {
   return {
     name: setting.name,
     scope: setting.scope,
     tableName: setting.tableName,
+    tableNames: setting.tableNames,
     format: setting.format,
+  };
+}
+
+function formValuesToInput(values: BackupSettingFormValues) {
+  return {
+    name: values.name,
+    scope: values.scope,
+    tableName: values.scope === "single" ? values.tableName : null,
+    tableNames: values.scope === "multiple" ? values.tableNames : null,
+    format: values.format,
   };
 }
 
@@ -99,12 +109,7 @@ export function CreateBackupSettingDialog() {
 
   function onSubmit(values: BackupSettingFormValues) {
     startTransition(async () => {
-      const result = await createBackupSetting({
-        name: values.name,
-        scope: values.scope,
-        tableName: values.scope === "single" ? values.tableName : null,
-        format: values.format,
-      });
+      const result = await createBackupSetting(formValuesToInput(values));
       if (result.status === "error") {
         toast.error(result.message);
         return;
@@ -125,14 +130,12 @@ export function CreateBackupSettingDialog() {
       }}
     >
       <DialogTrigger
-        render={
-          <Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />
-        }
+        render={<Button className="min-h-11 w-full sm:min-h-8 sm:w-auto" />}
       >
         <PlusIcon data-icon="inline-start" />
         New export setting
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex flex-col overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New export setting</DialogTitle>
           <DialogDescription>
@@ -141,16 +144,18 @@ export function CreateBackupSettingDialog() {
           </DialogDescription>
         </DialogHeader>
         <form
-          className="flex flex-col gap-4"
+          className="flex min-h-0 flex-1 flex-col gap-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <BackupSettingFormFields
-            idPrefix={`${id}-create`}
-            control={form.control}
-            watch={form.watch}
-            setValue={form.setValue}
-            disabled={pending}
-          />
+          <div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4">
+            <BackupSettingFormFields
+              idPrefix={`${id}-create`}
+              control={form.control}
+              watch={form.watch}
+              setValue={form.setValue}
+              disabled={pending}
+            />
+          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -190,10 +195,7 @@ export function EditBackupSettingDialog({
     startTransition(async () => {
       const result = await updateBackupSetting({
         id: setting.id,
-        name: values.name,
-        scope: values.scope,
-        tableName: values.scope === "single" ? values.tableName : null,
-        format: values.format,
+        ...formValuesToInput(values),
       });
       if (result.status === "error") {
         toast.error(result.message);
@@ -225,7 +227,7 @@ export function EditBackupSettingDialog({
       >
         <PencilIcon />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="flex flex-col overflow-hidden sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit export setting</DialogTitle>
           <DialogDescription>
@@ -233,16 +235,18 @@ export function EditBackupSettingDialog({
           </DialogDescription>
         </DialogHeader>
         <form
-          className="flex flex-col gap-4"
+          className="flex min-h-0 flex-1 flex-col gap-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <BackupSettingFormFields
-            idPrefix={`${id}-edit`}
-            control={form.control}
-            watch={form.watch}
-            setValue={form.setValue}
-            disabled={pending}
-          />
+          <div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4">
+            <BackupSettingFormFields
+              idPrefix={`${id}-edit`}
+              control={form.control}
+              watch={form.watch}
+              setValue={form.setValue}
+              disabled={pending}
+            />
+          </div>
           <DialogFooter>
             <Button
               type="button"
@@ -303,17 +307,13 @@ export function DeleteBackupSettingDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete export setting?</AlertDialogTitle>
           <AlertDialogDescription>
-            “{setting.name}” will be removed. This does not delete any table
-            data — only the saved export configuration.
+            â€œ{setting.name}â€ will be removed. This does not delete any table
+            data â€” only the saved export configuration.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            disabled={pending}
-            onClick={onDelete}
-          >
+          <Button variant="destructive" disabled={pending} onClick={onDelete}>
             {pending ? <Spinner data-icon="inline-start" /> : null}
             Delete
           </Button>

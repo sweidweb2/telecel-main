@@ -113,7 +113,8 @@ export const SOLUTIONS_HUB_BLUEPRINT: PageBlueprintConfig = {
   path: ROUTES.solutions,
   eyebrow: "Solutions",
   title: "Designed for the decisions you need to make",
-  description: "Outcome-led journeys by customer type.",
+  description:
+    "Start from your customer type: operators, enterprises, public bodies or wholesale partners.",
   metaTitle: "Solutions | Telecel Global",
   metaDescription:
     "Solutions for mobile operators, enterprises, governments and institutions, and wholesale aggregators.",
@@ -272,7 +273,7 @@ export const WHY_TELECEL_BLUEPRINT: PageBlueprintConfig = {
   eyebrow: WHY_TELECEL_PAGE.title,
   title: "International capability, delivered with operator understanding",
   description:
-    "Telecel Global is the international B2B arm of Telecel — blueprint sections only for now.",
+    "Telecel Global is the international B2B arm of Telecel, bringing connectivity and digital services together for operators, enterprises and institutions.",
   metaTitle: "Why Telecel Global | Telecel Global",
   metaDescription:
     "Operator-led understanding, one accountable relationship, international reach and solution-led agility.",
@@ -317,7 +318,7 @@ export const CASE_STUDIES_BLUEPRINT: PageBlueprintConfig = {
   path: CASE_STUDIES_PAGE.path,
   eyebrow: "Insights",
   title: CASE_STUDIES_PAGE.title,
-  description: "Template and listing slot — unpublished until cleared.",
+  description: "Customer outcomes and delivery stories from Telecel Global.",
   metaTitle: "Case Studies | Telecel Global",
   metaDescription:
     "Customer outcomes and delivery stories from Telecel Global.",
@@ -334,10 +335,6 @@ const LEGAL_COPY = {
   [ROUTES.privacy]: {
     metaTitle: "Privacy Policy | Telecel Global",
     metaDescription: "Privacy Policy for Telecel Global.",
-  },
-  [ROUTES.cookies]: {
-    metaTitle: "Cookie Policy | Telecel Global",
-    metaDescription: "Cookie Policy for Telecel Global.",
   },
   [ROUTES.terms]: {
     metaTitle: "Terms of Use | Telecel Global",
@@ -366,12 +363,10 @@ function legalBlueprint(
 }
 
 export const PRIVACY_BLUEPRINT = legalBlueprint(ROUTES.privacy);
-export const COOKIES_BLUEPRINT = legalBlueprint(ROUTES.cookies);
 export const TERMS_BLUEPRINT = legalBlueprint(ROUTES.terms);
 
 export const LEGAL_BLUEPRINTS: readonly PageBlueprintConfig[] = [
   PRIVACY_BLUEPRINT,
-  COOKIES_BLUEPRINT,
   TERMS_BLUEPRINT,
 ];
 

@@ -6,6 +6,7 @@ import {
   getMaintenanceModeForProxy,
   isAdminClaim,
   isMaintenanceActive,
+  MAINTENANCE_REWRITE_HEADER,
 } from "@/lib/maintenance";
 
 /**
@@ -15,9 +16,11 @@ import {
  * the 24h absolute session lifetime are enforced server-side (data/auth.ts)
  * and in RLS.
  *
- * Maintenance policy (full mode): rewrite public traffic to /maintenance;
- * keep auth surfaces + sign-out reachable; signed-in staff keep /dashboard/*
- * so they can turn maintenance off. Admin exceptions for *new* sessions are
+ * Maintenance policy (full mode): rewrite public traffic to /maintenance
+ * (503 + Retry-After); keep auth surfaces + sign-out reachable; anonymous
+ * /dashboard visitors go to /login; signed-in /dashboard
+ * requests reach the app, where requireStaff() does the authoritative DB role
+ * check (non-admins go to /maintenance). Admin exceptions for *new* sessions are
  * enforced in actions/auth and auth route handlers (DB role), not via
  * JWT-admin public browse.
  */
@@ -58,20 +61,47 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
 }
 
 /** Carries refreshed session cookies (with their options) onto a redirect. */
-function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
-  const redirect = NextResponse.redirect(url);
+/** Headers setAll() attached to a refreshed-session response (cache safety). */
+const SESSION_HEADER_NAMES = ["cache-control", "expires", "pragma"] as const;
+
+function copySessionState(from: NextResponse, to: NextResponse): NextResponse {
   for (const cookie of from.cookies.getAll()) {
-    redirect.cookies.set(cookie);
+    to.cookies.set(cookie);
   }
-  return redirect;
+  for (const name of SESSION_HEADER_NAMES) {
+    const value = from.headers.get(name);
+    if (value !== null) to.headers.set(name, value);
+  }
+  return to;
 }
 
-function rewriteWithCookies(url: URL, from: NextResponse): NextResponse {
-  const rewrite = NextResponse.rewrite(url);
-  for (const cookie of from.cookies.getAll()) {
-    rewrite.cookies.set(cookie);
-  }
-  return rewrite;
+function redirectWithCookies(url: URL, from: NextResponse): NextResponse {
+  return copySessionState(from, NextResponse.redirect(url));
+}
+
+/** Seconds clients should wait before retrying during maintenance. */
+const MAINTENANCE_RETRY_AFTER_SECONDS = 300;
+
+function maintenanceRewrite(request: NextRequest): NextResponse {
+  // Marks proxy-originated rewrites so /maintenance does not bounce home
+  // while the proxy and page caches briefly disagree.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(MAINTENANCE_REWRITE_HEADER, "1");
+  return NextResponse.rewrite(new URL(ROUTES.maintenance, request.url), {
+    request: { headers: requestHeaders },
+    status: 503,
+    headers: {
+      "Retry-After": String(MAINTENANCE_RETRY_AFTER_SECONDS),
+      "Cache-Control": "private, no-cache, no-store, must-revalidate",
+    },
+  });
+}
+
+function maintenanceRewriteWithCookies(
+  request: NextRequest,
+  from: NextResponse,
+): NextResponse {
+  return copySessionState(from, maintenanceRewrite(request));
 }
 
 export async function proxy(request: NextRequest) {
@@ -80,6 +110,10 @@ export async function proxy(request: NextRequest) {
   if (!url || !anonKey) return NextResponse.next({ request });
 
   const { pathname, search } = request.nextUrl;
+
+  // Scheduled jobs (e.g. backups) must run during maintenance; the route
+  // enforces its own CRON_SECRET bearer auth and needs no session refresh.
+  if (pathname.startsWith("/api/cron/")) return NextResponse.next({ request });
 
   if (pathname === LEGACY_FORGOT_PASSWORD) {
     const target = new URL(ROUTES.contact, request.url);
@@ -95,11 +129,13 @@ export async function proxy(request: NextRequest) {
     const maintenanceOn = isMaintenanceActive(await maintenancePromise);
 
     if (maintenanceOn) {
+      // Anonymous /dashboard falls through to the login redirect below so
+      // admins can still authenticate.
       const allow =
-        MAINTENANCE_PASSTHROUGH.has(pathname) || isAuthSurfacePath(pathname);
-      if (!allow) {
-        return NextResponse.rewrite(new URL(ROUTES.maintenance, request.url));
-      }
+        MAINTENANCE_PASSTHROUGH.has(pathname) ||
+        isAuthSurfacePath(pathname) ||
+        isProtectedPath(pathname);
+      if (!allow) return maintenanceRewrite(request);
     }
 
     if (isProtectedPath(pathname)) {
@@ -118,7 +154,7 @@ export async function proxy(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
@@ -126,6 +162,13 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
+        // A refreshed session must never be cached by a CDN or shared cache.
+        for (const [name, value] of Object.entries(headers ?? {})) {
+          response.headers.set(name, value);
+        }
+        if (cookiesToSet.length > 0) {
+          response.headers.set("Cache-Control", "private, no-store");
+        }
       },
     },
   });
@@ -145,13 +188,11 @@ export async function proxy(request: NextRequest) {
     const allow =
       MAINTENANCE_PASSTHROUGH.has(pathname) ||
       isAuthSurfacePath(pathname) ||
-      (signedIn && isProtectedPath(pathname));
-    if (!allow) {
-      return rewriteWithCookies(
-        new URL(ROUTES.maintenance, request.url),
-        response,
-      );
-    }
+      // Anonymous → login redirect below. Signed-in users pass through:
+      // requireStaff() checks the DB role and sends non-admins to
+      // /maintenance (the token role is not trusted for the lockout).
+      isProtectedPath(pathname);
+    if (!allow) return maintenanceRewriteWithCookies(request, response);
   }
 
   if (isProtectedPath(pathname) && !signedIn) {

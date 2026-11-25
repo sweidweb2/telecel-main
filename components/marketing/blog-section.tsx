@@ -55,7 +55,7 @@ function FeaturedPost({
         ) : (
           <div className="absolute inset-0 bg-muted" />
         )}
-        <div className="absolute inset-x-0 bottom-0 w-full bg-linear-to-t from-black/60 to-transparent pt-24">
+        <div className="absolute inset-x-0 bottom-0 w-full bg-neutral-950/85">
           <div className="flex w-full flex-col gap-6 p-6 lg:p-8">
             <div className="flex flex-col gap-2">
               <div className="flex gap-4">

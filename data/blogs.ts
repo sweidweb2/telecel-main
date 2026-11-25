@@ -13,7 +13,13 @@ import type {
 } from "@/types/blog";
 import type { BlogListQuery } from "@/validations/blog";
 
-export const BLOGS_CACHE_TAG = "blogs";
+import {
+  BLOGS_CACHE_TAG,
+  BLOGS_REVALIDATE_SECONDS,
+  blogSlugTag,
+} from "@/lib/cache-tags";
+
+export { BLOGS_CACHE_TAG };
 
 const LIST_COLUMNS =
   "id, slug, title, summary, categories, thumbnail_url, author_name, author_avatar_url, status, is_featured, reading_time_minutes, published_at, created_at, updated_at" as const;
@@ -165,7 +171,7 @@ async function tolerateDuringBuild<T>(
 const cachedPublishedBlogs = unstable_cache(
   fetchPublishedBlogs,
   ["published-blogs"],
-  { tags: [BLOGS_CACHE_TAG], revalidate: 300 },
+  { tags: [BLOGS_CACHE_TAG], revalidate: BLOGS_REVALIDATE_SECONDS },
 );
 
 /** Request-deduped; still backed by unstable_cache across requests. */
@@ -208,7 +214,10 @@ export const getPublishedBlogBySlug = cache(
         unstable_cache(
           async () => fetchPublishedBlogBySlug(slug),
           ["published-blog-by-slug", slug],
-          { tags: [BLOGS_CACHE_TAG], revalidate: 300 },
+          {
+            tags: [BLOGS_CACHE_TAG, blogSlugTag(slug)],
+            revalidate: BLOGS_REVALIDATE_SECONDS,
+          },
         )(),
       null,
     );

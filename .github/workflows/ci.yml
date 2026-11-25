@@ -5,8 +5,9 @@
 #   2. TypeScript (next typegen + tsc --noEmit)
 #   3. Vitest unit tests (lib, validations, data, actions — excludes e2e/)
 #   4. Next.js production build
-#   5. Playwright E2E (public site always; auth/blogs/users/observability when
-#      Supabase + E2E seed secrets are configured — otherwise those suites skip)
+#   5. Playwright E2E (public site always; auth/blogs/users/observability on
+#      push events when Supabase + E2E seed secrets are configured — PRs run
+#      credential-free and those suites skip)
 name: CI
 
 on:
@@ -32,21 +33,31 @@ jobs:
       # Prefer repo secrets so auth / blogs / users / observability E2E can run;
       # fall back to placeholders so lint / typecheck / unit / build / public E2E
       # still work without secrets.
+      # Privileged secrets (service role, seed password, Turnstile secret) are
+      # only provided on push events: pull_request runs are credential-free and
+      # the Supabase-backed E2E suites skip themselves.
       # NEXT_PUBLIC_* are inlined at build time — must be set for the whole job.
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      E2E_SEED_EMAIL: ${{ secrets.E2E_SEED_EMAIL }}
-      E2E_SEED_PASSWORD: ${{ secrets.E2E_SEED_PASSWORD }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ github.event_name == 'push' && secrets.SUPABASE_SERVICE_ROLE_KEY || '' }}
+      # Turnstile: unset unless secrets exist (keeps current CI behaviour).
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ github.event_name == 'push' && secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '' }}
+      TURNSTILE_SECRET: ${{ github.event_name == 'push' && secrets.TURNSTILE_SECRET || '' }}
+      TURNSTILE_HOSTNAMES: localhost
+      NEXT_PUBLIC_ALLOW_INDEXING: "false"
+      E2E_SEED_EMAIL: ${{ github.event_name == 'push' && secrets.E2E_SEED_EMAIL || '' }}
+      E2E_SEED_PASSWORD: ${{ github.event_name == 'push' && secrets.E2E_SEED_PASSWORD || '' }}
       CI: true
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -74,7 +85,7 @@ jobs:
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: playwright-report
           path: playwright-report/

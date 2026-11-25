@@ -6,9 +6,13 @@ import { recordActivity, recordAppError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { CONTACT_CONSENT_VERSION } from "@/constants/inquiries";
 import { ROUTES } from "@/constants/routes";
-import { authorizeAction } from "@/data/auth";
+import {
+  authorizeAction,
+  isActionAllowedDuringMaintenance,
+  MAINTENANCE_ACTION_BLOCKED,
+} from "@/data/auth";
 import { clientIp } from "@/lib/client-ip";
-import { consumeRateLimit } from "@/lib/rate-limit";
+import { consumeRateLimit, isRateLimited } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   TURNSTILE_CONTACT_ACTION,
@@ -26,6 +30,9 @@ export type InquiryActionResult =
   | { status: "error"; message: string };
 
 const ONE_HOUR = 60 * 60 * 1000;
+const CONTACT_IP_LIMIT = 8;
+const CONTACT_EMAIL_LIMIT = 3;
+const CONTACT_ATTEMPT_LIMIT = 30;
 const RATE_LIMITED =
   "Too many inquiries from this network. Please try again later.";
 const GENERIC_ERROR = ACTION_GENERIC_ERROR;
@@ -44,11 +51,28 @@ export async function submitInquiry(
   }
 
   const ip = await clientIp();
+  const ipKey = `contact:ip:${ip}`;
+  const emailKey = `contact:email:${parsed.data.email}`;
+  // Cheap pre-check (records nothing) so throttled clients skip siteverify.
   if (
-    !consumeRateLimit(`contact:ip:${ip}`, 8, ONE_HOUR) ||
-    !consumeRateLimit(`contact:email:${parsed.data.email}`, 3, ONE_HOUR)
+    isRateLimited(ipKey, CONTACT_IP_LIMIT, ONE_HOUR) ||
+    isRateLimited(emailKey, CONTACT_EMAIL_LIMIT, ONE_HOUR)
   ) {
     return { status: "error", message: RATE_LIMITED };
+  }
+
+  // Attempt bucket, consumed before siteverify: caps how often one IP can
+  // make us call Cloudflare (or retry failed challenges), independent of the
+  // success quota below.
+  if (
+    !consumeRateLimit(`contact:attempt:${ip}`, CONTACT_ATTEMPT_LIMIT, ONE_HOUR)
+  ) {
+    return { status: "error", message: RATE_LIMITED };
+  }
+
+  // After the attempt bucket so maintenance probes are throttled too.
+  if (!(await isActionAllowedDuringMaintenance())) {
+    return { status: "error", message: MAINTENANCE_ACTION_BLOCKED };
   }
 
   const turnstile = await verifyTurnstileToken({
@@ -73,6 +97,15 @@ export async function submitInquiry(
       status: "error",
       message: "Security check failed. Refresh the page and try again.",
     };
+  }
+
+  // Quota is consumed only after Turnstile passes, so failed or expired
+  // challenges do not burn a real visitor's attempts.
+  if (
+    !consumeRateLimit(ipKey, CONTACT_IP_LIMIT, ONE_HOUR) ||
+    !consumeRateLimit(emailKey, CONTACT_EMAIL_LIMIT, ONE_HOUR)
+  ) {
+    return { status: "error", message: RATE_LIMITED };
   }
 
   const admin = createAdminClient();

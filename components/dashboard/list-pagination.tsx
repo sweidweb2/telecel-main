@@ -61,7 +61,10 @@ export function ListPagination({
         </p>
         {hrefForPageSize ? (
           <div className="flex items-center gap-2">
-            <Label htmlFor="rows-per-page" className="text-sm text-muted-foreground">
+            <Label
+              htmlFor="rows-per-page"
+              className="text-sm text-muted-foreground"
+            >
               Rows
             </Label>
             <Select
@@ -100,7 +103,9 @@ export function ListPagination({
               <PaginationPrevious
                 href={current > 1 ? hrefForPage(current - 1) : undefined}
                 aria-disabled={current === 1}
-                className={cn(current === 1 && "pointer-events-none opacity-50")}
+                className={cn(
+                  current === 1 && "pointer-events-none opacity-50",
+                )}
               />
             </PaginationItem>
             <PaginationItem>

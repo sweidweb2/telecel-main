@@ -1,0 +1,81 @@
+# Deploys a Vercel preview for each same-repo pull request.
+# Skips cleanly (green, with a notice) when the Vercel secrets are not set,
+# and for PRs from forks (GitHub does not expose secrets to them).
+#
+# Required environment secrets on the "preview" GitHub environment (see Docs/04-runbooks/github-secrets.md):
+#   VERCEL_TOKEN       - https://vercel.com/account/tokens
+#   VERCEL_ORG_ID      - .vercel/project.json "orgId" after `vercel link`
+#   VERCEL_PROJECT_ID  - .vercel/project.json "projectId" after `vercel link`
+# Build-time env (Supabase, Turnstile, ...) comes from the Vercel project's
+# Preview environment, pulled by `vercel pull`.
+name: Preview Deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: preview-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Vercel preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # VERCEL_* live as environment secrets on "preview" (required reviewers).
+    environment: preview
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TELEMETRY_DISABLED: "1"
+      GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+
+    steps:
+      - name: Check secrets
+        id: guard
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice::Vercel secrets not configured - skipping preview deploy."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        if: steps.guard.outputs.enabled == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Vercel CLI
+        if: steps.guard.outputs.enabled == 'true'
+        run: npm install --global vercel@66.6.0
+
+      - name: Pull Vercel environment
+        if: steps.guard.outputs.enabled == 'true'
+        run: vercel pull --yes --environment=preview --git-branch="$GIT_BRANCH" --token="$VERCEL_TOKEN"
+
+      - name: Build
+        if: steps.guard.outputs.enabled == 'true'
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        if: steps.guard.outputs.enabled == 'true'
+        run: |
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"

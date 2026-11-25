@@ -35,3 +35,19 @@ describe("resolveMaintenanceMode", () => {
     expect(isAdminClaim(null)).toBe(false);
   });
 });
+
+describe("reportMaintenanceFetchFailure", () => {
+  afterEach(() => {
+    clearMaintenanceProxyCache();
+  });
+
+  it("throttles failure logging to once per interval", async () => {
+    const { reportMaintenanceFetchFailure } = await import("@/lib/maintenance");
+    const t0 = 1_000_000_000;
+    expect(reportMaintenanceFetchFailure("HTTP 500", t0)).toBe(true);
+    expect(reportMaintenanceFetchFailure("HTTP 500", t0 + 1_000)).toBe(false);
+    expect(reportMaintenanceFetchFailure("HTTP 500", t0 + 5 * 60 * 1000)).toBe(
+      true,
+    );
+  });
+});

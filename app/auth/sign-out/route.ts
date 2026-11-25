@@ -1,23 +1,104 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { loginPath, type LoginReason } from "@/constants/routes";
+import { recordActivity } from "@/actions/observability";
+import { loginPath, ROUTES, type LoginReason } from "@/constants/routes";
+import { getSessionContext } from "@/data/auth";
+import { getMaintenanceModeUncached } from "@/data/site-settings";
+import { isMaintenanceActive } from "@/lib/maintenance";
 import { createClient } from "@/lib/supabase/server";
 
-const REASONS = new Set<LoginReason>(["session-expired", "no-access", "signed-out"]);
+const REASONS = new Set<LoginReason>([
+  "session-expired",
+  "no-access",
+  "signed-out",
+]);
 
-/**
- * Ends the session and clears its cookies. Server Components cannot write
- * cookies, so guards in data/auth.ts redirect here when a session expired or
- * access was revoked. The user-facing logout button uses the signOut action.
- */
-export async function GET(request: NextRequest) {
-  const requested = request.nextUrl.searchParams.get("reason") as LoginReason | null;
-  const reason = requested && REASONS.has(requested) ? requested : "signed-out";
+function parseReason(request: NextRequest): LoginReason {
+  const requested = request.nextUrl.searchParams.get(
+    "reason",
+  ) as LoginReason | null;
+  return requested && REASONS.has(requested) ? requested : "signed-out";
+}
 
+async function endSessionAndRedirect(
+  request: NextRequest,
+  reason: LoginReason,
+  source: "route.post" | "route.get",
+): Promise<NextResponse> {
   const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const actorId = data?.claims?.sub ?? null;
   await supabase.auth.signOut({ scope: "local" });
+  if (actorId) {
+    await recordActivity({
+      actorId,
+      action: "sign_out",
+      entityType: "auth",
+      entityId: actorId,
+      summary: { source, reason },
+    });
+  }
 
-  const response = NextResponse.redirect(new URL(loginPath({ reason }), request.url));
+  const response = NextResponse.redirect(
+    new URL(loginPath({ reason }), request.url),
+    303,
+  );
   response.headers.set("Cache-Control", "no-store");
   return response;
+}
+
+/** Same-origin check for the state-changing POST (CSRF defence). */
+function isSameOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) {
+    // Browsers always send Origin on cross-site POSTs; fall back to Sec-Fetch-Site.
+    const site = request.headers.get("sec-fetch-site");
+    return site === null || site === "same-origin" || site === "none";
+  }
+  return origin === request.nextUrl.origin;
+}
+
+/** Explicit logout (forms / fetch). POST-only so it cannot be triggered cross-site via a link or <img>. */
+export async function POST(request: NextRequest) {
+  if (!isSameOrigin(request)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+  return endSessionAndRedirect(request, parseReason(request), "route.post");
+}
+
+function noStoreRedirect(request: NextRequest, path: string): NextResponse {
+  const response = NextResponse.redirect(new URL(path, request.url));
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
+/**
+ * Server Components cannot write cookies, so guards in data/auth.ts redirect
+ * here (a GET) when a session expired or access was revoked. To keep GET free
+ * of CSRF-able side effects, it only clears cookies for sessions confirmed
+ * unusable (expired, inactive or without a role). A healthy session goes back
+ * to the dashboard (or /maintenance for non-admins during maintenance), and a
+ * transient session lookup failure goes to /login without signing out.
+ */
+export async function GET(request: NextRequest) {
+  let context: Awaited<ReturnType<typeof getSessionContext>>;
+  try {
+    context = await getSessionContext();
+  } catch {
+    return noStoreRedirect(request, loginPath({}));
+  }
+  if (!context) return noStoreRedirect(request, loginPath({}));
+
+  const unusable = !context.sessionFresh || !context.isActive || !context.role;
+  if (unusable) {
+    return endSessionAndRedirect(request, parseReason(request), "route.get");
+  }
+
+  if (context.role !== "admin") {
+    const mode = await getMaintenanceModeUncached().catch(() => null);
+    if (mode && isMaintenanceActive(mode)) {
+      return noStoreRedirect(request, ROUTES.maintenance);
+    }
+  }
+  return noStoreRedirect(request, ROUTES.dashboard);
 }

@@ -47,8 +47,15 @@ export function InquiryStatusForm({
     <div className="space-y-2">
       <Label htmlFor="inquiry-status-update">Status</Label>
       <div className="flex items-center gap-3">
-        <Select value={status} onValueChange={handleChange} disabled={isPending}>
-          <SelectTrigger id="inquiry-status-update" className="h-11 w-full max-w-xs">
+        <Select
+          value={status}
+          onValueChange={handleChange}
+          disabled={isPending}
+        >
+          <SelectTrigger
+            id="inquiry-status-update"
+            className="h-11 w-full max-w-xs"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

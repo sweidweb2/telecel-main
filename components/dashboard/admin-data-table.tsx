@@ -132,8 +132,8 @@ export function AdminDataTable({
 
   return (
     <Card className="min-w-0 gap-0 overflow-hidden py-0">
-      <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:items-center">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="min-w-0 flex-1 sm:min-w-56">
           <Label htmlFor={searchId} className="sr-only">
             {searchLabel}
           </Label>
@@ -153,7 +153,7 @@ export function AdminDataTable({
           />
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
           {filterNode}
           {hasFilters || search ? (
             <Link

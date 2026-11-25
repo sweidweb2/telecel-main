@@ -1,11 +1,33 @@
+import { marketingPageMetadata } from "@/components/marketing/page-blueprint";
+import { JourneyIndex } from "@/components/marketing/journey-page";
 import {
-  MarketingPageView,
-  marketingPageMetadata,
-} from "@/components/marketing/page-blueprint";
-import { SOLUTIONS_HUB_BLUEPRINT } from "@/constants/page-blueprints";
+  SOLUTION_PAGES,
+  marketingChildPath,
+} from "@/constants/marketing-pages";
+import {
+  SOLUTIONS_HUB_BLUEPRINT,
+  getBlueprintByPath,
+} from "@/constants/page-blueprints";
+import { ROUTES } from "@/constants/routes";
 
 export const metadata = marketingPageMetadata(SOLUTIONS_HUB_BLUEPRINT);
 
+const items = SOLUTION_PAGES.map((page) => {
+  const href = marketingChildPath(ROUTES.solutions, page.slug);
+  return {
+    href,
+    title: page.title,
+    summary: getBlueprintByPath(href)?.description,
+  };
+});
+
 export default function Page() {
-  return <MarketingPageView config={SOLUTIONS_HUB_BLUEPRINT} />;
+  return (
+    <JourneyIndex
+      eyebrow={SOLUTIONS_HUB_BLUEPRINT.eyebrow ?? ""}
+      title={SOLUTIONS_HUB_BLUEPRINT.title}
+      description={SOLUTIONS_HUB_BLUEPRINT.description}
+      items={items}
+    />
+  );
 }

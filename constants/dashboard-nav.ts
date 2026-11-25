@@ -29,7 +29,8 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         title: "Dashboard",
         href: ROUTES.dashboard,
         minRole: "editor",
-        description: "Recent inquiries, drafts awaiting review and quick links.",
+        description:
+          "Recent inquiries, drafts awaiting review and quick links.",
       },
     ],
   },
@@ -62,19 +63,22 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
         title: "Users",
         href: ROUTES.users,
         minRole: "admin",
-        description: "Invite people, assign admin or editor roles and suspend access.",
+        description:
+          "Invite people, assign admin or editor roles and suspend access.",
       },
       {
         title: "Activity log",
         href: ROUTES.activityLog,
         minRole: "admin",
-        description: "Who created, updated, published or deleted CMS content and users.",
+        description:
+          "Who created, updated, published or deleted CMS content and users.",
       },
       {
         title: "Error log",
         href: ROUTES.errorLog,
         minRole: "admin",
-        description: "Unexpected server failures from actions and auth providers.",
+        description:
+          "Unexpected server failures from actions and auth providers.",
       },
       {
         title: "Site settings",
@@ -95,10 +99,13 @@ export const PORTAL_NAV: readonly PortalNavGroup[] = [
 ] as const;
 
 export const PORTAL_SECTIONS: readonly PortalSection[] = PORTAL_NAV.flatMap(
-  (group) => group.items
+  (group) => group.items,
 );
 
-export function canAccessSection(role: UserRole, section: Pick<PortalSection, "minRole">) {
+export function canAccessSection(
+  role: UserRole,
+  section: Pick<PortalSection, "minRole">,
+) {
   return section.minRole === "editor" || role === "admin";
 }
 
@@ -112,7 +119,8 @@ export function getDashboardPageTitle(pathname: string): string {
     .filter(
       (section) =>
         pathname === section.href ||
-        (section.href !== ROUTES.dashboard && pathname.startsWith(`${section.href}/`))
+        (section.href !== ROUTES.dashboard &&
+          pathname.startsWith(`${section.href}/`)),
     )
     .sort((a, b) => b.href.length - a.href.length)[0];
   return match?.title ?? "Dashboard";

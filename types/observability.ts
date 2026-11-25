@@ -20,6 +20,8 @@ export type ActivityLogListResult = {
   rows: ActivityLogRow[];
   total: number;
   totalPages: number;
+  /** True when the actor filter matched more profiles than the lookup cap. */
+  actorsCapped?: boolean;
 };
 
 /** List-row shape for the admin error table + detail modal. */

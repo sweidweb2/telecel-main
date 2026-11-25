@@ -7,7 +7,8 @@ import {
   type TurnstileWidgetId,
 } from "@/types/turnstile";
 
-const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+const SCRIPT_SRC =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 type TurnstileWidgetProps = {
   onToken: (token: string) => void;
@@ -21,14 +22,21 @@ function loadTurnstileScript(): Promise<void> {
   if (window.turnstile) return Promise.resolve();
 
   const existing = document.querySelector<HTMLScriptElement>(
-    `script[src="${SCRIPT_SRC}"]`
+    `script[src="${SCRIPT_SRC}"]`,
   );
   if (existing) {
     return new Promise((resolve, reject) => {
       existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("Turnstile script failed")), {
-        once: true,
-      });
+      existing.addEventListener(
+        "error",
+        () => {
+          existing.remove(); // let the next mount retry with a fresh tag
+          reject(new Error("Turnstile script failed"));
+        },
+        {
+          once: true,
+        },
+      );
     });
   }
 
@@ -37,7 +45,10 @@ function loadTurnstileScript(): Promise<void> {
     script.src = SCRIPT_SRC;
     script.async = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Turnstile script failed"));
+    script.onerror = () => {
+      script.remove(); // allow a clean retry on the next mount
+      reject(new Error("Turnstile script failed"));
+    };
     document.head.appendChild(script);
   });
 }
@@ -79,6 +90,10 @@ export function TurnstileWidget({
 
     return () => {
       cancelled = true;
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+      }
+      widgetIdRef.current = null;
     };
   }, [siteKey, onToken, onExpire, onError]);
 

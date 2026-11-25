@@ -11,8 +11,16 @@ import { SiteNavbar } from "@/components/layout/site-navbar";
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <>
+      <a
+        href="#main-content"
+        className="sr-only z-[100] rounded-md bg-background px-4 py-2 font-medium shadow focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Skip to content
+      </a>
       <SiteNavbar />
-      <PageContainer as="div">{children}</PageContainer>
+      <div id="main-content" tabIndex={-1} className="outline-none">
+        <PageContainer as="div">{children}</PageContainer>
+      </div>
       <SiteFooter />
     </>
   );

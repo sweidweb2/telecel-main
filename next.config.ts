@@ -10,14 +10,48 @@ import type { NextConfig } from "next";
  * the UI falls back to a neutral text lockup.
  */
 const hasBrandLogo = existsSync(
-  path.join(process.cwd(), "public", "brand", "telecel-wordmark.png")
+  path.join(process.cwd(), "public", "brand", "telecel-wordmark.png"),
 );
 
+/** Never let a browser or shared cache keep a copy of protected responses. */
+const NO_STORE = [
+  {
+    key: "Cache-Control",
+    value: "private, no-cache, no-store, must-revalidate",
+  },
+];
+
 const nextConfig: NextConfig = {
+  /**
+   * Hashed /_next/static assets already get `immutable` from Next (not
+   * overridable). These cover un-hashed public/ files and protected routes.
+   * See Docs/02-architecture/caching.md.
+   */
+  async headers() {
+    return [
+      {
+        source: "/brand/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+      { source: "/dashboard", headers: NO_STORE },
+      { source: "/dashboard/:path*", headers: NO_STORE },
+      { source: "/login", headers: NO_STORE },
+      { source: "/update-password", headers: NO_STORE },
+      { source: "/auth/:path*", headers: NO_STORE },
+      { source: "/maintenance", headers: NO_STORE },
+    ];
+  },
+
   env: {
     NEXT_PUBLIC_HAS_BRAND_LOGO: hasBrandLogo ? "true" : "false",
   },
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

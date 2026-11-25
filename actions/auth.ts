@@ -3,10 +3,11 @@
 import { redirect } from "next/navigation";
 import { match, P } from "ts-pattern";
 
-import { recordAppError } from "@/actions/observability";
+import { recordActivity, recordAppError } from "@/actions/observability";
 import { ACTION_GENERIC_ERROR } from "@/constants/action-messages";
 import { loginPath, ROUTES } from "@/constants/routes";
 import { allowSessionDuringMaintenance } from "@/data/auth";
+import { allowAuthAuditWrite, signInOutcome } from "@/lib/auth-audit-throttle";
 import { isGoogleAuthEnabled } from "@/lib/auth-config";
 import { clientIp } from "@/lib/client-ip";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -28,6 +29,7 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
 const GENERIC_ERROR = ACTION_GENERIC_ERROR;
 const RATE_LIMITED = "Too many attempts. Wait a few minutes and try again.";
+const NO_ACCESS_ERROR = "Your account has no CMS access.";
 const MAINTENANCE_LOGIN_BLOCKED =
   "Only administrators can sign in while maintenance is active.";
 
@@ -83,12 +85,36 @@ export async function signIn(
     !consumeRateLimit(`login:ip:${ip}`, 20, FIFTEEN_MINUTES) ||
     !consumeRateLimit(`login:email:${parsed.data.email}`, 5, FIFTEEN_MINUTES)
   ) {
+    // Log only the first throttled hit per IP per window, within the audit budget.
+    if (
+      consumeRateLimit(`audit:auth:ratelimited:${ip}`, 1, FIFTEEN_MINUTES) &&
+      allowAuthAuditWrite(ip)
+    ) {
+      await recordActivity({
+        actorId: null,
+        action: "sign_in_failed",
+        entityType: "auth",
+        summary: { email: parsed.data.email, reason: "rate_limited" },
+      });
+    }
     return { status: "error", message: RATE_LIMITED };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data: signInData, error } = await supabase.auth.signInWithPassword(
+    parsed.data,
+  );
   if (error) {
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_failed",
+      entityType: "auth",
+      summary: {
+        email: parsed.data.email,
+        method: "password",
+        code: error.code ?? null,
+      },
+    });
     const message = mapAuthError(error.message);
     // Expected denials stay quiet; provider/outage unknowns hit app_errors.
     if (message === GENERIC_ERROR) {
@@ -103,9 +129,51 @@ export async function signIn(
   }
 
   // L1/L2: only active admins may establish a new session.
+  const userId = signInData.user?.id ?? null;
   if (!(await allowSessionDuringMaintenance())) {
+    await recordActivity({
+      actorId: userId,
+      action: "sign_in_blocked",
+      entityType: "auth",
+      entityId: userId,
+      summary: { method: "password", reason: "maintenance" },
+    });
     return { status: "error", message: MAINTENANCE_LOGIN_BLOCKED };
   }
+
+  // sign_in only for active profiles with a role; requireStaff() signs the
+  // rest out on the next request.
+  const outcome = await signInOutcome();
+  if (!outcome.ok) {
+    // Never leave a session behind for an account that cannot use the CMS.
+    await supabase.auth.signOut({ scope: "local" });
+    if (outcome.reason === "no_session") {
+      // Session-context RPC failed: operational error, not a policy block.
+      await recordAppError({
+        severity: "error",
+        source: "actions.auth.signIn",
+        message: "Session context lookup failed after password sign-in.",
+        actorId: userId,
+      });
+      return { status: "error", message: GENERIC_ERROR };
+    }
+    await recordActivity({
+      actorId: userId,
+      action: "sign_in_blocked",
+      entityType: "auth",
+      entityId: userId,
+      summary: { method: "password", reason: outcome.reason },
+    });
+    return { status: "error", message: NO_ACCESS_ERROR };
+  }
+
+  await recordActivity({
+    actorId: userId,
+    action: "sign_in",
+    entityType: "auth",
+    entityId: userId,
+    summary: { method: "password" },
+  });
 
   return {
     status: "success",
@@ -144,12 +212,32 @@ export async function signInWithGoogle(
     return { status: "error", message: GENERIC_ERROR };
   }
 
+  if (allowAuthAuditWrite(await clientIp())) {
+    await recordActivity({
+      actorId: null,
+      action: "sign_in_started",
+      entityType: "auth",
+      summary: { method: "google" },
+    });
+  }
   redirect(data.url);
 }
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.auth.signOut();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const actorId = claimsData?.claims?.sub ?? null;
+  // "local" matches app/auth/sign-out/route.ts: other devices stay signed in.
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (actorId) {
+    await recordActivity({
+      actorId,
+      action: "sign_out",
+      entityType: "auth",
+      entityId: actorId,
+      summary: { source: "action" },
+    });
+  }
   if (error) {
     await recordAppError({
       severity: "warning",
@@ -212,6 +300,14 @@ export async function updatePassword(
       context: { reason: "sign_out_others_failed_after_password_update" },
     });
   }
+
+  await recordActivity({
+    actorId: claimsData.claims.sub,
+    action: "password_update",
+    entityType: "auth",
+    entityId: claimsData.claims.sub,
+    summary: { otherSessionsRevoked: !signOutError },
+  });
 
   return {
     status: "success",

@@ -87,6 +87,11 @@ export function ErrorLogTable({
             Severity
           </Label>
           <Select
+            items={{
+              all: "All severities",
+              error: "Error",
+              warning: "Warning",
+            }}
             value={query.severity}
             onValueChange={(value) => {
               if (!value) return;

@@ -83,22 +83,24 @@ export const SITE_NAV: readonly SiteNavSection[] = [
     label: "Services",
     href: ROUTES.services,
     live: true,
-    // Pillar pages are still blueprint skeletons — keep out of sitemap.
-    children: navLinksFromChildren(ROUTES.services, SERVICE_PILLAR_PAGES),
+    children: navLinksFromChildren(ROUTES.services, SERVICE_PILLAR_PAGES, true),
   },
   {
     label: "Solutions",
     href: ROUTES.solutions,
-    children: navLinksFromChildren(ROUTES.solutions, SOLUTION_PAGES),
+    live: true,
+    children: navLinksFromChildren(ROUTES.solutions, SOLUTION_PAGES, true),
   },
   {
     label: "Use Cases",
     href: ROUTES.useCases,
-    children: navLinksFromChildren(ROUTES.useCases, USE_CASE_PAGES),
+    live: true,
+    children: navLinksFromChildren(ROUTES.useCases, USE_CASE_PAGES, true),
   },
   {
     label: WHY_TELECEL_PAGE.title,
     href: WHY_TELECEL_PAGE.path,
+    live: true,
     children: [
       {
         label: "Our Approach",
@@ -112,10 +114,7 @@ export const SITE_NAV: readonly SiteNavSection[] = [
         label: "Global Reach",
         href: `${WHY_TELECEL_PAGE.path}#global-reach`,
       },
-      {
-        label: "Partners & Ecosystem",
-        href: `${WHY_TELECEL_PAGE.path}#partners`,
-      },
+      // Partners & Ecosystem returns once partner marks are cleared (RFQ).
     ],
   },
   {

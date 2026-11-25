@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRightIcon, MenuIcon } from "lucide-react";
 
+import { Logo } from "@/components/brand/logo";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import {
@@ -53,7 +54,15 @@ export function SiteMobileNav({
           Menu
         </SheetTrigger>
         <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md">
-          <SheetHeader className="h-[72px] justify-center border-b px-5">
+          <SheetHeader className="h-[72px] flex-row items-center justify-between gap-3 border-b px-5 pr-14">
+            <Link
+              href={ROUTES.home}
+              aria-label="Telecel Global Services home"
+              onClick={() => setOpen(false)}
+              className="inline-flex shrink-0 items-center"
+            >
+              <Logo size="sm" />
+            </Link>
             <SheetTitle className="type-notation text-muted-foreground">
               Menu
             </SheetTitle>
@@ -68,10 +77,11 @@ export function SiteMobileNav({
                   href={item.href}
                   prefetch={false}
                   onClick={() => setOpen(false)}
-                  aria-current={
-                    isNavActive(pathname, item.href) ? "page" : undefined
+                  aria-current={pathname === item.href ? "page" : undefined}
+                  data-active={
+                    isNavActive(pathname, item.href) ? "true" : undefined
                   }
-                  className="flex min-h-16 items-center justify-between text-ink aria-[current=page]:text-brand"
+                  className="flex min-h-16 items-center justify-between text-ink data-active:text-brand"
                 >
                   <Heading level="subtitle" as="span" className="text-xl">
                     {item.label}
@@ -87,9 +97,7 @@ export function SiteMobileNav({
                           prefetch={false}
                           onClick={() => setOpen(false)}
                           aria-current={
-                            isNavActive(pathname, child.href)
-                              ? "page"
-                              : undefined
+                            pathname === child.href ? "page" : undefined
                           }
                           className="flex min-h-11 items-center text-sm text-muted-foreground hover:text-ink aria-[current=page]:font-medium aria-[current=page]:text-brand"
                         >

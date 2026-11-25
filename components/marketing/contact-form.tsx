@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -41,13 +41,27 @@ import {
   type SubmitInquiryInput,
 } from "@/validations/inquiries";
 
+/** Without a site key the server rejects every submit, so block it up front. */
+const TURNSTILE_ENABLED = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+
 type ContactFormProps = {
   defaultIntent?: InquiryIntent;
+  /** Pre-selected area of interest (validated by the page). */
+  defaultArea?: string;
+  /** Page the form is embedded on, stored with the inquiry. */
+  sourcePath?: string;
 };
 
-export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
+export function ContactForm({
+  defaultIntent = "sales",
+  defaultArea,
+  sourcePath = ROUTES.contact,
+}: ContactFormProps) {
   const [isPending, startTransition] = useTransition();
   const [sentMessage, setSentMessage] = useState<string | null>(null);
+  /** Bumped after a failed submit so Turnstile issues a fresh challenge. */
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const sentHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const {
     register,
@@ -64,12 +78,12 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
       jobRole: "",
       email: "",
       countryCode: undefined,
-      areaOfInterest: undefined,
+      areaOfInterest: defaultArea as SubmitInquiryInput["areaOfInterest"],
       businessNeed: "",
       preferredContactMethod: "email",
       consent: undefined,
       turnstileToken: "",
-      sourcePath: ROUTES.contact,
+      sourcePath,
     },
   });
 
@@ -90,6 +104,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
       if (result.status === "error") {
         toast.error(result.message);
         clearTurnstileToken();
+        setTurnstileKey((key) => key + 1);
         return;
       }
       setSentMessage(
@@ -99,11 +114,20 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
     });
   }
 
+  useEffect(() => {
+    if (sentMessage) sentHeadingRef.current?.focus();
+  }, [sentMessage]);
+
   if (sentMessage) {
     return (
       <div className="rounded-lg border border-hairline bg-surface px-6 py-10">
         <Text variant="brand">Sent</Text>
-        <Heading level="section" className="mt-3">
+        <Heading
+          ref={sentHeadingRef}
+          tabIndex={-1}
+          level="section"
+          className="mt-3 outline-none"
+        >
           We have your message
         </Heading>
         <Text variant="lead" className="mt-4 max-w-[48ch]">
@@ -123,6 +147,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
             <Field data-invalid={Boolean(fieldState.error)}>
               <FieldLabel htmlFor="contact-intent">I want to</FieldLabel>
               <Select
+                items={INQUIRY_INTENTS}
                 value={field.value}
                 onValueChange={(value) => {
                   if (value) field.onChange(value);
@@ -130,9 +155,13 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                 disabled={isPending}
               >
                 <SelectTrigger
+                  ref={field.ref}
                   id="contact-intent"
-                  className="h-12 w-full text-base"
+                  className="h-12 w-full text-base data-[size=default]:h-12"
                   aria-invalid={Boolean(fieldState.error)}
+                  aria-describedby={
+                    fieldState.error ? `contact-${field.name}-error` : undefined
+                  }
                 >
                   <SelectValue placeholder="Choose an option" />
                 </SelectTrigger>
@@ -144,7 +173,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError>{fieldState.error?.message}</FieldError>
+              <FieldError id={`contact-${field.name}-error`}>
+                {fieldState.error?.message}
+              </FieldError>
             </Field>
           )}
         />
@@ -158,9 +189,14 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               autoComplete="name"
               disabled={isPending}
               aria-invalid={Boolean(errors.fullName)}
+              aria-describedby={
+                errors.fullName ? "contact-fullName-error" : undefined
+              }
               {...register("fullName")}
             />
-            <FieldError>{errors.fullName?.message}</FieldError>
+            <FieldError id="contact-fullName-error">
+              {errors.fullName?.message}
+            </FieldError>
           </Field>
           <Field data-invalid={Boolean(errors.company)}>
             <FieldLabel htmlFor="contact-company">Company</FieldLabel>
@@ -170,9 +206,14 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               autoComplete="organization"
               disabled={isPending}
               aria-invalid={Boolean(errors.company)}
+              aria-describedby={
+                errors.company ? "contact-company-error" : undefined
+              }
               {...register("company")}
             />
-            <FieldError>{errors.company?.message}</FieldError>
+            <FieldError id="contact-company-error">
+              {errors.company?.message}
+            </FieldError>
           </Field>
         </div>
 
@@ -185,9 +226,14 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               autoComplete="organization-title"
               disabled={isPending}
               aria-invalid={Boolean(errors.jobRole)}
+              aria-describedby={
+                errors.jobRole ? "contact-jobRole-error" : undefined
+              }
               {...register("jobRole")}
             />
-            <FieldError>{errors.jobRole?.message}</FieldError>
+            <FieldError id="contact-jobRole-error">
+              {errors.jobRole?.message}
+            </FieldError>
           </Field>
           <Field data-invalid={Boolean(errors.email)}>
             <FieldLabel htmlFor="contact-email">Work email</FieldLabel>
@@ -198,9 +244,14 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               autoComplete="email"
               disabled={isPending}
               aria-invalid={Boolean(errors.email)}
+              aria-describedby={
+                errors.email ? "contact-email-error" : undefined
+              }
               {...register("email")}
             />
-            <FieldError>{errors.email?.message}</FieldError>
+            <FieldError id="contact-email-error">
+              {errors.email?.message}
+            </FieldError>
           </Field>
         </div>
 
@@ -212,6 +263,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               <Field data-invalid={Boolean(fieldState.error)}>
                 <FieldLabel htmlFor="contact-country">Country</FieldLabel>
                 <Select
+                  items={COUNTRY_OPTIONS}
                   value={field.value}
                   onValueChange={(value) => {
                     if (value) field.onChange(value);
@@ -219,9 +271,15 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   disabled={isPending}
                 >
                   <SelectTrigger
+                    ref={field.ref}
                     id="contact-country"
-                    className="h-12 w-full text-base"
+                    className="h-12 w-full text-base data-[size=default]:h-12"
                     aria-invalid={Boolean(fieldState.error)}
+                    aria-describedby={
+                      fieldState.error
+                        ? `contact-${field.name}-error`
+                        : undefined
+                    }
                   >
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
@@ -233,7 +291,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldError>{fieldState.error?.message}</FieldError>
+                <FieldError id={`contact-${field.name}-error`}>
+                  {fieldState.error?.message}
+                </FieldError>
               </Field>
             )}
           />
@@ -245,6 +305,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
               <Field data-invalid={Boolean(fieldState.error)}>
                 <FieldLabel htmlFor="contact-area">Area of interest</FieldLabel>
                 <Select
+                  items={AREA_OF_INTEREST_OPTIONS}
                   value={field.value}
                   onValueChange={(value) => {
                     if (value) field.onChange(value);
@@ -252,9 +313,15 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   disabled={isPending}
                 >
                   <SelectTrigger
+                    ref={field.ref}
                     id="contact-area"
-                    className="h-12 w-full text-base"
+                    className="h-12 w-full text-base data-[size=default]:h-12"
                     aria-invalid={Boolean(fieldState.error)}
+                    aria-describedby={
+                      fieldState.error
+                        ? `contact-${field.name}-error`
+                        : undefined
+                    }
                   >
                     <SelectValue placeholder="Select an area" />
                   </SelectTrigger>
@@ -266,7 +333,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldError>{fieldState.error?.message}</FieldError>
+                <FieldError id={`contact-${field.name}-error`}>
+                  {fieldState.error?.message}
+                </FieldError>
               </Field>
             )}
           />
@@ -279,9 +348,14 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
             className="min-h-28 border-input px-3 py-3 text-base"
             disabled={isPending}
             aria-invalid={Boolean(errors.businessNeed)}
+            aria-describedby={
+              errors.businessNeed ? "contact-businessNeed-error" : undefined
+            }
             {...register("businessNeed")}
           />
-          <FieldError>{errors.businessNeed?.message}</FieldError>
+          <FieldError id="contact-businessNeed-error">
+            {errors.businessNeed?.message}
+          </FieldError>
         </Field>
 
         <Controller
@@ -293,6 +367,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                 Preferred contact
               </FieldLabel>
               <Select
+                items={CONTACT_METHODS}
                 value={field.value}
                 onValueChange={(value) => {
                   if (value) field.onChange(value);
@@ -300,9 +375,13 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                 disabled={isPending}
               >
                 <SelectTrigger
+                  ref={field.ref}
                   id="contact-method"
-                  className="h-12 w-full text-base"
+                  className="h-12 w-full text-base data-[size=default]:h-12"
                   aria-invalid={Boolean(fieldState.error)}
+                  aria-describedby={
+                    fieldState.error ? `contact-${field.name}-error` : undefined
+                  }
                 >
                   <SelectValue placeholder="How should we reach you?" />
                 </SelectTrigger>
@@ -314,7 +393,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError>{fieldState.error?.message}</FieldError>
+              <FieldError id={`contact-${field.name}-error`}>
+                {fieldState.error?.message}
+              </FieldError>
             </Field>
           )}
         />
@@ -326,6 +407,7 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
             <Field data-invalid={Boolean(fieldState.error)}>
               <div className="flex items-start gap-3">
                 <Checkbox
+                  ref={field.ref}
                   id="contact-consent"
                   checked={field.value === true}
                   disabled={isPending}
@@ -334,6 +416,9 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   }
                   className="mt-0.5 size-5"
                   aria-invalid={Boolean(fieldState.error)}
+                  aria-describedby={
+                    fieldState.error ? `contact-${field.name}-error` : undefined
+                  }
                 />
                 <FieldLabel
                   htmlFor="contact-consent"
@@ -342,25 +427,30 @@ export function ContactForm({ defaultIntent = "sales" }: ContactFormProps) {
                   {CONTACT_CONSENT_LABEL}
                 </FieldLabel>
               </div>
-              <FieldError>{fieldState.error?.message}</FieldError>
+              <FieldError id={`contact-${field.name}-error`}>
+                {fieldState.error?.message}
+              </FieldError>
             </Field>
           )}
         />
 
         <Field data-invalid={Boolean(errors.turnstileToken)}>
           <TurnstileWidget
+            key={turnstileKey}
             onToken={handleTurnstileToken}
             onExpire={clearTurnstileToken}
             onError={clearTurnstileToken}
           />
-          <FieldError>{errors.turnstileToken?.message}</FieldError>
+          <FieldError id="contact-turnstileToken-error">
+            {errors.turnstileToken?.message}
+          </FieldError>
         </Field>
       </FieldGroup>
 
       <Button
         type="submit"
         className="h-12 w-full text-[15px] sm:w-auto sm:min-w-44"
-        disabled={isPending}
+        disabled={isPending || !TURNSTILE_ENABLED}
       >
         {isPending ? (
           <>

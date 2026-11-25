@@ -150,9 +150,7 @@ async function persistAppError(input: RecordAppErrorInput): Promise<void> {
 export async function recordActivity(
   input: RecordActivityInput,
 ): Promise<void> {
-  after(() => {
-    void persistActivity(input);
-  });
+  after(() => persistActivity(input));
 }
 
 /**
@@ -163,9 +161,7 @@ export async function recordActivity(
 export async function recordAppError(
   input: RecordAppErrorInput,
 ): Promise<void> {
-  after(() => {
-    void persistAppError(input);
-  });
+  after(() => persistAppError(input));
 }
 
 export type UnexpectedActionErrorResult = {
@@ -197,4 +193,14 @@ export async function unexpectedActionError(input: {
     });
   }
   return { status: "error", message: input.userMessage };
+}
+
+/**
+ * Awaited variant of `recordAppError` for contexts without a request scope
+ * for `after()` (e.g. `instrumentation.ts` `onRequestError`). Never throws.
+ */
+export async function recordAppErrorNow(
+  input: RecordAppErrorInput,
+): Promise<void> {
+  await persistAppError(input);
 }

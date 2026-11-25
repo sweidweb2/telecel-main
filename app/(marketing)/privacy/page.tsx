@@ -1,11 +1,10 @@
-import {
-  MarketingPageView,
-  marketingPageMetadata,
-} from "@/components/marketing/page-blueprint";
+import { marketingPageMetadata } from "@/components/marketing/page-blueprint";
+import { LegalPage } from "@/components/marketing/legal-page";
+import { PRIVACY_POLICY } from "@/constants/legal-content";
 import { PRIVACY_BLUEPRINT } from "@/constants/page-blueprints";
 
 export const metadata = marketingPageMetadata(PRIVACY_BLUEPRINT);
 
 export default function PrivacyPage() {
-  return <MarketingPageView config={PRIVACY_BLUEPRINT} />;
+  return <LegalPage doc={PRIVACY_POLICY} />;
 }

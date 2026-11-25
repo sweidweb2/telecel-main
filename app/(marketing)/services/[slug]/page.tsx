@@ -1,10 +1,42 @@
-import { createBlueprintHubPage } from "@/components/marketing/blueprint-slug-route";
-import { SERVICE_PILLAR_BLUEPRINTS } from "@/constants/page-blueprints";
+import { notFound } from "next/navigation";
+
+import { blueprintSlugMetadata } from "@/components/marketing/blueprint-slug-route";
+import { ServicePillarPage } from "@/components/marketing/service-pillar-page";
+import {
+  SERVICE_PILLAR_BLUEPRINTS,
+  blueprintStaticParams,
+  getBlueprintByPath,
+} from "@/constants/page-blueprints";
+import { marketingChildPath } from "@/constants/marketing-pages";
 import { ROUTES } from "@/constants/routes";
+import { getServicePillar } from "@/constants/service-pillars";
 
-const hub = createBlueprintHubPage(ROUTES.services, SERVICE_PILLAR_BLUEPRINTS);
+/** Fixed pillar set — unknown slugs 404 without an on-demand render. */
+export const dynamicParams = false;
 
-export const dynamicParams = hub.dynamicParams;
-export const generateStaticParams = hub.generateStaticParams;
-export const generateMetadata = hub.generateMetadata;
-export default hub.Page;
+export function generateStaticParams() {
+  return blueprintStaticParams(SERVICE_PILLAR_BLUEPRINTS, ROUTES.services);
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps<"/services/[slug]">) {
+  const { slug } = await params;
+  return blueprintSlugMetadata(ROUTES.services, slug);
+}
+
+export default async function ServicePillarRoute({
+  params,
+}: PageProps<"/services/[slug]">) {
+  const { slug } = await params;
+  const pillar = getServicePillar(slug);
+  const config = getBlueprintByPath(marketingChildPath(ROUTES.services, slug));
+  if (!pillar || !config) notFound();
+  return (
+    <ServicePillarPage
+      pillar={pillar}
+      title={config.title}
+      description={config.description}
+    />
+  );
+}

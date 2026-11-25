@@ -11,7 +11,10 @@ import {
   ADMIN_LIST_PAGE_SIZE,
   setAdminListPagingParams,
 } from "@/validations/admin-list-query";
-import { parseActivityLogQuery } from "@/validations/audit-log";
+import {
+  parseActivityLogQuery,
+  setActivityFilterParams,
+} from "@/validations/audit-log";
 
 export const metadata: Metadata = {
   title: "Activity log",
@@ -20,7 +23,9 @@ export const metadata: Metadata = {
 export default async function ActivityLogPage({
   searchParams,
 }: PageProps<"/dashboard/activity-log">) {
-  const { session, section, allowed } = await requireSection(ROUTES.activityLog);
+  const { session, section, allowed } = await requireSection(
+    ROUTES.activityLog,
+  );
   if (!allowed) return <AccessDenied />;
 
   const query = parseActivityLogQuery(await searchParams);
@@ -33,7 +38,7 @@ export default async function ActivityLogPage({
       pageSize: query.pageSize,
       defaultPageSize: ADMIN_LIST_PAGE_SIZE,
     });
-    if (query.search) params.set("search", query.search);
+    setActivityFilterParams(params, query);
     redirect(`${ROUTES.activityLog}?${params.toString()}`);
   }
 
@@ -47,6 +52,7 @@ export default async function ActivityLogPage({
         rows={list.rows}
         total={list.total}
         totalPages={list.totalPages}
+        actorsCapped={list.actorsCapped ?? false}
         query={query}
       />
     </main>

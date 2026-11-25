@@ -41,3 +41,9 @@ export function createBlueprintHubPage(
     },
   };
 }
+
+/** Metadata for a hub child page that renders its own layout. */
+export function blueprintSlugMetadata(hubPath: string, slug: string): Metadata {
+  const config = getBlueprintByPath(marketingChildPath(hubPath, slug));
+  return config ? marketingPageMetadata(config) : {};
+}

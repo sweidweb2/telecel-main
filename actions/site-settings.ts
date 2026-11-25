@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { recordActivity, unexpectedActionError } from "@/actions/observability";
 import { ROUTES } from "@/constants/routes";
@@ -28,7 +28,8 @@ export async function updateMaintenanceMode(
   if (!parsed.success) {
     return {
       status: "error",
-      message: parsed.error.issues[0]?.message ?? "Invalid maintenance settings.",
+      message:
+        parsed.error.issues[0]?.message ?? "Invalid maintenance settings.",
     };
   }
 
@@ -65,7 +66,8 @@ export async function updateMaintenanceMode(
     summary: { mode },
   });
 
-  revalidateTag(MAINTENANCE_CACHE_TAG, "max");
+  // Expire immediately (read-your-writes) so the toggle takes effect now.
+  updateTag(MAINTENANCE_CACHE_TAG);
   revalidatePath(ROUTES.settings);
   revalidatePath(ROUTES.maintenance);
   clearMaintenanceProxyCache();

@@ -100,7 +100,11 @@ async function uploadImage(options: {
 
   const { error: updateError } = await session.supabase
     .from("blogs")
-    .update({ [column]: publicUrl })
+    .update(
+      column === "thumbnail_url"
+        ? { thumbnail_url: publicUrl }
+        : { author_avatar_url: publicUrl },
+    )
     .eq("id", blogId);
 
   if (updateError) {
@@ -227,7 +231,11 @@ export async function removeBlogImage(input: {
     input.kind === "thumbnail" ? "thumbnail_url" : "author_avatar_url";
   const { error } = await session.supabase
     .from("blogs")
-    .update({ [column]: null })
+    .update(
+      column === "thumbnail_url"
+        ? { thumbnail_url: null }
+        : { author_avatar_url: null },
+    )
     .eq("id", input.id);
 
   if (error) {

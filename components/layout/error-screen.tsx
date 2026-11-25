@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
+import Link from "next/link";
+
+import { Logo } from "@/components/brand/logo";
 import { SignalMotif } from "@/components/brand/signal-motif";
 import { Container } from "@/components/layout/container";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 
 type ErrorScreenProps = {
@@ -14,6 +18,8 @@ type ErrorScreenProps = {
   description: string;
   tone?: "muted" | "destructive";
   children?: ReactNode;
+  /** Home link for the logo; `null` renders a non-linked logo (e.g. maintenance). */
+  logoHref?: string | null;
 };
 
 /** Shared 400/401/403/404/500 layout: notation code, display title, actions, motif. */
@@ -24,6 +30,7 @@ export function ErrorScreen({
   description,
   tone = "muted",
   children,
+  logoHref = ROUTES.home,
 }: ErrorScreenProps) {
   return (
     <Container
@@ -32,6 +39,19 @@ export function ErrorScreen({
     >
       <SignalMotif rows={8} className="hidden h-64 w-auto md:block" />
       <div className="max-w-xl">
+        {logoHref === null ? (
+          <div className="mb-10 inline-flex">
+            <Logo size="sm" />
+          </div>
+        ) : (
+          <Link
+            href={logoHref}
+            aria-label="Telecel Global Services home"
+            className="mb-10 inline-flex"
+          >
+            <Logo size="sm" />
+          </Link>
+        )}
         <p
           className={cn(
             "flex items-center gap-2 type-notation",
